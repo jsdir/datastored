@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "mocha test"
+    "test": "mocha -R spec test/**/*.js"
   },
   "repository": {
     "type": "git",
@@ -26,11 +26,13 @@
   },
   "homepage": "https://github.com/jsdir/datastored",
   "dependencies": {
-    "lodash": "~2.4.1"
+    "lodash": "~2.4.1",
+    "validator": "~3.11.0"
   },
   "devDependencies": {
     "sinon-chai": "~2.5.0",
     "chai": "~1.9.1",
-    "sinon": "~1.9.1"
+    "sinon": "~1.9.1",
+    "mocha": "~1.18.2"
   }
 }
