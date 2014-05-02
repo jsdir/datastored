@@ -9,7 +9,7 @@ chai.use(sinonChai);
 var datastores = require('../../lib/datastores.js');
 
 
-describe('RedisDatastore', function() {
+xdescribe('RedisDatastore', function() {
 
   it('persists to redis', function(done) {
     var rds = new datastores.RedisDatastore();

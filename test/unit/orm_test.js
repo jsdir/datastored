@@ -2,13 +2,44 @@ var chai = require('chai');
 var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
 
-var orm = require('../../index');
+var Orm = require('../../index');
 
 var expect = chai.expect;
 chai.should();
 chai.use(sinonChai);
 
 describe('ORM', function() {
+
+  var redis = {
+    insert: function() {},
+    update: function() {}
+  };
+
+  var cassandra = {
+    insert: function() {},
+    update: function() {}
+  };
+
+  var orm = new Orm({
+    redis: redis,
+    cassandra: cassandra,
+    generateId: function(cb) {cb(null, 'generated_id');}
+  });
+
+  before(function() {
+    orm.model('BasicModel', {
+      attributes: {
+        primary_key: {
+          primary: true,
+          type: 'string'
+        },
+        foo: {type: 'string'},
+        bar: {type: 'string'}
+      }
+    });
+
+    this.BasicModel = orm.use('BasicModel');
+  });
 
   describe('#use()', function() {
 
@@ -20,21 +51,6 @@ describe('ORM', function() {
   });
 
   describe('model', function() {
-
-    before(function() {
-      orm.model('BasicModel', {
-        attributes: {
-          primary_key: {
-            primary: true,
-            type: 'string'
-          },
-          foo: {type: 'string'},
-          bar: {type: 'string'}
-        }
-      });
-
-      this.BasicModel = orm.use('BasicModel');
-    });
 
     describe('constructor', function() {
 
@@ -97,16 +113,18 @@ describe('ORM', function() {
       });
 
       it('should set attributes', function() {
-        expect(this.model.get('foo', false)).to.be.undefined;
-        expect(this.model.get('bar', false)).to.be.undefined;
+        var model = this.model;
+
+        expect(model.get('foo', false)).to.be.undefined;
+        expect(model.get('bar', false)).to.be.undefined;
 
         this.transform.returns({
           foo: 'inputTransformed',
           bar: 'inputTransformed'
         });
 
-        this.model.set('foo', 1);
-        this.model.set('bar', 2, false);
+        model.set('foo', 1);
+        model.set('bar', 2, false);
 
         // Test for proper invocations of the input transform chain.
         this.transform.should.have.been.calledWith({'foo': 1}, 'input');
@@ -116,39 +134,45 @@ describe('ORM', function() {
           bar: 'outputTransformed'
         });
 
-        this.model.get('foo').should.equal('outputTransformed');
-        this.model.get('bar').should.equal('outputTransformed');
+        model.get('foo').should.equal('outputTransformed');
+        model.get('bar').should.equal('outputTransformed');
 
-        this.model.get('foo', false).should.equal('inputTransformed');
-        this.model.get('bar', false).should.equal(2);
+        model.get('foo', false).should.equal('inputTransformed');
+        model.get('bar', false).should.equal(2);
+
+        model.changedAttributes.should.include.members(['foo', 'bar']);
       });
 
       it('should set multiple attributes', function() {
+        var model = this.model;
+
         // Test input with transforms.
         this.transform.returns({
           foo: 'inputTransformed',
           bar: 'inputTransformed'
         });
-        this.model.set({foo: 'foo', bar: 'bar'})
-        this.model.get(['foo', 'bar'], false).should.deep.equal({
+        model.set({foo: 'foo', bar: 'bar'})
+        model.get(['foo', 'bar'], false).should.deep.equal({
           foo: 'inputTransformed', bar: 'inputTransformed'
         });
         this.transform.returns({
           foo: 'outputTransformed',
           bar: 'outputTransformed'
         });
-        this.model.get(['foo', 'bar']).should.deep.equal({
+        model.get(['foo', 'bar']).should.deep.equal({
           foo: 'outputTransformed', bar: 'outputTransformed'
         });
 
         // Test input without transforms.
-        this.model.set({foo: 'foo2', bar: 'bar2'}, false);
-        this.model.get(['foo', 'bar']).should.deep.equal({
+        model.set({foo: 'foo2', bar: 'bar2'}, false);
+        model.get(['foo', 'bar']).should.deep.equal({
           foo: 'outputTransformed', bar: 'outputTransformed'
         });
-        this.model.get(['foo', 'bar'], false).should.deep.equal({
+        model.get(['foo', 'bar'], false).should.deep.equal({
           foo: 'foo2', bar: 'bar2'
         });
+
+        model.changedAttributes.should.include.members(['foo', 'bar']);
       });
     });
 
@@ -211,7 +235,108 @@ describe('ORM', function() {
       });
     });
 
-    describe('#find()', function() {
+    describe('#save()', function() {
+
+      before(function() {
+        this.stubs = {
+          redis: {
+            insert: sinon.stub(redis, 'insert', function(data, cb) {cb();}),
+            update: sinon.stub(redis, 'update', function(data, cb) {cb();})
+          },
+          cassandra: {
+            insert: sinon.stub(cassandra, 'insert', function(data, cb) {
+              cb();
+            }),
+            update: sinon.stub(cassandra, 'update', function(data, cb) {
+              cb();
+            })
+          }
+        };
+      });
+
+      beforeEach(function() {
+        this.model = new this.BasicModel();
+      });
+
+      afterEach(function() {
+        this.stubs.redis.insert.reset();
+        this.stubs.redis.update.reset();
+        this.stubs.cassandra.insert.reset();
+        this.stubs.cassandra.update.reset();
+      });
+
+      after(function() {
+        this.stubs.redis.insert.restore();
+        this.stubs.redis.update.restore();
+        this.stubs.cassandra.insert.restore();
+        this.stubs.cassandra.update.restore();
+      });
+
+      it('should not fail when no attributes have changed', function(done) {
+        this.model.save(function(err) {
+          expect(err).to.be.undefined;
+          done();
+        });
+      });
+
+      it('should reset changed attributes when done', function(done) {
+        var model = this.model;
+        model.set('foo', 'bar');
+
+        model.save(function(err) {
+          expect(err).to.be.undefined;
+          model.changedAttributes.should.be.empty;
+          done();
+        });
+      });
+
+      it('should insert into datastores correctly', function(done) {
+        var model = this.model;
+        var cassandraInsert = this.stubs.cassandra.insert;
+        var redisInsert = this.stubs.redis.insert;
+
+        model.set('foo', 'bar');
+        model.isNew.should.be.true;
+
+        model.save(function(err) {
+          cassandraInsert.should.have.been.calledWith({
+            foo: 'bar', primary_key: 'generated_id'
+          }, sinon.match.func);
+          redisInsert.should.have.been.calledWith({
+            foo: 'bar', primary_key: 'generated_id'
+          }, sinon.match.func);
+
+          cassandraInsert.should.have.been.calledBefore(redisInsert);
+
+          expect(err).to.be.undefined;
+          model.isNew.should.be.false;
+          done();
+        });
+      });
+
+      it('should update datastores correctly', function(done) {
+        var model = new this.BasicModel('id');
+        var cassandraUpdate = this.stubs.cassandra.update;
+        var redisUpdate = this.stubs.redis.update;
+
+        model.set('foo', 'bar');
+        model.isNew.should.be.false;
+
+        model.save(function(err) {
+          cassandraUpdate.should.have.been.calledWith({
+            foo: 'bar', primary_key: 'id'
+          }, sinon.match.func);
+          redisUpdate.should.have.been.calledWith({
+            foo: 'bar', primary_key: 'id'
+          }, sinon.match.func);
+
+          cassandraUpdate.should.have.been.calledBefore(redisUpdate);
+
+          expect(err).to.be.undefined;
+          model.isNew.should.be.false;
+          done();
+        });
+      });
     });
   });
 });

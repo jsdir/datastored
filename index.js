@@ -1,7 +1,7 @@
 var _ = require('lodash');
-var validator = require('validator');
 
 var datastores = require('./lib/datastores');
+var validate = require('./lib/validate');
 
 
 function requireProperties(obj, properties) {
@@ -84,7 +84,15 @@ function Orm(options) {
   } else {
     this.cassandra = options.cassandra;
   }
+
+  if (!options.generateId) {
+    throw new Error('no `generateId` method given to datastored');
+  } else {
+    this.generateId = options.generateId;
+  }
 };
+
+Orm.validate = validate;
 
 Orm.prototype.model = function(name, options, behaviors) {
 
@@ -98,8 +106,7 @@ Orm.prototype.model = function(name, options, behaviors) {
 
   model.prototype = Object.create(Model.prototype);
   model.prototype.options = options;
-  model.prototype.redis = this.redis;
-  model.prototype.cassandra = this.cassandra;
+  model.prototype.orm = this;
 
   this.models[name] = model;
 }
@@ -227,6 +234,7 @@ Orm.parseOptions = function(options) {
 
 function Model(data, transform) {
   this.data = {};
+  this.isNew = true;
   this.changedAttributes = [];
 
   // Load initial data.
@@ -236,6 +244,7 @@ function Model(data, transform) {
       this.set(data, transform);
     } else {
       // A primary key was given.
+      this.isNew = false;
       this.set(this.options.pkAttribute, data, transform);
     }
   }
@@ -315,31 +324,51 @@ Model.prototype.save = function(cb) {
     // No attributes have changed; still successful.
     cb();
   } else {
-    var data = _.pick(this.data, this.changeAttributes);
+    // Get data only from changed attributes.
+    var data = _.pick(this.data, this.changedAttributes);
+
     if (this.isNew) {
-      idGen.next(function(err, id) {
+      // Generate an id for the new model.
+      this.orm.generateId(function(err, id) {
         if (err) {
           cb(err);
         } else {
           // Set the new id.
-          data[self.pkAttribute] = id;
+          data[self.options.pkAttribute] = id;
           // Insert to cassandra first.
-          self.cassandra.insert(data, function(err) {
-            // Insert to redis.
-            self.redis.insert(data, function(err) {
+          self.orm.cassandra.insert(data, function(err) {
+            if (err) {
+              cb(err);
+            } else {
+              // Insert to redis.
+              self.orm.redis.insert(data, function(err) {
+                if (err) {
+                  // Log this entry
+                }
+              });
               self.isNew = false;
+              self.changedAttributes = false;
               cb();
-            });
+            }
           });
         }
       });
     } else {
       // Update cassandra first.
-      self.cassandra.update(data, function(err) {
-        // Update redis.
-        self.redis.update(data, function(err) {
+      self.orm.cassandra.update(data, function(err) {
+        if (err) {
+          cb(err);
+        } else {
+          // Update redis asynchronously then call the callback. As of now,
+          // there is no need to wait or get the status of redis for the user.
+          self.orm.redis.update(data, function(err) {
+            if (err) {
+              // Log this entry
+            }
+          });
+          self.changedAttributes = false;
           cb();
-        });
+        }
       });
     }
   }
@@ -422,27 +451,6 @@ Model.prototype.show = function(scope) {
   return this.transform(this.data, 'output', scope);
 }
 
-Model.prototype.checkAttribute = function(attribute) {
-  if (!_.contains(_.keys(self._attributes), attribute)) {
-    throw new Orm.OrmError('model has no attribute "' + attribute + '"');
-  }
-}
-
-Model.prototype.setPermission = function(permission, attribute) {
-  if (attribute === null) {
-    // Changed model permission.
-    this._permissions.model = permission;
-    this._changed.permissions.model = true;
-  } else {
-    // Changed attribute permission.
-    this.checkAttribute(attribute);
-    this._permissions.attributes[attribute] = permission;
-    if (!_.contains(this._changed.permissions, attribute)) {
-      this._changed.permissions.push(attribute);
-    }
-  }
-}
-
 /**
  * Find a single model by a primary key (id) or an index. It can be used
  * with the database or the caching layer. "query" supports basic boolean
@@ -517,6 +525,8 @@ Model.prototype.transform = function(attributes, chain, cb) {
     });
     return attributes;
   }
+
+  return attributes;
 }
 
 module.exports = Orm;
