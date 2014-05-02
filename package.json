@@ -1,0 +1,34 @@
+{
+  "name": "datastored",
+  "version": "0.0.0",
+  "description": "synchronized cache and persistent datastore for node.js",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jsdir/datastored.git"
+  },
+  "keywords": [
+    "redis",
+    "cassandra",
+    "datastore",
+    "database"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jsdir/datastored/issues"
+  },
+  "homepage": "https://github.com/jsdir/datastored",
+  "dependencies": {
+    "redis": "~0.10.1",
+    "lodash": "~2.4.1",
+    "helenus": "~0.6.10",
+    "hiredis": "~0.1.16"
+  }
+}
