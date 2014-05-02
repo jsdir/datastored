@@ -109,6 +109,8 @@ Orm.prototype.model = function(name, options, behaviors) {
   model.prototype.orm = this;
 
   this.models[name] = model;
+
+  return model;
 }
 
 Orm.prototype.use = function(name) {

@@ -27,7 +27,7 @@ describe('ORM', function() {
   });
 
   before(function() {
-    orm.model('BasicModel', {
+    this.BasicModel = orm.model('BasicModel', {
       attributes: {
         primary_key: {
           primary: true,
@@ -37,8 +37,6 @@ describe('ORM', function() {
         bar: {type: 'string'}
       }
     });
-
-    this.BasicModel = orm.use('BasicModel');
   });
 
   describe('#use()', function() {
@@ -47,6 +45,10 @@ describe('ORM', function() {
       expect(function() {
         orm.use('NonexistentModel');
       }).to.throw('model "NonexistentModel" has not been defined');
+    });
+
+    it('should return the correct model', function() {
+      orm.use('BasicModel').should.deep.equal(this.BasicModel);
     });
   });
 
