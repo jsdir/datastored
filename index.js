@@ -69,12 +69,24 @@ function parseTransforms(existing, transforms) {
 }
 
 
-function Orm() {};
+function Orm(options) {
+  this.options = options;
+  this.models = {};
 
-// Model cache.
-var models = {};
+  if (!options.redis) {
+    throw new Error('no `RedisClient` given to datastored');
+  } else {
+    this.redis = options.redis;
+  }
 
-Orm.model = function(name, options, behaviors) {
+  if (!options.cassandra) {
+    throw new Error('no helenus `ConnectionPool` given to datastored');
+  } else {
+    this.cassandra = options.cassandra;
+  }
+};
+
+Orm.prototype.model = function(name, options, behaviors) {
 
   // TODO: behaviors
 
@@ -86,15 +98,17 @@ Orm.model = function(name, options, behaviors) {
 
   model.prototype = Object.create(Model.prototype);
   model.prototype.options = options;
+  model.prototype.redis = this.redis;
+  model.prototype.cassandra = this.cassandra;
 
-  models[name] = model;
+  this.models[name] = model;
 }
 
-Orm.use = function(name) {
-  if (!models.hasOwnProperty(name)) {
+Orm.prototype.use = function(name) {
+  if (!this.models.hasOwnProperty(name)) {
     throw new Error('model "' + name + '" has not been defined');
   }
-  return models[name];
+  return this.models[name];
 }
 
 Orm.transforms = {
@@ -375,22 +389,6 @@ Model.prototype.fetch = function(cb) {
     // The cache does not have all of the required attributes. Use cassandra.
     this._fetchFromDb(attributes, cb);
   }
-
-  /*
-  var self = this;
-  Orm.repository.fetch(scope, this, function(attributes) {
-    attributes = self._transform(attributes, 'fetch');
-    self._attributes = _.extend(self._attributes, attributes);
-    self.set(attributes);
-    if (cb != null) {
-      cb(self.show(scope));
-    }
-  });*/
-
-  // scope, attributes
-  // var data = _.object(_.zip(attributes, values));
-  // Check model permissions. If the user is not authorized to view the
-  // entire model, act as if the model does not exist.
 
   func = function(cb) {
     cassandra.getItem(itemFromClosure, cb)
