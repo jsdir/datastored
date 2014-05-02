@@ -1,7 +1,9 @@
 datastored
 ==========
 
-unified cache and persistent datastore for node.js
+Datastored is a failover-tolerant cache and persistent datastore for node.js using redis and cassandra.
+
+[![Build Status](https://travis-ci.org/jsdir/datastored.svg?branch=master)](https://travis-ci.org/jsdir/datastored)
 
 Usage
 -----
