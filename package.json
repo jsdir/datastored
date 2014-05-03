@@ -28,7 +28,7 @@
   "dependencies": {
     "lodash": "~2.4.1",
     "validator": "~3.11.0",
-    "valids": "0.0.0"
+    "valids": "~0.1.0"
   },
   "devDependencies": {
     "sinon-chai": "~2.5.0",
