@@ -2,7 +2,7 @@ var chai = require('chai');
 var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
 
-var Orm = require('../../index');
+var Orm = require('..');
 
 var expect = chai.expect;
 chai.should();
@@ -340,6 +340,34 @@ describe('ORM', function() {
           model.isNew.should.be.false;
           done();
         });
+      });
+
+      it('should use the async save transform chain', function() {
+
+      });
+    });
+
+    xdescribe('#fetch()', function() {
+
+      before(function() {
+        // stub transform.fetch to return "fetchTransformed"
+      });
+
+      // Global assertions: all returned attributes should use the fetch transform chain.
+      it('should fetch from redis first if all the attributes are cached', function() {
+
+      });
+
+      it('should fetch from cassandra if any of the attributes are not cached', function() {
+
+      });
+
+      it('should fetch from cassandra if fetching from redis fails', function() {
+        // if successful, make sure that redis is repopulated *after* the result is returned.
+      });
+
+      it('should fail when fetching from cassandra fails', function() {
+
       });
     });
   });

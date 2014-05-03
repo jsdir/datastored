@@ -4,7 +4,7 @@ var sinonChai = require('sinon-chai');
 var redis = require('redis');
 var helenus = require('helenus');
 
-var datastores = require('../../lib/datastores');
+var datastores = require('../lib/datastores');
 
 var expect = chai.expect;
 

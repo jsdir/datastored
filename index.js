@@ -150,7 +150,6 @@ Orm.transforms = {
      */
     input: function(attributes, model) {
       // Validate attributes.
-      debugger;
       var messages = Orm.validate(attributes, model.attributes);
       if (messages) {
         // Model is invalid.
