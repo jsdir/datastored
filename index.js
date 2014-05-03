@@ -70,26 +70,23 @@ function parseTransforms(existing, transforms) {
 
 
 function Orm(options) {
-  this.options = options;
-  this.models = {};
-
   if (!options.redis) {
     throw new Error('no `RedisClient` given to datastored');
-  } else {
-    this.redis = options.redis;
   }
 
   if (!options.cassandra) {
     throw new Error('no helenus `ConnectionPool` given to datastored');
-  } else {
-    this.cassandra = options.cassandra;
   }
 
   if (!options.generateId) {
     throw new Error('no `generateId` method given to datastored');
-  } else {
-    this.generateId = options.generateId;
   }
+
+  // Set defaults.
+  options.redisKeyspace = options.redisKeyspace || 'orm';
+
+  this.options = options;
+  this.models = {};
 };
 
 Orm.validate = validate;
@@ -256,8 +253,9 @@ function Model(data, transform) {
 
 Model.prototype.initializeDatastores = function() {
   // Create datastores.
-  this.redis = new datastores.RedisDatastore(this.options);
-  this.cassandra = new datastores.CassandraDatastore(this.options);
+  var ormOptions = this.orm.options;
+  this.redis = new datastores.RedisDatastore(ormOptions, this.options);
+  this.cassandra = new datastores.CassandraDatastore(ormOptions, this.options);
 }
 
 Model.prototype.get = function(attributes, transform) {
@@ -331,19 +329,19 @@ Model.prototype.save = function(cb) {
 
     if (this.isNew) {
       // Generate an id for the new model.
-      this.orm.generateId(function(err, id) {
+      this.orm.options.generateId(function(err, id) {
         if (err) {
           cb(err);
         } else {
           // Set the new id.
           data[self.options.pkAttribute] = id;
           // Insert to cassandra first.
-          self.orm.cassandra.insert(data, function(err) {
+          self.orm.options.cassandra.insert(data, function(err) {
             if (err) {
               cb(err);
             } else {
               // Insert to redis.
-              self.orm.redis.insert(data, function(err) {
+              self.orm.options.redis.insert(data, function(err) {
                 if (err) {
                   // Log this entry
                 }
@@ -357,13 +355,13 @@ Model.prototype.save = function(cb) {
       });
     } else {
       // Update cassandra first.
-      self.orm.cassandra.update(data, function(err) {
+      self.orm.options.cassandra.update(data, function(err) {
         if (err) {
           cb(err);
         } else {
           // Update redis asynchronously then call the callback. As of now,
           // there is no need to wait or get the status of redis for the user.
-          self.orm.redis.update(data, function(err) {
+          self.orm.options.redis.update(data, function(err) {
             if (err) {
               // Log this entry
             }

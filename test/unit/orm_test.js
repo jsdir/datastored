@@ -23,6 +23,7 @@ describe('ORM', function() {
   var orm = new Orm({
     redis: redis,
     cassandra: cassandra,
+    redisKeyspace: 'keyspace',
     generateId: function(cb) {cb(null, 'generated_id');}
   });
 
