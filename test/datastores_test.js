@@ -139,6 +139,7 @@ describe('CassandraDatastore', function() {
       datetime: datetime,
       date: date
     }, function(err) {
+      if (err) { throw err; }
       cds.fetch('key', attributes, function(err, result) {
         result.integer.should.equal(1234);
         result.string.should.equal('string');

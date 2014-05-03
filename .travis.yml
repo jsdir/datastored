@@ -5,7 +5,7 @@ node_js:
   - "0.10"
 
 before_script:
-  - cqlsh -f scripts/test.cql
+  - ./scripts/create-schema.sh
 
 services:
   - redis-server
