@@ -4,6 +4,9 @@ node_js:
   - "0.8"
   - "0.10"
 
+before_script:
+  - cqlsh -f scripts/test.cql
+
 services:
   - redis-server
   - cassandra
