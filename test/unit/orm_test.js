@@ -70,8 +70,9 @@ describe('ORM', function() {
       });
 
       it('should construct with a primary key', function() {
-        new this.BasicModel('value', false);
+        var model = new this.BasicModel('value', false);
         this.set.should.have.been.calledWith('primary_key', 'value', false);
+        model.options.pkAttribute.should.equal('primary_key');
         this.set.reset();
 
         new this.BasicModel('value');
