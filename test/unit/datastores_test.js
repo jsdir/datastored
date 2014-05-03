@@ -37,7 +37,9 @@ describe('RedisDatastore', function() {
         booleanFalse: {type: 'boolean'},
         datetime: {type: 'datetime'},
         date: {type: 'date'}
-      }
+      },
+      table: 'table',
+      pkAttribute: 'primary_key'
     });
   });
 
@@ -51,7 +53,7 @@ describe('RedisDatastore', function() {
     var attributes = ['integer', 'string', 'booleanTrue', 'booleanFalse',
       'datetime', 'date'];
 
-    rds.save('models', 'primary_key', {
+    rds.save({
       primary_key: 'key',
       integer: 1234,
       string: 'string',
@@ -60,16 +62,18 @@ describe('RedisDatastore', function() {
       datetime: datetime,
       date: date
     }, function() {
-      rds.fetch('models', 'primary_key', 'key', attributes
-      , function(err, result) {
+      rds.fetch('key', attributes, function(err, result) {
         result.integer.should.equal(1234);
         result.string.should.equal('string');
         result.booleanTrue.should.be.true
         result.booleanFalse.should.be.false
         result.datetime.getTime().should.equal(datetime.getTime());
         result.date.getTime().should.equal(date.getTime());
-        done();
-      })
+        redisClient.exists('test:table:key', function(err, exists) {
+          exists.should.equal(1);
+          done();
+        });
+      });
     });
   });
 });
