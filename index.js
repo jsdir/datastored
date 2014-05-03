@@ -319,57 +319,69 @@ Model.prototype.set = function(data, transform) {
 Model.prototype.save = function(cb) {
   // Only save when attributes have changed.
   var self = this;
+
   if (this.changedAttributes.length === 0) {
     // No attributes have changed; still successful.
     cb();
   } else {
     // Get data only from changed attributes.
-    var data = _.pick(this.data, this.changedAttributes);
+    var changedData = _.pick(this.data, this.changedAttributes);
+    this.transform(changedData, 'save', function(err, data) {
+      if (err) {
+        cb(err);
+      } else {
+        self.saveToDatastore(data, cb);
+      }
+    });
+  }
+}
 
-    if (this.isNew) {
-      // Generate an id for the new model.
-      this.orm.options.generateId(function(err, id) {
-        if (err) {
-          cb(err);
-        } else {
-          // Set the new id.
-          data[self.options.pkAttribute] = id;
-          // Insert to cassandra first.
-          self.orm.options.cassandra.insert(data, function(err) {
-            if (err) {
-              cb(err);
-            } else {
-              // Insert to redis.
-              self.orm.options.redis.insert(data, function(err) {
-                if (err) {
-                  // Log this entry
-                }
-              });
-              self.isNew = false;
-              self.changedAttributes = false;
-              cb();
-            }
-          });
-        }
-      });
-    } else {
-      // Update cassandra first.
-      self.orm.options.cassandra.update(data, function(err) {
-        if (err) {
-          cb(err);
-        } else {
-          // Update redis asynchronously then call the callback. As of now,
-          // there is no need to wait or get the status of redis for the user.
-          self.orm.options.redis.update(data, function(err) {
-            if (err) {
-              // Log this entry
-            }
-          });
-          self.changedAttributes = false;
-          cb();
-        }
-      });
-    }
+Model.prototype.saveToDatastore = function(data, cb) {
+  var self = this;
+
+  if (this.isNew) {
+    // Generate an id for the new model.
+    this.orm.options.generateId(function(err, id) {
+      if (err) {
+        cb(err);
+      } else {
+        // Set the new id.
+        data[self.options.pkAttribute] = id;
+        // Insert to cassandra first.
+        self.orm.options.cassandra.insert(data, function(err) {
+          if (err) {
+            cb(err);
+          } else {
+            // Insert to redis.
+            self.orm.options.redis.insert(data, function(err) {
+              if (err) {
+                // Log this entry
+              }
+            });
+            self.isNew = false;
+            self.changedAttributes = [];
+            cb();
+          }
+        });
+      }
+    });
+  } else {
+    // Update cassandra first.
+    self.orm.options.cassandra.update(data, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        // Update redis asynchronously then call the callback. As of now,
+        // there is no need to wait or get the status of redis for the user.
+        self.orm.options.redis.update(data, function(err) {
+          if (err) {
+            // Log this entry
+          }
+        });
+        self.changedAttributes = [];
+        cb();
+      }
+    });
   }
 }
 
@@ -510,11 +522,13 @@ Model.prototype.transform = function(attributes, chain, cb) {
     // Return a callback for save chain.
     var index = 0;
     var applyTransform = function(err, attrs) {
-      if (transformChain.length > index) {
+      if (err) {
+        cb(err);
+      } else if (transformChain.length > index) {
         index += 1;
         transformChain[index - 1](attrs, self, applyTransform);
       } else {
-        cb(attrs);
+        cb(null, attrs);
       }
     }
     applyTransform(null, attributes);

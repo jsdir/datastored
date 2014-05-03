@@ -232,7 +232,7 @@ describe('ORM', function() {
         this.model.transform({foo: '0'}, 'input').foo.should.equal('012');
         this.model.transform({foo: '0'}, 'fetch').foo.should.equal('012');
         this.model.transform({foo: '0'}, 'output').foo.should.equal('021');
-        this.model.transform({foo: '0'}, 'save', function(attributes) {
+        this.model.transform({foo: '0'}, 'save', function(err, attributes) {
           attributes.foo.should.equal('021');
           done();
         });
@@ -302,12 +302,22 @@ describe('ORM', function() {
         model.set('foo', 'bar');
         model.isNew.should.be.true;
 
+        var transform = sinon.stub(model, 'transform',
+          function(attributes, chain, cb) {
+            cb(null, {foo: 'transformed_bar'});
+          }
+        );
+
         model.save(function(err) {
+          transform.should.have.been.calledWith({
+            foo: 'bar'
+          }, 'save', sinon.match.func);
+
           cassandraInsert.should.have.been.calledWith({
-            foo: 'bar', primary_key: 'generated_id'
+            foo: 'transformed_bar', primary_key: 'generated_id'
           }, sinon.match.func);
           redisInsert.should.have.been.calledWith({
-            foo: 'bar', primary_key: 'generated_id'
+            foo: 'transformed_bar', primary_key: 'generated_id'
           }, sinon.match.func);
 
           cassandraInsert.should.have.been.calledBefore(redisInsert);
@@ -326,12 +336,22 @@ describe('ORM', function() {
         model.set('foo', 'bar');
         model.isNew.should.be.false;
 
+        var transform = sinon.stub(model, 'transform',
+          function(attributes, chain, cb) {
+            cb(null, {foo: 'transformed_bar', primary_key: 'id'});
+          }
+        );
+
         model.save(function(err) {
-          cassandraUpdate.should.have.been.calledWith({
+          transform.should.have.been.calledWith({
             foo: 'bar', primary_key: 'id'
+          }, 'save', sinon.match.func);
+
+          cassandraUpdate.should.have.been.calledWith({
+            foo: 'transformed_bar', primary_key: 'id'
           }, sinon.match.func);
           redisUpdate.should.have.been.calledWith({
-            foo: 'bar', primary_key: 'id'
+            foo: 'transformed_bar', primary_key: 'id'
           }, sinon.match.func);
 
           cassandraUpdate.should.have.been.calledBefore(redisUpdate);
@@ -351,6 +371,10 @@ describe('ORM', function() {
 
       before(function() {
         // stub transform.fetch to return "fetchTransformed"
+
+
+
+
       });
 
       // Global assertions: all returned attributes should use the fetch transform chain.
