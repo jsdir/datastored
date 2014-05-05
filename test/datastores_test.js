@@ -4,6 +4,7 @@ var sinonChai = require('sinon-chai');
 var redis = require('redis');
 var helenus = require('helenus');
 
+var databases = require('./databases');
 var datastores = require('../lib/datastores');
 
 var expect = chai.expect;
@@ -11,22 +12,12 @@ var expect = chai.expect;
 chai.should();
 chai.use(sinonChai);
 
-var redisClient = redis.createClient();
-var cassandraClient = new helenus.ConnectionPool({
-  hosts: ['localhost:9160'],
-  keyspace: 'test',
-  user: 'user',
-  password: 'password',
-  timeout: 3000,
-  cqlVersion: '3.0.0'
-});
-
 
 describe('RedisDatastore', function() {
 
   before(function() {
     this.rds = new datastores.RedisDatastore({
-      redis: redisClient,
+      redis: databases.redis,
       redisKeyspace: 'test'
     }, {
       attributes: {
@@ -81,20 +72,8 @@ describe('RedisDatastore', function() {
 describe('CassandraDatastore', function() {
 
   before(function(done) {
-    // Add a testing table to the database.
-    var query = 'CREATE TABLE family (primary_key text PRIMARY KEY, ' +
-      'string text, integer int, "booleanTrue" boolean, "booleanFalse" boolean, ' +
-      'datetime timestamp, date int);';
-    cassandraClient.connect(function(err) {
-      if (err) {
-        throw err;
-      } else {
-        cassandraClient.cql(query, done)
-      }
-    })
-
     this.cds = new datastores.CassandraDatastore({
-      cassandra: cassandraClient
+      cassandra: databases.cassandra
     }, {
       attributes: {
         primary_key: {type: 'string'},
@@ -111,15 +90,8 @@ describe('CassandraDatastore', function() {
   });
 
   after(function(done) {
-    // Remove the testing table from the database.
-    var query = 'DROP TABLE family;';
-    cassandraClient.connect(function(err) {
-      if (err) {
-        throw err;
-      } else {
-        cassandraClient.cql(query, done)
-      }
-    });
+    // Clear the testing table.
+    databases.cassandraRun('TRUNCATE family;', done);
   });
 
   it('persists to cassandra', function(done) {

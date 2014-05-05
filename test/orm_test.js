@@ -371,10 +371,6 @@ describe('ORM', function() {
 
       before(function() {
         // stub transform.fetch to return "fetchTransformed"
-
-
-
-
       });
 
       // Global assertions: all returned attributes should use the fetch transform chain.
@@ -392,6 +388,26 @@ describe('ORM', function() {
 
       it('should fail when fetching from cassandra fails', function() {
 
+      });
+    });
+
+    xdescribe('#show()', function() {
+
+      before(function() {
+        var ScopeModel = orm.model('ScopeModel', {
+          scopes: {
+            'fooScope': ['foo'],
+            'allScope': ['foo', 'bar']
+          }
+        });
+        this.model = new ScopeModel({foo: 'foo', bar: 'bar'});
+      });
+
+      it('should use the given scope', function() {
+        this.model.show('fooScope').should.deep.equal({foo: 'foo'});
+        this.model.show('allScope').should.deep.equal({
+          foo: 'foo', bar: 'bar'
+        });
       });
     });
   });

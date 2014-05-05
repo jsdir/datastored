@@ -348,12 +348,12 @@ Model.prototype.saveToDatastore = function(data, cb) {
         // Set the new id.
         data[self.options.pkAttribute] = id;
         // Insert to cassandra first.
-        self.orm.options.cassandra.insert(data, function(err) {
+        self.cassandra.insert(data, function(err) {
           if (err) {
             cb(err);
           } else {
             // Insert to redis.
-            self.orm.options.redis.insert(data, function(err) {
+            self.redis.insert(data, function(err) {
               if (err) {
                 // Log this entry
               }
@@ -367,13 +367,13 @@ Model.prototype.saveToDatastore = function(data, cb) {
     });
   } else {
     // Update cassandra first.
-    self.orm.options.cassandra.update(data, function(err) {
+    self.cassandra.update(data, function(err) {
       if (err) {
         cb(err);
       } else {
         // Update redis asynchronously then call the callback. As of now,
         // there is no need to wait or get the status of redis for the user.
-        self.orm.options.redis.update(data, function(err) {
+        self.redis.update(data, function(err) {
           if (err) {
             // Log this entry
           }
@@ -410,7 +410,7 @@ Model.prototype.fetch = function(cb) {
 
   if (difference.length === 0) {
     // The cache has all of the required attributes.
-    datastores.redis.fetch(this, scopeOptions, function(err, data) {
+    this.redis.fetch(this, scopeOptions, function(err, data) {
       if (err) {
         // Redis failed. Fall back to cassandra.
         // TODO: log this error
@@ -439,7 +439,7 @@ Model.prototype.fetch = function(cb) {
   if (useRedis) {
     // cb is called with (err, item or null)
     failoverRead(function(cb) {
-      datastores.redis.fetch(this.family, 5)
+      datastores.redis.fetch(this.family, 5);
       redis.getItem(itemFromClosure, cb);
     }, func, function(item) {
       // Place "item" back in redis.
