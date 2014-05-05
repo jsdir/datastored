@@ -40,6 +40,54 @@ describe('ORM', function() {
     });
   });
 
+  describe('#model()', function() {
+
+    function modelWithAttributes(attributes, message) {
+      expect(function() {
+        orm.model('InvalidModel', {attributes: attributes});
+      }).to.throw(message);
+    }
+
+    it('should fail when a model is defined without a primary key',
+      function() {
+      modelWithAttributes({
+        random: {type: 'string'}
+      }, 'a primary key attribute is required');
+    });
+
+    it('should fail when a model is defined with a primary key with ' +
+        'cache set to false', function() {
+      modelWithAttributes({
+        id: {
+          primary: true,
+          cache: false,
+          type: 'string'
+        }
+      }, 'the primary key "id" must be cached');
+    });
+
+    it('should fail when a model is defined with more than one primary ' +
+        'key', function() {
+      modelWithAttributes({
+        id: {
+          primary: true,
+          type: 'string'
+        },
+        random: {
+          primary: true,
+          type: 'string'
+        }
+      }, 'there must only be one primary key attribute');
+    });
+
+    it('should fail when a model is defined with an attribute with no type',
+      function() {
+      modelWithAttributes({
+        random: {primary: true}
+      }, 'attribute "random" must have a type');
+    });
+  });
+
   describe('#use()', function() {
 
     it('should fail when using a nonexistent model', function() {
@@ -370,8 +418,15 @@ describe('ORM', function() {
     xdescribe('#fetch()', function() {
 
       before(function() {
+        var CachedModel = Orm.model('CachedModel', {
+          attributes: {
+
+          }
+        });
         // stub transform.fetch to return "fetchTransformed"
       });
+
+      // test failover for fetch and save.
 
       // Global assertions: all returned attributes should use the fetch transform chain.
       it('should fetch from redis first if all the attributes are cached', function() {

@@ -3,7 +3,7 @@ var async = require('async');
 var databases = require('./databases');
 var Orm = require('..');
 
-describe.only('ORM', function() {
+describe('ORM', function() {
 
   var orm = new Orm({
     redis: databases.redis,
@@ -31,11 +31,33 @@ describe.only('ORM', function() {
     ], done);
   });
 
-  it('should be functional', function(done) {
+  it.only('should create new models', function(done) {
+    var model = new BasicModel();
+    model.set('foo', 'foo');
+    model.set('bar', 'bar');
+    model.save(function(err) {
+      if (err) {
+        throw err;
+      } else {
+        console.log('saved new');
+        var fetchModel = new BasicModel('value');
+        fetchModel.fetch(function(err) {
+          if (err) {
+            throw err;
+          } else {
+            console.log('fetch');
+            done();
+          }
+        });
+      }
+    });
+  });
+
+  it('should update existing models', function(done) {
     var model = new BasicModel();
     model.set('primary_key', 'value');
     model.set('foo', 'foo');
-    model.set('bar', 'bar');
+    //model.set('bar', 'bar');
     model.save(function(err) {
       if (err) {
         throw err;
@@ -47,10 +69,10 @@ describe.only('ORM', function() {
             throw err;
           } else {
             console.log('fetch');
+            done();
           }
         });
       }
-      done();
     });
   });
 });

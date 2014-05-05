@@ -212,14 +212,46 @@ Orm.defaultTransformList = [
 Orm.defaultTransforms = parseTransforms({}, Orm.defaultTransformList);
 
 Orm.parseOptions = function(options) {
+  options.cachedAttributes = [];
+
   // Load attributes.
   for (var name in (options.attributes || {})) {
     var attribute = options.attributes[name];
 
+    // Ensure that attribute has a type.
+    if (!attribute.type) {
+      throw new Error('attribute "' + name + '" must have a type');
+    }
+
     // Find the primary key attribute.
     if (attribute.primary) {
+      // Only one primary key can be defined per model.
+      if (options.pkAttribute) {
+        throw new Error('there must only be one primary key attribute');
+      }
       options.pkAttribute = name;
     }
+
+    // Get cached attributes.
+    if (attribute.primary) {
+      if (attribute.cache !== false) {
+        options.cachedAttributes.push(name);
+      }
+    } else if (attribute.cache) {
+      options.cachedAttributes.push(name);
+    }
+  }
+
+  // Fail if the model was defined without a primary key.
+  if (!options.pkAttribute) {
+    throw new Error('a primary key attribute is required');
+  }
+
+  // Fail if the model was defined with a primary key attribute cache set to
+  // false.
+  if (!_.contains(options.cachedAttributes, options.pkAttribute)) {
+    throw new Error('the primary key "' + options.pkAttribute +
+      '" must be cached')
   }
 
   // Load transforms.
@@ -330,13 +362,13 @@ Model.prototype.save = function(cb) {
       if (err) {
         cb(err);
       } else {
-        self.saveToDatastore(data, cb);
+        self.saveToDatastores(data, cb);
       }
     });
   }
 }
 
-Model.prototype.saveToDatastore = function(data, cb) {
+Model.prototype.saveToDatastores = function(data, cb) {
   var self = this;
 
   if (this.isNew) {
@@ -347,42 +379,29 @@ Model.prototype.saveToDatastore = function(data, cb) {
       } else {
         // Set the new id.
         data[self.options.pkAttribute] = id;
-        // Insert to cassandra first.
-        self.cassandra.insert(data, function(err) {
-          if (err) {
-            cb(err);
-          } else {
-            // Insert to redis.
-            self.redis.insert(data, function(err) {
-              if (err) {
-                // Log this entry
-              }
-            });
-            self.isNew = false;
-            self.changedAttributes = [];
-            cb();
-          }
-        });
-      }
-    });
-  } else {
-    // Update cassandra first.
-    self.cassandra.update(data, function(err) {
-      if (err) {
-        cb(err);
-      } else {
-        // Update redis asynchronously then call the callback. As of now,
-        // there is no need to wait or get the status of redis for the user.
-        self.redis.update(data, function(err) {
-          if (err) {
-            // Log this entry
-          }
-        });
-        self.changedAttributes = [];
-        cb();
       }
     });
   }
+
+  // Save to cassandra first.
+  this.cassandra.save(data, function(err) {
+    if (err) {
+      cb(err);
+    } else {
+      // Save to redis. This is run asynchronously parallel to the return
+      // callback since there is no need to wait or get the status of redis
+      // for the user and it makes saving much faster by assuming that nothing
+      // failed when the data was saved to redis.
+      self.redis.save(data, function(err) {
+        if (err) {
+          // Log this entry
+        }
+      });
+      self.isNew = false;
+      self.changedAttributes = [];
+      cb();
+    }
+  });
 }
 
 Model.prototype.fetch = function(cb) {
