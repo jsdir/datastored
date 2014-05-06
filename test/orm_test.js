@@ -130,8 +130,6 @@ describe('ORM', function() {
       });
     });
 
-    // TODO: save should set isNew to false;
-
     describe('#set()', function() {
 
       /**
@@ -141,19 +139,12 @@ describe('ORM', function() {
        * chain as well.
        */
 
-      before(function() {
-        this.transform = sinon.stub(this.BasicModel.prototype, 'transform');
-      });
-
       beforeEach(function() {
+        this.transform = sinon.stub(this.BasicModel.prototype, 'transform');
         this.model = new this.BasicModel('primary_key');
       });
 
       afterEach(function() {
-        this.transform.reset();
-      });
-
-      after(function() {
         this.transform.restore();
       });
 
@@ -218,6 +209,14 @@ describe('ORM', function() {
         });
 
         model.changedAttributes.should.include.members(['foo', 'bar']);
+      });
+
+      it('should unset isNew if the primary key is being set', function() {
+        this.transform.restore();
+        var model = new this.BasicModel();
+        model.isNew.should.be.true;
+        model.set({primary_key: 'id', foo: 'foo'});
+        model.isNew.should.be.false;
       });
     });
 

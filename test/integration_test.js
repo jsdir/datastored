@@ -31,7 +31,7 @@ describe('ORM', function() {
     ], done);
   });
 
-  it.only('should create new models', function(done) {
+  it('should create new models', function(done) {
     var model = new BasicModel();
     model.set('foo', 'foo');
     model.set('bar', 'bar');
@@ -39,13 +39,15 @@ describe('ORM', function() {
       if (err) {
         throw err;
       } else {
+        // TODO: check for model not found errors.
         console.log('saved new');
-        var fetchModel = new BasicModel('value');
-        fetchModel.fetch(function(err) {
+        var fetchModel = new BasicModel('generated_id');
+        fetchModel.fetch(null, function(err) {
           if (err) {
             throw err;
           } else {
             console.log('fetch');
+            console.log(fetchModel.show());
             done();
           }
         });
@@ -64,11 +66,12 @@ describe('ORM', function() {
       } else {
         console.log('save');
         var fetchModel = new BasicModel('value');
-        fetchModel.fetch(function(err) {
+        fetchModel.fetch(null, function(err) {
           if (err) {
             throw err;
           } else {
             console.log('fetch');
+            console.log(fetchModel.show());
             done();
           }
         });

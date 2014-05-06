@@ -15,6 +15,7 @@ function requireProperties(obj, properties) {
   }));
 }
 
+/*
 function failoverRead(redisCb, cassandraCb, restore, cb) {
   redisCb(function(redisErr, redisItem) {
     if (redisItem === null) {
@@ -37,7 +38,7 @@ function failoverRead(redisCb, cassandraCb, restore, cb) {
       cb(null, redisItem);
     }
   });
-}
+}*/
 
 /**
  * Groups transforms and adds them to the existing transforms while
@@ -339,6 +340,12 @@ Model.prototype.set = function(data, transform) {
         this.changedAttributes.push(attribute);
       }
     }
+
+    // If the primary key is being set, the model is not new and already
+    // exists.
+    if (attribute === this.options.pkAttribute) {
+      this.isNew = false;
+    }
   }
 
   return this;
@@ -419,6 +426,7 @@ Model.prototype.getScope = function(name) {
 }
 
 Model.prototype.fetch = function(scopeRequest, cb) {
+  var self = this;
 
   // Require the primary key before fetching.
   var pkValue = this.getPk();
@@ -426,19 +434,17 @@ Model.prototype.fetch = function(scopeRequest, cb) {
     throw new Orm.OrmError('the primary key must be set in order to fetch');
   }
 
-  // TODO: Determine which datastore to query first based on the request.
-  var scope = this.getScope(scopeRequest.name);
-
-  //scopeOptions.showPermissions = scopeOptions.showPermissions || false;
-
-  // "userId" is the raw id
-  /*if (_.isString(scope.user)) {
-    scopeOptions.userId = scope.user;
+  // Determine which datastore to query first based on the request.
+  if (scopeRequest) {
+    var scope = this.getScope(scopeRequest.name);
+    var attributes = scope.attributes;
   } else {
-    scopeOptions.userId = scope.user.getId();
-  }*/
+    // Fetch all attributes excluding the primary key attribute.
+    var attributes = _.without(_.keys(this.options.attributes),
+      this.options.pkAttribute);
+  }
 
-  var attributes = scope.attributes;
+  // Difference gets the array of variables that are not cached.
   var difference = _.difference(attributes, this.options.cachedAttributes);
 
   if (difference.length) {
@@ -451,18 +457,52 @@ Model.prototype.fetch = function(scopeRequest, cb) {
       if (err) {
         // Redis failed. Fall back to cassandra.
         // TODO: log this error
-        this._fetchFromDb(attributes, cb)
-      } else if (data === null) {
+        self.fetchFromCassandra(pkValue, attributes, cb);
+      } else if (!data) {
         // The item either does not exist at all or it just doesn't exist in
         // redis. We will assume that the items exists. Fall back to cassandra
         // and update redis with the new value if found.
-        this._fetchFromDb(attributes, cb, true)
+        self.fetchFromCassandra(pkValue, attributes, function(err) {
+          if (err) {
+            cb(err);
+          } else {
+            // Restore data to redis. fetchFromCassandra already transformed
+            // the data and set it in the model.
+            _.pick(self.data, attributes);
+            self.transform(_.pick(self.data, attributes), 'save', function(err, data) {
+              if (err) {
+                // TODO: log the error
+              } else {
+                self.redis.save(data, function(err) {
+                  if (err) {
+                    // TODO: log this error.
+                  }
+                });
+              }
+            });
+            cb();
+          }
+        });
       } else {
         // Redis has the item.
-        data
+        self.set(self.transform(data, 'fetch'), false);
+        cb();
       }
     });
   }
+}
+
+Model.prototype.fetchFromCassandra = function(pkValue, attributes, cb) {
+  var self = this;
+  this.cassandra.fetch(pkValue, attributes, function(err, data) {
+    if (err) {
+      cb(err);
+    } else {
+      var transformedData = self.transform(data, 'fetch');
+      self.set(transformedData, false);
+      cb(null, transformedData);
+    }
+  });
 }
 
 Model.prototype.show = function() {

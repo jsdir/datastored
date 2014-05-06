@@ -60,7 +60,7 @@ describe('RedisDatastore', function() {
         result.booleanFalse.should.be.false
         result.datetime.getTime().should.equal(datetime.getTime());
         result.date.getTime().should.equal(date.getTime());
-        redisClient.exists('test:table:key', function(err, exists) {
+        databases.redis.exists('test:table:key', function(err, exists) {
           exists.should.equal(1);
           done();
         });
@@ -71,7 +71,7 @@ describe('RedisDatastore', function() {
 
 describe('CassandraDatastore', function() {
 
-  before(function(done) {
+  before(function() {
     this.cds = new datastores.CassandraDatastore({
       cassandra: databases.cassandra
     }, {
