@@ -225,18 +225,18 @@ Orm.parseOptions = function(options) {
 
     // Find the primary key attribute.
     if (attribute.primary) {
+
       // Only one primary key can be defined per model.
       if (options.pkAttribute) {
         throw new Error('there must only be one primary key attribute');
       }
-      options.pkAttribute = name;
-    }
 
-    // Get cached attributes.
-    if (attribute.primary) {
+      // Get cached attributes.
       if (attribute.cache !== false) {
         options.cachedAttributes.push(name);
       }
+
+      options.pkAttribute = name;
     } else if (attribute.cache) {
       options.cachedAttributes.push(name);
     }
@@ -404,32 +404,50 @@ Model.prototype.saveToDatastores = function(data, cb) {
   });
 }
 
-Model.prototype.fetch = function(cb) {
-  // TODO: (scopeRequest, cb)
+Model.prototype.getPk = function() {
+  if (this.data.hasOwnProperty(this.options.pkAttribute)) {
+    return this.data[this.options.pkAttribute];
+  }
+}
+
+Model.prototype.getScope = function(name) {
+  if (this.options.scopes && this.options.scopes.getOwnProperty(name)) {
+    return this.options.scopes[name]
+  } else {
+    throw new Error('scope "' + name + '" has not been defined');
+  }
+}
+
+Model.prototype.fetch = function(scopeRequest, cb) {
 
   // Require the primary key before fetching.
-  if (!this.data.hasOwnProperty(this.options.pkAttribute)) {
+  var pkValue = this.getPk();
+  if (!pkValue) {
     throw new Orm.OrmError('the primary key must be set in order to fetch');
   }
 
   // TODO: Determine which datastore to query first based on the request.
+  var scope = this.getScope(scopeRequest.name);
 
-  var scopeOptions = this.options.scopes[scope.name];
-  scopeOptions.showPermissions = scopeOptions.showPermissions || false;
+  //scopeOptions.showPermissions = scopeOptions.showPermissions || false;
 
   // "userId" is the raw id
-  if (_.isObject(scope.user)) {
-    scopeOptions.userId = scope.user.getId();
-  } else {
+  /*if (_.isString(scope.user)) {
     scopeOptions.userId = scope.user;
-  }
+  } else {
+    scopeOptions.userId = scope.user.getId();
+  }*/
 
-  var attributes = _.union(scopeOptions.attributes, ['id', 'user']);
-  var difference = _.difference(attributes, this._cachedAttributes);
+  var attributes = scope.attributes;
+  var difference = _.difference(attributes, this.options.cachedAttributes);
 
-  if (difference.length === 0) {
+  if (difference.length) {
+    // Since some of the required attributes are exclusively in cassandra,
+    // fetch from cassandra.
+    this.fetchFromCassandra(pkValue, attributes, cb);
+  } else {
     // The cache has all of the required attributes.
-    this.redis.fetch(this, scopeOptions, function(err, data) {
+    this.redis.fetch(pkValue, attributes, function(err, data) {
       if (err) {
         // Redis failed. Fall back to cassandra.
         // TODO: log this error
@@ -444,41 +462,11 @@ Model.prototype.fetch = function(cb) {
         data
       }
     });
-  } else {
-    // The cache does not have all of the required attributes. Use cassandra.
-    this._fetchFromDb(attributes, cb);
-  }
-
-  func = function(cb) {
-    cassandra.getItem(itemFromClosure, cb)
-  }
-  /*
-  Determine from scope whether or not to use redis.
-   */
-  if (useRedis) {
-    // cb is called with (err, item or null)
-    failoverRead(function(cb) {
-      datastores.redis.fetch(this.family, 5);
-      redis.getItem(itemFromClosure, cb);
-    }, func, function(item) {
-      // Place "item" back in redis.
-    }, function(err, item) {
-      if (err) {
-        // Both databases failed.
-        // wakeUp(Jason, "now");
-      } else {
-
-      }
-    });
-  } else {
-    func(function(err, item) {
-
-    });
   }
 }
 
-Model.prototype.show = function(scope) {
-  return this.transform(this.data, 'output', scope);
+Model.prototype.show = function() {
+  return this.transform(this.data, 'output');//, scope);
 }
 
 /**

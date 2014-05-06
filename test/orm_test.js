@@ -10,19 +10,12 @@ chai.use(sinonChai);
 
 describe('ORM', function() {
 
-  var redis = {
-    insert: function() {},
-    update: function() {}
-  };
-
-  var cassandra = {
-    insert: function() {},
-    update: function() {}
-  };
+  var redis = {save: function() {}};
+  var cassandra = {save: function() {}};
 
   var orm = new Orm({
-    redis: redis,
-    cassandra: cassandra,
+    redis: 'redisClient',
+    cassandra: 'helenus ConnectionPool',
     redisKeyspace: 'keyspace',
     generateId: function(cb) {cb(null, 'generated_id');}
   });
@@ -232,6 +225,12 @@ describe('ORM', function() {
 
       before(function() {
         orm.model('TransformModel', {
+          attributes: {
+            id: {
+              primary: true,
+              type: 'string'
+            }
+          },
           transforms: [{
             input: function(attributes, model) {
               attributes.foo += '1';
@@ -289,39 +288,17 @@ describe('ORM', function() {
 
     describe('#save()', function() {
 
-      before(function() {
-        this.stubs = {
-          redis: {
-            insert: sinon.stub(redis, 'insert', function(data, cb) {cb();}),
-            update: sinon.stub(redis, 'update', function(data, cb) {cb();})
-          },
-          cassandra: {
-            insert: sinon.stub(cassandra, 'insert', function(data, cb) {
-              cb();
-            }),
-            update: sinon.stub(cassandra, 'update', function(data, cb) {
-              cb();
-            })
-          }
+      function noop(data, cb) {cb();};
+
+      function stubDatastores(model) {
+        return {
+          redis: sinon.stub(model.redis, 'save', noop),
+          cassandra: sinon.stub(model.cassandra, 'save', noop)
         };
-      });
+      }
 
       beforeEach(function() {
         this.model = new this.BasicModel();
-      });
-
-      afterEach(function() {
-        this.stubs.redis.insert.reset();
-        this.stubs.redis.update.reset();
-        this.stubs.cassandra.insert.reset();
-        this.stubs.cassandra.update.reset();
-      });
-
-      after(function() {
-        this.stubs.redis.insert.restore();
-        this.stubs.redis.update.restore();
-        this.stubs.cassandra.insert.restore();
-        this.stubs.cassandra.update.restore();
       });
 
       it('should not fail when no attributes have changed', function(done) {
@@ -333,6 +310,7 @@ describe('ORM', function() {
 
       it('should reset changed attributes when done', function(done) {
         var model = this.model;
+        stubDatastores(model);
         model.set('foo', 'bar');
 
         model.save(function(err) {
@@ -342,10 +320,15 @@ describe('ORM', function() {
         });
       });
 
+      /*it('should save to datastores correctly', function(done) {
+
+      });*/
+
       it('should insert into datastores correctly', function(done) {
         var model = this.model;
-        var cassandraInsert = this.stubs.cassandra.insert;
-        var redisInsert = this.stubs.redis.insert;
+        var stubs = stubDatastores(model);
+        var cassandraSave = stubs.cassandra;
+        var redisSave = stubs.redis;
 
         model.set('foo', 'bar');
         model.isNew.should.be.true;
@@ -361,14 +344,14 @@ describe('ORM', function() {
             foo: 'bar'
           }, 'save', sinon.match.func);
 
-          cassandraInsert.should.have.been.calledWith({
+          cassandraSave.should.have.been.calledWith({
             foo: 'transformed_bar', primary_key: 'generated_id'
           }, sinon.match.func);
-          redisInsert.should.have.been.calledWith({
+          redisSave.should.have.been.calledWith({
             foo: 'transformed_bar', primary_key: 'generated_id'
           }, sinon.match.func);
 
-          cassandraInsert.should.have.been.calledBefore(redisInsert);
+          cassandraSave.should.have.been.calledBefore(redisSave);
 
           expect(err).to.be.undefined;
           model.isNew.should.be.false;
@@ -378,8 +361,9 @@ describe('ORM', function() {
 
       it('should update datastores correctly', function(done) {
         var model = new this.BasicModel('id');
-        var cassandraUpdate = this.stubs.cassandra.update;
-        var redisUpdate = this.stubs.redis.update;
+        var stubs = stubDatastores(model);
+        var cassandraSave = stubs.cassandra;
+        var redisSave = stubs.redis;
 
         model.set('foo', 'bar');
         model.isNew.should.be.false;
@@ -395,14 +379,14 @@ describe('ORM', function() {
             foo: 'bar', primary_key: 'id'
           }, 'save', sinon.match.func);
 
-          cassandraUpdate.should.have.been.calledWith({
+          cassandraSave.should.have.been.calledWith({
             foo: 'transformed_bar', primary_key: 'id'
           }, sinon.match.func);
-          redisUpdate.should.have.been.calledWith({
+          redisSave.should.have.been.calledWith({
             foo: 'transformed_bar', primary_key: 'id'
           }, sinon.match.func);
 
-          cassandraUpdate.should.have.been.calledBefore(redisUpdate);
+          cassandraSave.should.have.been.calledBefore(redisSave);
 
           expect(err).to.be.undefined;
           model.isNew.should.be.false;
