@@ -40,14 +40,14 @@ describe('ORM', function() {
         throw err;
       } else {
         // TODO: check for model not found errors.
-        console.log('saved new');
+        //console.log('saved new');
         var fetchModel = new BasicModel('generated_id');
         fetchModel.fetch(null, function(err) {
           if (err) {
             throw err;
           } else {
-            console.log('fetch');
-            console.log(fetchModel.show());
+            //console.log('fetch');
+            //console.log(fetchModel.show());
             done();
           }
         });
@@ -64,14 +64,14 @@ describe('ORM', function() {
       if (err) {
         throw err;
       } else {
-        console.log('save');
+        //console.log('save');
         var fetchModel = new BasicModel('value');
         fetchModel.fetch(null, function(err) {
           if (err) {
             throw err;
           } else {
-            console.log('fetch');
-            console.log(fetchModel.show());
+            //console.log('fetch');
+            //console.log(fetchModel.show());
             done();
           }
         });
