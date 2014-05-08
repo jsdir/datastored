@@ -90,7 +90,9 @@ function Orm(options) {
   this.models = {};
 };
 
-Orm.validate = validate;
+// Accessibility helpers.
+Orm.marshallers = require('./lib/marshallers');
+Orm.transforms = require('./lib/transforms');
 
 Orm.prototype.model = function(name, options, behaviors) {
 
