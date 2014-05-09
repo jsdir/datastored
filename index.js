@@ -120,14 +120,10 @@ Orm.prototype.use = function(name) {
   return this.models[name];
 }
 
+/*
 Orm.transforms = {
 
   culling: {
-    /**
-     * Culling
-     *
-     * This transform will delete unknown fields.
-     */
     input: function(attributes, model) {
       return _.pick(attributes, _.keys(model.attributes).concat('id'));
     }
@@ -148,9 +144,6 @@ Orm.transforms = {
   },
 
   validation: {
-    /**
-     * Validation
-     */
     input: function(attributes, model) {
       // Validate attributes.
       var messages = Orm.validate(attributes, model.attributes);
@@ -163,12 +156,6 @@ Orm.transforms = {
   },
 
   types: {
-    /**
-     * Attribute types
-     *
-     * These transforms handle serializing attributes from their types and
-     * unserializing attributes to their types.
-     */
     input: function(attributes, model) {
       // Unserialize for input.
       for (var attribute in model.attributes) {
@@ -204,13 +191,12 @@ Orm.transforms = {
 };
 
 Orm.defaultTransformList = [
-  /*
   Orm.transforms.culling,
   Orm.transforms.escapeHtml,
   Orm.transforms.validation,
   Orm.transforms.types
-  */
 ];
+*/
 
 Orm.defaultTransforms = parseTransforms({}, Orm.defaultTransformList);
 
