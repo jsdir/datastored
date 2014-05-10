@@ -356,6 +356,17 @@ Model.prototype.save = function(cb) {
     this.transform(changedData, 'save', function(err, data) {
       if (err) {
         cb(err);
+      } else if (self.isNew) {
+        // Generate an id for the new model.
+        self.orm.options.generateId(function(err, id) {
+          if (err) {
+            cb(err);
+          } else {
+            // Set the new id.
+            data[self.options.pkAttribute] = id;
+            self.saveToDatastores(data, cb);
+          }
+        });
       } else {
         self.saveToDatastores(data, cb);
       }
@@ -365,18 +376,6 @@ Model.prototype.save = function(cb) {
 
 Model.prototype.saveToDatastores = function(data, cb) {
   var self = this;
-
-  if (this.isNew) {
-    // Generate an id for the new model.
-    this.orm.options.generateId(function(err, id) {
-      if (err) {
-        cb(err);
-      } else {
-        // Set the new id.
-        data[self.options.pkAttribute] = id;
-      }
-    });
-  }
 
   // Save to cassandra first.
   this.cassandra.save(data, function(err) {
