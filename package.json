@@ -1,6 +1,6 @@
 {
   "name": "datastored",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "synchronized cache and persistent datastore for node.js",
   "main": "index.js",
   "directories": {
@@ -27,7 +27,7 @@
   "homepage": "https://github.com/jsdir/datastored",
   "dependencies": {
     "lodash": "~2.4.1",
-    "validator": "~3.11.0",
+    "validator": "~3.11.2",
     "valids": "~0.1.0"
   },
   "devDependencies": {
