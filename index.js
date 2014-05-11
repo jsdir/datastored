@@ -108,6 +108,20 @@ Orm.prototype.model = function(name, options, behaviors) {
   model.prototype.options = options;
   model.prototype.orm = this;
 
+  // Assign static methods.
+  if (options.hasOwnProperty('staticMethods')) {
+    for (var name in options.staticMethods) {
+      model[name] = options.staticMethods[name];
+    }
+  }
+
+  // Assign instance methods.
+  if (options.hasOwnProperty('methods')) {
+    for (var name in options.methods) {
+      model.prototype[name] = options.methods[name];
+    }
+  }
+
   this.models[name] = model;
 
   return model;
@@ -122,12 +136,6 @@ Orm.prototype.use = function(name) {
 
 /*
 Orm.transforms = {
-
-  culling: {
-    input: function(attributes, model) {
-      return _.pick(attributes, _.keys(model.attributes).concat('id'));
-    }
-  },
 
   escapeHtml: {
     input: function(attributes, model) {

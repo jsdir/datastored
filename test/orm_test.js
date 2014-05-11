@@ -10,6 +10,13 @@ chai.use(sinonChai);
 
 describe('ORM', function() {
 
+  var requiredAttributes = {
+    id: {
+      primary: true,
+      type: 'string'
+    }
+  };
+
   var redis = {save: function() {}};
   var cassandra = {save: function() {}};
 
@@ -78,6 +85,29 @@ describe('ORM', function() {
       modelWithAttributes({
         random: {primary: true}
       }, 'attribute "random" must have a type');
+    });
+
+    it('should create a model with methods', function() {
+      var MethodModel = orm.model('MethodModel', {
+        attributes: requiredAttributes,
+        methods: {
+          getInstanceThis: function() {
+            return this;
+          }
+        },
+        staticMethods: {
+          getStaticThis: function() {
+            return this;
+          }
+        }
+      });
+
+      // Test static methods.
+      MethodModel.getStaticThis().should.deep.equal(MethodModel);
+
+      // Test instance methods.
+      var model = new MethodModel();
+      model.getInstanceThis().should.deep.equal(model);
     });
   });
 
@@ -234,12 +264,7 @@ describe('ORM', function() {
 
       before(function() {
         orm.model('TransformModel', {
-          attributes: {
-            id: {
-              primary: true,
-              type: 'string'
-            }
-          },
+          attributes: requiredAttributes,
           transforms: [{
             input: function(attributes, model) {
               attributes.foo += '1';
