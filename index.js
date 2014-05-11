@@ -312,6 +312,8 @@ Model.prototype.set = function(data, transform) {
     var setData = data;
   }
 
+  setData = _.pick(setData, _.keys(this.options.attributes));
+
   if (transform !== false) {
     setData = this.transform(setData, 'input');
   }

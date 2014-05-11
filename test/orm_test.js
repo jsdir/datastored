@@ -218,6 +218,16 @@ describe('ORM', function() {
         model.set({primary_key: 'id', foo: 'foo'});
         model.isNew.should.be.false;
       });
+
+      it('should not set undeclared attributes', function() {
+        this.transform.restore();
+        var model = new this.BasicModel({
+          foo: 'foo', bar: 'bar', baz: 'baz'
+        });
+        model.get('foo').should.equal('foo');
+        model.get('bar').should.equal('bar');
+        expect(model.get('baz')).to.be.undefined;
+      });
     });
 
     describe('#tranform()', function() {
