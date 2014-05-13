@@ -1,4 +1,5 @@
 var _ = require('lodash');
+var async = require('async');
 
 var datastores = require('./lib/datastores');
 var validate = require('./lib/validate');
@@ -124,10 +125,10 @@ Orm.prototype.model = function(name, options, behaviors) {
     if (chain === 'save') {
       transformAsync(options, attributes, transforms, cb);
     } else if (options.transforms.hasOwnProperty(chain)) {
-      attributes = transform(options, attributes, transforms);
+      return transform(options, attributes, transforms);
+    } else {
+      return attributes;
     }
-
-    return attributes;
   }
 
   model.prototype.transform = model.transform;
@@ -482,18 +483,6 @@ Model.prototype.show = function(scope) {
   } else {
     return _.pick(transformedAttributes, this.getScope(scope));
   }
-}
-
-Model.prototype.search = function(query, cb) {
-  // expects paginated query and returns objects. This only uses the
-  // indexer. If you want to use the cache or the database, set up some
-  // secondary keys and use "#find()".
-  indexer.search({
-
-  }, function(err, results) {
-    callback(err, results);
-  });
-  callback(null, {"hello": "world"})
 }
 
 module.exports = Orm;
