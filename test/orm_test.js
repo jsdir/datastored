@@ -474,10 +474,18 @@ describe('ORM', function() {
       });
     });
 
-    xdescribe('#show()', function() {
+    describe('#show()', function() {
 
       before(function() {
         var ScopeModel = orm.model('ScopeModel', {
+          attributes: {
+            id: {
+              primary: true,
+              type: 'string'
+            },
+            foo: {type: 'string'},
+            bar: {type: 'string'}
+          },
           scopes: {
             'fooScope': ['foo'],
             'allScope': ['foo', 'bar']

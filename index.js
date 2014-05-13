@@ -472,7 +472,7 @@ Model.prototype.getPk = function() {
 }
 
 Model.prototype.getScope = function(name) {
-  if (this.options.scopes && this.options.scopes.getOwnProperty(name)) {
+  if (this.options.scopes && this.options.scopes.hasOwnProperty(name)) {
     return this.options.scopes[name]
   } else {
     throw new Error('scope "' + name + '" has not been defined');
@@ -560,8 +560,9 @@ Model.prototype.fetchFromCassandra = function(pkValue, attributes, cb) {
   });
 }
 
-Model.prototype.show = function() {
-  return this.transform(this.data, 'output');//, scope);
+Model.prototype.show = function(scope) {
+  var transformedAttributes = this.transform(this.data, 'output');//, scope);
+  return _.pick(transformedAttributes, this.getScope(scope));
 }
 
 Model.prototype.search = function(query, cb) {
