@@ -153,7 +153,7 @@ Orm.prototype.model = function(name, options, behaviors) {
       if (redisErr || pk === null) {
         self.cassandra.find(options, query, function(cassandraErr, pk) {
           if (cassandraErr) {
-            cb([redisErr, cassandraErr]);
+            cb(cassandraErr);
           } else if (pk !== null) {
             // TODO: restore to redis.
             cb(null, pk);
