@@ -8,16 +8,18 @@ chai.should();
 describe('transforms', function() {
 
   describe('validate', function() {
-    var model = {options: {attributes: {
-      foo: {rules: {required: true}},
-      bar: {rules: {min: 3}}
-    }}};
+    var options = {
+      attributes: {
+        foo: {rules: {required: true}},
+        bar: {rules: {min: 3}}
+      }
+    };
 
     it('should validate attributes', function(done) {
       transforms.validate.save({
         foo: 'baz',
         bar: 'abcd'
-      }, model, function(err) {
+      }, options, function(err) {
         expect(err).to.be.undefined;
         done();
       });
@@ -27,7 +29,7 @@ describe('transforms', function() {
       transforms.validate.save({
         foo: null,
         bar: 'ab'
-      }, model, function(err) {
+      }, options, function(err) {
         err.should.have.property('foo').that.is.a('string');
         err.should.have.property('bar').that.is.a('string');
         done();
