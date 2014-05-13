@@ -562,7 +562,11 @@ Model.prototype.fetchFromCassandra = function(pkValue, attributes, cb) {
 
 Model.prototype.show = function(scope) {
   var transformedAttributes = this.transform(this.data, 'output');//, scope);
-  return _.pick(transformedAttributes, this.getScope(scope));
+  if (scope == null) {
+    return transformedAttributes;
+  } else {
+    return _.pick(transformedAttributes, this.getScope(scope));
+  }
 }
 
 Model.prototype.search = function(query, cb) {

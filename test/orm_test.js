@@ -499,6 +499,9 @@ describe('ORM', function() {
         this.model.show('allScope').should.deep.equal({
           foo: 'foo', bar: 'bar'
         });
+        this.model.show().should.deep.equal({
+          foo: 'foo', bar: 'bar'
+        });
       });
     });
 
