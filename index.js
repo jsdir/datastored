@@ -15,6 +15,18 @@ function requireProperties(obj, properties) {
   }));
 }
 
+function transform(options, attributes, chain) {
+  return _.reduce(chain, function(existing, transform) {
+    return transform(existing, options);
+  }, attributes);
+}
+
+function transformAsync(options, attributes, chain, cb) {
+  async.reduce(chain, attributes, function(existing, transform, cb) {
+    transform(existing, options, cb);
+  }, cb);
+}
+
 /*
 function failoverRead(redisCb, cassandraCb, restore, cb) {
   redisCb(function(redisErr, redisItem) {
@@ -130,6 +142,21 @@ Orm.prototype.model = function(name, options, behaviors) {
     }
   }
 
+  // Set transforms.
+  model.transform = function(attributes, chain, cb) {
+    var transforms = options.transforms[chain] || [];
+
+    if (chain === 'save') {
+      transformAsync(options, attributes, transforms, cb);
+    } else if (options.transforms.hasOwnProperty(chain)) {
+      attributes = transform(options, attributes, transforms);
+    }
+
+    return attributes;
+  }
+
+  model.prototype.transform = model.transform;
+
   // Assign default static methods.
   /**
    * Find a single model by a primary key (id) or an index. It can be used
@@ -139,6 +166,12 @@ Orm.prototype.model = function(name, options, behaviors) {
    * @param  {Function} cb    Called with a found model or null.
    */
   model.find = function(query, cb) {
+    // Since we accept user input here, we need to use the input transform
+    // chain.
+    // WARNING: This will work as long as the query is a single-dimensional
+    // array. Once boolean operators are introduced, we will need a different
+    // solution.
+    query = model.transform(query, 'input');
     // Since all indexes are persisted to both backends, check redis first.
     self.redis.find(options, query, function(redisErr, pk) {
       if (redisErr || pk === null) {
@@ -273,6 +306,8 @@ Orm.defaultTransformList = [
   Orm.transforms.types
 ];
 */
+
+Orm.defaultTransformList = [];
 
 Orm.defaultTransforms = parseTransforms({}, Orm.defaultTransformList);
 
@@ -583,36 +618,6 @@ Model.prototype.search = function(query, cb) {
     callback(err, results);
   });
   callback(null, {"hello": "world"})
-}
-
-Model.prototype.transform = function(attributes, chain, cb) {
-  var self = this;
-  var transformChain = this.options.transforms[chain] || [];
-
-  // Since the save method is asynchronous, asynchronous transforms can be
-  // used in the save transform chain.
-  if (chain === 'save') {
-    // Return a callback for save chain.
-    var index = 0;
-    var applyTransform = function(err, attrs) {
-      if (err) {
-        cb(err);
-      } else if (transformChain.length > index) {
-        index += 1;
-        transformChain[index - 1](attrs, self, applyTransform);
-      } else {
-        cb(null, attrs);
-      }
-    }
-    applyTransform(null, attributes);
-  } else if (this.options.transforms.hasOwnProperty(chain)) {
-    transformChain.forEach(function(transform) {
-      attributes = transform(attributes, self);
-    });
-    return attributes;
-  }
-
-  return attributes;
 }
 
 module.exports = Orm;
