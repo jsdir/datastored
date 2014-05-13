@@ -198,6 +198,10 @@ Orm.prototype.use = function(name) {
   return this.models[name];
 }
 
+Orm.prototype.setRedisKeyspace = function(keyspace) {
+  this.redis.keyspace = keyspace;
+}
+
 /*
 Orm.transforms = {
 
