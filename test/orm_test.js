@@ -55,8 +55,9 @@ describe('ORM', function() {
       }, 'a primary key attribute is required');
     });
 
-    it('should fail when a model is defined with a primary key with ' +
-        'cache set to false', function() {
+    // Primary keys and indexes are both classified as indexes.
+    it('should fail when a model is defined with an index with cache set to ' +
+      'false', function() {
       modelWithAttributes({
         id: {
           primary: true,
@@ -64,6 +65,18 @@ describe('ORM', function() {
           type: 'string'
         }
       }, 'the primary key "id" must be cached');
+
+      modelWithAttributes({
+        id: {
+          primary: true,
+          type: 'string'
+        },
+        index: {
+          index: true,
+          cache: false,
+          type: 'string'
+        }
+      }, 'the index "index" must be cached');
     });
 
     it('should fail when a model is defined with more than one primary ' +
@@ -322,17 +335,19 @@ describe('ORM', function() {
 
     describe('#save()', function() {
 
-      function noop(data, cb) {cb();};
-
-      function stubDatastores(model) {
-        return {
-          redis: sinon.stub(model.redis, 'save', noop),
-          cassandra: sinon.stub(model.cassandra, 'save', noop)
-        };
-      }
+      function noop(options, data, cb) {cb();};
 
       beforeEach(function() {
+        this.stubs = {
+          redis: sinon.stub(orm.redis, 'save', noop),
+          cassandra: sinon.stub(orm.cassandra, 'save', noop)
+        };
         this.model = new this.BasicModel();
+      });
+
+      afterEach(function() {
+        this.stubs.redis.restore();
+        this.stubs.cassandra.restore();
       });
 
       it('should not fail when no attributes have changed', function(done) {
@@ -344,7 +359,6 @@ describe('ORM', function() {
 
       it('should reset changed attributes when done', function(done) {
         var model = this.model;
-        stubDatastores(model);
         model.set('foo', 'bar');
 
         model.save(function(err) {
@@ -359,10 +373,8 @@ describe('ORM', function() {
       });*/
 
       it('should insert into datastores correctly', function(done) {
+        var stubs = this.stubs;
         var model = this.model;
-        var stubs = stubDatastores(model);
-        var cassandraSave = stubs.cassandra;
-        var redisSave = stubs.redis;
 
         model.set('foo', 'bar');
         model.isNew.should.be.true;
@@ -378,14 +390,14 @@ describe('ORM', function() {
             foo: 'bar'
           }, 'save', sinon.match.func);
 
-          cassandraSave.should.have.been.calledWith({
+          stubs.cassandra.should.have.been.calledWith(sinon.match.object, {
             foo: 'transformed_bar', primary_key: 'generated_id'
           }, sinon.match.func);
-          redisSave.should.have.been.calledWith({
+          stubs.redis.should.have.been.calledWith(sinon.match.object, {
             foo: 'transformed_bar', primary_key: 'generated_id'
           }, sinon.match.func);
 
-          cassandraSave.should.have.been.calledBefore(redisSave);
+          stubs.cassandra.should.have.been.calledBefore(stubs.redis);
 
           expect(err).to.be.undefined;
           model.isNew.should.be.false;
@@ -394,10 +406,8 @@ describe('ORM', function() {
       });
 
       it('should update datastores correctly', function(done) {
+        var stubs = this.stubs;
         var model = new this.BasicModel('id');
-        var stubs = stubDatastores(model);
-        var cassandraSave = stubs.cassandra;
-        var redisSave = stubs.redis;
 
         model.set('foo', 'bar');
         model.isNew.should.be.false;
@@ -413,14 +423,14 @@ describe('ORM', function() {
             foo: 'bar', primary_key: 'id'
           }, 'save', sinon.match.func);
 
-          cassandraSave.should.have.been.calledWith({
+          stubs.cassandra.should.have.been.calledWith(sinon.match.object, {
             foo: 'transformed_bar', primary_key: 'id'
           }, sinon.match.func);
-          redisSave.should.have.been.calledWith({
+          stubs.redis.should.have.been.calledWith(sinon.match.object, {
             foo: 'transformed_bar', primary_key: 'id'
           }, sinon.match.func);
 
-          cassandraSave.should.have.been.calledBefore(redisSave);
+          stubs.cassandra.should.have.been.calledBefore(stubs.redis);
 
           expect(err).to.be.undefined;
           model.isNew.should.be.false;
@@ -480,6 +490,15 @@ describe('ORM', function() {
         this.model.show('fooScope').should.deep.equal({foo: 'foo'});
         this.model.show('allScope').should.deep.equal({
           foo: 'foo', bar: 'bar'
+        });
+      });
+    });
+
+    xdescribe('#find()', function() {
+
+      it('should find models from indexes', function() {
+        model.find({index: 'foo'}, function(err, model) {
+
         });
       });
     });

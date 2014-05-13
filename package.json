@@ -28,7 +28,8 @@
   "dependencies": {
     "lodash": "~2.4.1",
     "validator": "~3.11.2",
-    "valids": "~0.1.0"
+    "valids": "~0.1.0",
+    "async": "~0.8.0"
   },
   "devDependencies": {
     "sinon-chai": "~2.5.0",
@@ -37,7 +38,6 @@
     "mocha": "~1.18.2",
     "redis": "~0.10.1",
     "hiredis": "~0.1.16",
-    "helenus": "~0.6.10",
-    "async": "~0.8.0"
+    "helenus": "~0.6.10"
   }
 }

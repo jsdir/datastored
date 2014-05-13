@@ -13,24 +13,27 @@ chai.should();
 chai.use(sinonChai);
 
 
+var modelOptions = {
+  attributes: {
+    primary_key: {type: 'string'},
+    integer: {type: 'integer'},
+    string: {type: 'string'},
+    booleanTrue: {type: 'boolean'},
+    booleanFalse: {type: 'boolean'},
+    datetime: {type: 'datetime'},
+    date: {type: 'date'}
+  },
+  table: 'family',
+  pkAttribute: 'primary_key',
+  indexes: ['integer']
+};
+
 describe('RedisDatastore', function() {
 
   before(function() {
     this.rds = new datastores.RedisDatastore({
       redis: databases.redis,
-      redisKeyspace: 'test'
-    }, {
-      attributes: {
-        primary_key: {type: 'string'},
-        integer: {type: 'integer'},
-        string: {type: 'string'},
-        booleanTrue: {type: 'boolean'},
-        booleanFalse: {type: 'boolean'},
-        datetime: {type: 'datetime'},
-        date: {type: 'date'}
-      },
-      table: 'table',
-      pkAttribute: 'primary_key'
+      keyspace: 'test'
     });
   });
 
@@ -44,7 +47,7 @@ describe('RedisDatastore', function() {
     var attributes = ['integer', 'string', 'booleanTrue', 'booleanFalse',
       'datetime', 'date'];
 
-    rds.save({
+    rds.save(modelOptions, {
       primary_key: 'key',
       integer: 1234,
       string: 'string',
@@ -53,14 +56,14 @@ describe('RedisDatastore', function() {
       datetime: datetime,
       date: date
     }, function() {
-      rds.fetch('key', attributes, function(err, result) {
+      rds.fetch(modelOptions, 'key', attributes, function(err, result) {
         result.integer.should.equal(1234);
         result.string.should.equal('string');
         result.booleanTrue.should.be.true
         result.booleanFalse.should.be.false
         result.datetime.getTime().should.equal(datetime.getTime());
         result.date.getTime().should.equal(date.getTime());
-        databases.redis.exists('test:table:key', function(err, exists) {
+        databases.redis.exists('test:family:key', function(err, exists) {
           exists.should.equal(1);
           done();
         });
@@ -74,18 +77,6 @@ describe('CassandraDatastore', function() {
   before(function() {
     this.cds = new datastores.CassandraDatastore({
       cassandra: databases.cassandra
-    }, {
-      attributes: {
-        primary_key: {type: 'string'},
-        integer: {type: 'integer'},
-        string: {type: 'string'},
-        booleanTrue: {type: 'boolean'},
-        booleanFalse: {type: 'boolean'},
-        datetime: {type: 'datetime'},
-        date: {type: 'date'}
-      },
-      table: 'family',
-      pkAttribute: 'primary_key'
     });
   });
 
@@ -102,7 +93,7 @@ describe('CassandraDatastore', function() {
     var attributes = ['integer', 'string', 'booleanTrue', 'booleanFalse',
       'datetime', 'date'];
 
-    cds.save({
+    cds.save(modelOptions, {
       primary_key: 'key',
       integer: 1234,
       string: 'string',
@@ -112,7 +103,7 @@ describe('CassandraDatastore', function() {
       date: date
     }, function(err) {
       if (err) { throw err; }
-      cds.fetch('key', attributes, function(err, result) {
+      cds.fetch(modelOptions, 'key', attributes, function(err, result) {
         result.integer.should.equal(1234);
         result.string.should.equal('string');
         result.booleanTrue.should.be.true
