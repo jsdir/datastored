@@ -27,31 +27,6 @@ function transformAsync(options, attributes, chain, cb) {
   }, cb);
 }
 
-/*
-function failoverRead(redisCb, cassandraCb, restore, cb) {
-  redisCb(function(redisErr, redisItem) {
-    if (redisItem === null) {
-      // Either redis failed or the item was not found. Assume that the item is
-      // in cassandra.
-      cassandraCb(function(cassandraErr, cassandraItem) {
-        if (cassandraErr) {
-          // Apparently both persistence layers failed. This is not good.
-          cb([redisErr, cassandraErr]);
-        } else {
-          // Handle the valid response from cassandra.
-          if (cassandraItem && restore) {
-            // Restore the item to redis.
-            restore(cassandraItem);
-          }
-          cb(null, cassandraItem);
-        }
-      });
-    } else {
-      cb(null, redisItem);
-    }
-  });
-}*/
-
 /**
  * Groups transforms and adds them to the existing transforms while
  * preserving order based on the type of chain.
@@ -190,33 +165,6 @@ Orm.prototype.model = function(name, options, behaviors) {
         cb(null, instance);
       }
     });
-
-    /*
-    failover(function(failoverCb) {
-      datastores.redis.getFromIndex(scope, query, function(err, modelId) {
-        if (err) {
-          failoverCb(err);
-        } else {
-          if (modelId === null) {
-            // Couldn't find the model in redis. Try cassandra.
-            failoverCb(null);
-          } else {
-            // The model was found.
-            var model = this.
-            cb(null, 8)
-          }
-        }
-      });
-    }, function(failoverCb) {
-      datastores.cassandra.getFromIndex(scope, query, failoverCb);
-    }, function(err, result) {
-      // A model was found or both fetches resulted in an error.
-      if (err) {
-        cb(err);
-      } else {
-
-      }
-    });*/
   }
 
   this.models[name] = model;
@@ -234,78 +182,6 @@ Orm.prototype.use = function(name) {
 Orm.prototype.setRedisKeyspace = function(keyspace) {
   this.redis.keyspace = keyspace;
 }
-
-/*
-Orm.transforms = {
-
-  escapeHtml: {
-    input: function(attributes, model) {
-      for (attribute in model.attributes) {
-        var options = model.attributes[attribute];
-        if (options.escapeHtml != false && options.type === 'string') {
-          if (attributes.hasOwnProperty(attribute)) {
-            attributes[attribute] = validator.escape(attributes[attribute]);
-          }
-        }
-      }
-      return attributes;
-    }
-  },
-
-  validation: {
-    input: function(attributes, model) {
-      // Validate attributes.
-      var messages = Orm.validate(attributes, model.attributes);
-      if (messages) {
-        // Model is invalid.
-        throw new Orm.ValidationError(messages);
-      }
-      return attributes;
-    }
-  },
-
-  types: {
-    input: function(attributes, model) {
-      // Unserialize for input.
-      for (var attribute in model.attributes) {
-        var options = model.attributes[attribute];
-        if (attributes.hasOwnProperty(attribute)) {
-          var type = 'string';
-          if (options.hasOwnProperty('type')) {
-            type = options.type;
-          }
-          attributes[attribute] = Orm.unserialize(type, attributes[attribute]);
-        }
-      }
-      return attributes;
-    },
-    output: function(attributes, model) {
-      // Serialize for output.
-      for (var attribute in model.attributes) {
-        var options = model.attributes[attribute];
-        if (attributes.hasOwnProperty(attribute)) {
-          var type = 'string';
-          if (options.hasOwnProperty('type')) {
-            type = options.type;
-          }
-          attributes[attribute] = Orm.serialize(type, attributes[attribute]);
-        }
-      }
-      return attributes;
-    },
-    fetch: function(attributes) {
-      // serialize for database
-    }
-  }
-};
-
-Orm.defaultTransformList = [
-  Orm.transforms.culling,
-  Orm.transforms.escapeHtml,
-  Orm.transforms.validation,
-  Orm.transforms.types
-];
-*/
 
 Orm.defaultTransformList = [];
 
