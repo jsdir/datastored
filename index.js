@@ -149,9 +149,10 @@ Orm.prototype.model = function(name, options, behaviors) {
     // solution.
     query = model.transform(query, 'input');
     // Since all indexes are persisted to both backends, check redis first.
-    self.redis.find(options, query, function(redisErr, pk) {
-      if (redisErr || pk === null) {
+    self.redis.find(options, query, function(redisErr, redisPk) {
+      if (redisErr || redisPk === null) {
         if (redisErr) {
+          // TODO: report this error
           console.trace(redisErr);
         }
         self.cassandra.find(options, query, function(cassandraErr, pk) {
@@ -159,13 +160,14 @@ Orm.prototype.model = function(name, options, behaviors) {
             cb(cassandraErr);
           } else if (pk !== null) {
             // TODO: restore to redis.
-            cb(null, pk);
+            var instance = new model(pk);
+            cb(null, instance);
           } else {
             cb();
           }
         });
-      } else if (pk !== null) {
-        var instance = new model(pk);
+      } else if (redisPk !== null) {
+        var instance = new model(redisPk);
         cb(null, instance);
       }
     });
@@ -404,7 +406,8 @@ Model.prototype.fetch = function(scopeRequest, cb) {
   // Require the primary key before fetching.
   var pkValue = this.getPk();
   if (!pkValue) {
-    throw new Orm.OrmError('the primary key must be set in order to fetch');
+    var err = new Error('the primary key must be set in order to fetch');
+    return cb(err);
   }
 
   // Determine which datastore to query first based on the request.
