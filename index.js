@@ -151,6 +151,9 @@ Orm.prototype.model = function(name, options, behaviors) {
     // Since all indexes are persisted to both backends, check redis first.
     self.redis.find(options, query, function(redisErr, pk) {
       if (redisErr || pk === null) {
+        if (redisErr) {
+          console.trace(redisErr);
+        }
         self.cassandra.find(options, query, function(cassandraErr, pk) {
           if (cassandraErr) {
             cb(cassandraErr);
