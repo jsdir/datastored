@@ -31,7 +31,7 @@ Options
 
 #### Required settings
 
-- `redisClient`: a redis client
+- `redisClient`: a [redis client](https://github.com/mranney/node_redis)
 - `cassandraClient`: a [cassandra client](https://github.com/jorgebay/node-cassandra-cql)
 
 #### Optional settings
