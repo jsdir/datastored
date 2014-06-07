@@ -1,6 +1,5 @@
 ORM
 ===
-
 The orm is a single unit that manages configuration and model definitions. It is best practice to export an orm instance from a module so that it behaves like a singleton and can be easily required when creating models.
 
 ```js
@@ -27,16 +26,16 @@ module.exports = datastored.createOrm({
 Options
 -------
 
-`datastored.createOrm(settings)` has settings:
+`datastored.createOrm(settings)` has the following settings:
 
-#### Required settings
+#### `redisClient` (required)
+A [redis client](https://github.com/mranney/node_redis).
 
-- `redisClient`: a [redis client](https://github.com/mranney/node_redis)
-- `cassandraClient`: a [cassandra client](https://github.com/jorgebay/node-cassandra-cql)
+#### `cassandraClient` (required)
+A [cassandra client](https://github.com/jorgebay/node-cassandra-cql).
 
-#### Optional settings
-
-- `generateId`: a function that calls an errback with a unique id on invocation. `generateId` defaults to uuid4.
+#### `generateId`
+A function that calls an errback with a unique id on invocation. `generateId` defaults to uuid4.
 
 ```js
 var settings = {
@@ -48,4 +47,5 @@ var settings = {
 };
 ```
 
-- `redisNamespace`: a namespace for redis to use. This option is useful when running multiple orm instances on the same redis server. The default namespace is `ds`.
+#### `redisNamespace`
+A namespace for redis to use. This option is useful when running multiple orm instances on the same redis server. The default namespace is `ds`.

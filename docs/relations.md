@@ -1,6 +1,5 @@
 Relations
 =========
-
 Datastored provides options for relational modeling that can describe relationships between models. Relations are defined in the model options:
 
 ```js
@@ -25,7 +24,6 @@ There are three different relation types that can be used by a model:
 
 HasOne
 ------
-
 This is datastored's implementation of a **1:1** relationship between models.
 
 #### Options
@@ -36,7 +34,6 @@ This is datastored's implementation of a **1:1** relationship between models.
 
 HasMany
 -------
-
 This is the ORM's implementation of a **1:n** relationship between models. The options for this relationship essentially define a Collection.
 
 #### Options
@@ -47,7 +44,6 @@ This is the ORM's implementation of a **1:n** relationship between models. The o
 
 ManyToMany
 ----------
-
 This is the ORM's implementation of an **n:n** relationship between models.
 
 #### Options

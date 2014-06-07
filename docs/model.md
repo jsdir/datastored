@@ -5,31 +5,36 @@ Model
 Options
 -------
 
-- `table`
-- `transforms`
-- `attributes`
-- `relations`: Relations are described [here](relations.md) in further detail.
-- `methods`
-- `staticMethods`
+#### `table` (required)
+Describes the fragment for redis and the column family name for cassandra.
 
-Although highly unrecommended, `staticMethods` and `methods` will overwrite any existing methods that have the same name.
+#### `schema` (required)
+Describes the model's attributes.
+
+#### `transforms`
+Available transforms are described [here](transforms.md) in further detail.
+
+#### `relations`
+Relations are described [here](relations.md) in further detail.
+
+#### `methods`
+This option will overwrite any existing instance methods on conflict.
+
+#### `staticMethods`
+This option will overwrite any existing static methods on conflict.
 
 
 Static Methods
 --------------
-
 Static methods are called on the model class.
 
 #### Model.create(attrs)
-
 The id can optionally be assigned in `attrs`. If the id is not assigned, datastored will automatically generate on with the orm's `idGenerator`.
 
 #### Model.get(pk)
-
 This gets a model from a primary key. This method does not fetch from any datastores, it is just a convenience method that creates a new model and assigns the primary key to `pk`.
 
 #### Model.find(query, cb)
-
 `find(query)` finds any model that matches `query`. `query` is a hash that maps attribute name to value.
 
 ```js
@@ -45,11 +50,9 @@ Book.find({isbn: 1234567890}, function(err, book) {
 
 Instance Methods
 ----------------
-
 Instance methods can be called on model instances.
 
 #### model.set(attr, value)
-
 ```js
 model.set('isbn', 12345);
 ```
@@ -61,7 +64,6 @@ model.set({isbn: 12345, name: 'foo'});
 ```
 
 #### model.get(attr)
-
 ```js
 var name = model.get('name');
 console.log(name); // => "foo"
@@ -75,7 +77,6 @@ console.log(data); // => {isbn: 12345, name: 'foo'}
 ```
 
 #### model.save(cb)
-
 Save can be called on any model instance. If the model instance does not have a set primary key, the ORM will automatically generate and assign one to the instance using the `idGenerator`.
 
 ```js
@@ -103,7 +104,6 @@ book.save(function(err, model) {
 ```
 
 #### model.fetch(scope, cb)
-
 This method can only be called on model instances that have a set primary key.
 
 ```js
@@ -118,7 +118,6 @@ book.fetch('basic', function(err, book) {
 ```
 
 #### model.destroy(cb)
-
 This method can only be called on model instances that have a set primary key.
 
 ```js
