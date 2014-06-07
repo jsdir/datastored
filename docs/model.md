@@ -6,10 +6,60 @@ Options
 -------
 
 #### `table` (required)
-Describes the fragment for redis and the column family name for cassandra.
+Describes the fragment for redis and the column family name for cassandra. The value must be unique within the orm that owns the model.
 
 #### `schema` (required)
-Describes the model's attributes.
+Describes the model's attributes with a hash mapping attribute names to options.
+
+```js
+var orm = require('./orm');
+
+var Book = orm.createModel('Book', {
+  table: 'books',
+  schema: {
+    id: {
+      type: 'number'
+    },
+    title: {
+      type: 'string',
+      cached: true
+    },
+    description: {
+      type: 'string',
+      rules: {
+        required: true,
+        max: 10000
+      }
+    },
+    isbn: {
+      type: 'integer',
+      rules: {
+        required: true
+      }
+    }
+  }
+});
+```
+
+Each attribute in the schema can have its own options:
+
+##### `type` (required)
+This works with marshallers.
+
+##### `primary`
+Only one attribute per model can be primary key.
+
+##### `index`
+Unlike the `primary` option, any number of fields can become indexes. Using indexes is the only way to ensure uniqueness in datastored.
+
+##### `cached`
+`cached` defaults to `false`.
+
+##### `rules`
+TODO: sync and async rules.
+
+#### `cached`
+`cached` defaults to `false`.
 
 #### `transforms`
 Available transforms are described [here](transforms.md) in further detail.
