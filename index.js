@@ -2,7 +2,6 @@ var _ = require('lodash');
 var async = require('async');
 
 var datastores = require('./lib/datastores');
-var validate = require('./lib/validate');
 
 
 function requireProperties(obj, properties) {
