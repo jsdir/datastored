@@ -2,7 +2,7 @@ var chai = require('chai');
 var async = require('async');
 
 var databases = require('./databases');
-var Orm = require('..');
+var Orm = require('../..');
 
 var expect = chai.expect;
 chai.should();

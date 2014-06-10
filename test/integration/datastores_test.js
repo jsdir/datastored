@@ -5,7 +5,7 @@ var redis = require('redis');
 var helenus = require('helenus');
 
 var databases = require('./databases');
-var datastores = require('../lib/datastores');
+var datastores = require('../../lib/datastores');
 
 var expect = chai.expect;
 

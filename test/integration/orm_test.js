@@ -2,7 +2,7 @@ var chai = require('chai');
 var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
 
-var Orm = require('..');
+var Orm = require('../..');
 
 var expect = chai.expect;
 chai.should();

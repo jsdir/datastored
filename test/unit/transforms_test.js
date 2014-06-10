@@ -1,6 +1,6 @@
 var chai = require('chai');
 
-var transforms = require('../lib/transforms');
+var transforms = require('../../lib/transforms');
 
 var expect = chai.expect;
 chai.should();
