@@ -49,3 +49,6 @@ var settings = {
 
 #### `redisNamespace`
 A namespace for redis to use. This option is useful when running multiple orm instances on the same redis server. The default namespace is `ds`.
+
+#### `modelTransforms`
+This defaults to an input/output serializer/unserializer for JSON.

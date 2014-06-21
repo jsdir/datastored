@@ -50,7 +50,7 @@ This works with marshallers.
 Only one attribute per model can be primary key.
 
 ##### `index`
-Unlike the `primary` option, any number of fields can become indexes. Using indexes is the only way to ensure uniqueness in datastored.
+Unlike the `primary` option, any number of fields can become indexes. Using indexes is the only way to ensure uniqueness in datastored. Defaults to `false`.
 
 ##### `cached`
 `cached` defaults to `false`.

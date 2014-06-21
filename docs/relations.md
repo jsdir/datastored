@@ -48,3 +48,15 @@ This is the ORM's implementation of an **n:n** relationship between models.
 
 #### Options
 - **`join`**: Embed the related model within the attributes of the referencing model.
+
+
+Collections
+===========
+HasMany and ManyToMany relational attributes have collections as values.
+Collections are the result of relations.
+Are collections only involved with relations? What about as the result of find?
+
+temp
+- returning items in an owned collection collection.get('images')
+- feeds
+- user.collections

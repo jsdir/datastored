@@ -17,6 +17,8 @@ A diagram of the transform chains in the datastored pipeline:
 +------------+         +-------+          +------+
 ```
 
+Where do marshallers go in this?
+
 Each transform chain handles a different part of ORM functionality:
 
 #### input

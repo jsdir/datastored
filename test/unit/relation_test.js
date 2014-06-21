@@ -6,4 +6,4 @@ describe('HasMany', function() {
 
 });
 
-describe('')
+// model.destroy removes related models
