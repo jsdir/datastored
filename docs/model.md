@@ -78,13 +78,13 @@ Static Methods
 --------------
 Static methods are called on the model class.
 
-#### Model.create(attrs)
+#### Model.create(attrs, transform=false)
 The id can optionally be assigned in `attrs`. If the id is not assigned, datastored will automatically generate on with the orm's `idGenerator`.
 
-#### Model.get(pk)
+#### Model.get(pk, transform=false)
 This gets a model from a primary key. This method does not fetch from any datastores, it is just a convenience method that creates a new model and assigns the primary key to `pk`.
 
-#### Model.find(query, cb)
+#### Model.find(query, transform=false, cb)
 `find(query)` finds any model that matches `query`. `query` is a hash that maps attribute name to value.
 
 ```js
@@ -102,7 +102,7 @@ Instance Methods
 ----------------
 Instance methods can be called on model instances.
 
-#### model.set(attr, value)
+#### model.set(attr, value, transform=false)
 ```js
 model.set('isbn', 12345);
 ```
