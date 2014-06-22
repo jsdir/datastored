@@ -4,4 +4,4 @@ var relations = require('./lib/relations');
 module.exports = {
   createOrm: createOrm,
   relations: relations
-}
+};
