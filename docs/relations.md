@@ -50,13 +50,63 @@ This is the ORM's implementation of an **n:n** relationship between models.
 - **`join`**: Embed the related model within the attributes of the referencing model.
 
 
-Collections
-===========
-HasMany and ManyToMany relational attributes have collections as values.
+Collection
+==========
+
+Collection is sometimes seeded with data when the parent model joins the attribute. Pagination is also supported.
+
+#### limit offset
+
+#### count
+
+#### show
+_.map show on all contained models.
+
+The `HasMany` and `HasAndBelongsToMany` relational attributes have collections as values.
 Collections are the result of relations.
-Are collections only involved with relations? What about as the result of find?
 
 temp
 - returning items in an owned collection collection.get('images')
 - feeds
 - user.collections
+
+HasOne
+------
+Establish reverse relations with `BelongsTo`.
+
+- join: (joins all by default if enabled)
+- joinedAttributes
+
+HasMany
+-------
+Establish reverse relations with `BelongsTo`. Makes the relational attribute value a `Collection`.
+
+BelongsTo
+---------
+TODO: How does `BelongsTo` know what relation it is paired with?
+
+- join: (joins all by default if enabled)
+- joinedAttributes (should also make it possible to include permission details somehow)
+
+HasAndBelongsToMany
+-------------------
+Text.
+
+Tree
+----
+
+maxDepth: int
+
+
+Relation Options
+================
+
+- cache: true
+- audit: Includes the time when the (or each) relationship was made.
+- model: (optional) restrict to a model
+
+Any relation that returns a `Collection` has the following options:
+
+- sort: popularity, name[a-z]
+  - redis creates zsets for each sort option. Cassandra has this built in.
+- cassandra join table (alternative to storing in a column)

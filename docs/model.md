@@ -126,6 +126,9 @@ var data = model.get(['name', 'isbn']);
 console.log(data); // => {isbn: 12345, name: 'foo'}
 ```
 
+#### model.show(scope)
+Returns a hash of the models transformed attributes that are included by `scope`.
+
 #### model.save(cb)
 Save can be called on any model instance. If the model instance does not have a set primary key, the ORM will automatically generate and assign one to the instance using the `idGenerator`.
 

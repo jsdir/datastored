@@ -51,4 +51,7 @@ var settings = {
 A namespace for redis to use. This option is useful when running multiple orm instances on the same redis server. The default namespace is `ds`.
 
 #### `modelTransforms`
-This defaults to an input/output serializer/unserializer for JSON.
+Datstored uses several base transforms on model for features such as hidden attributes and validation. These transforms cannot be changed. `modelTransforms` are added to the transform chain immediately after the immutable ones added by datastored.
+
+`modelTransforms` defaults to:
+- `BasicMarshaller`: an input/output serializer/unserializer for JSON-friendly values.

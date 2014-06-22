@@ -29,7 +29,7 @@ describe('Model', function() {
   });
 
   beforeEach(function() {
-    // Stub the datastores.
+    // TODO: Stub the datastores.
     this.orm = datastored.createOrm({
       redisClient: true,
       cassandraClient: true
@@ -136,6 +136,8 @@ describe('Model', function() {
     });
 
     it('should find a single model through the datastore', function() {
+      // TODO: Check transform chain here.
+
       // similar to fetch
       // redis first if ()
       // [model options, attribute map] (orm options are already given at init)
@@ -150,14 +152,64 @@ describe('Model', function() {
     });
   });
 
-  describe('#set()', function() {
+  describe('#transform()', function() {
 
-    // Check transform chain here.
+    it.only('should transform with chains in the right order', function(done) {
+      var model = this.createModel({
+        transforms: [{
+          input: function(attributes, model) {
+            attributes.foo += '1';
+            return attributes;
+          },
+          output: function(attributes, model) {
+            attributes.foo += '1';
+            return attributes;
+          },
+          fetch: function(attributes, model) {
+            attributes.foo += '1';
+            return attributes;
+          },
+          save: function(attributes, model, cb) {
+            attributes.foo += '1';
+            cb(null, attributes);
+          }
+        }, {
+          input: function(attributes, model) {
+            attributes.foo += '2';
+            return attributes;
+          },
+          output: function(attributes, model) {
+            attributes.foo += '2';
+            return attributes;
+          },
+          fetch: function(attributes, model) {
+            attributes.foo += '2';
+            return attributes;
+          },
+          save: function(attributes, model, cb) {
+            attributes.foo += '2';
+            cb(null, attributes);
+          }
+        }]
+      }).create();
+
+      model.transform({foo: '0'}, 'input').foo.should.equal('012');
+      model.transform({foo: '0'}, 'output').foo.should.equal('021');
+      model.transform({foo: '0'}, 'fetch').foo.should.equal('012');
+      model.transform({foo: '0'}, 'save', function(err, attributes) {
+        attributes.foo.should.equal('021');
+        done();
+      });
+    });
+  });
+
+  describe('#set()', function() {
 
     it('should accept a single attribute', function() {
       var model = this.createModel().create();
       model.set('id', 'foo');
       model.get('id').should.equal('foo');
+      // TODO: Check transform chain here.
     });
 
     it('should accept multiple attributes', function() {
@@ -167,6 +219,7 @@ describe('Model', function() {
 
       model.set({id: 'foo', foo: 'bar'});
       model.get(['id', 'foo']).should.deep.equal({id: 'foo', foo: 'bar'});
+      // TODO: Check transform chain here.
     });
 
     it('should omit attributes that are not defined in the ' +
@@ -179,12 +232,27 @@ describe('Model', function() {
 
   describe('#get()', function() {
 
+    it('should not use the output transform chain', function() {
+
+    });
+
     it('should fail when getting an undefined attribute', function() {
       var orm = this.orm;
 
       (function() {
         orm.createModel('Model', options).create().get(['id', 'invalid'])
       }).should.throw('invalid attribute `invalid`');
+    });
+  });
+
+  xdescribe('#show()', function() {
+
+    it('should only return the attributes included in the scope', function() {
+
+    });
+
+    it('should use the output transform chain', function() {
+
     });
   });
 
@@ -203,7 +271,6 @@ describe('Model', function() {
       // Redis failure should not stop it.
     });
 
-    // Complications
     // - caching
     // - relations
     // - permissions (mixin)
