@@ -24,7 +24,9 @@ describe('Model', function() {
   before(function() {
     this.createModel = function(modelOptions) {
       modelOptions = modelOptions || {};
-      return this.orm.createModel('Model', _.merge(options, modelOptions));
+      return this.orm.createModel('Model', _.merge(
+        _.clone(options), modelOptions)
+      );
     }
   });
 
@@ -154,7 +156,7 @@ describe('Model', function() {
 
   describe('#transform()', function() {
 
-    it.only('should transform with chains in the right order', function(done) {
+    it('should transform with chains in the right order', function(done) {
       var model = this.createModel({
         transforms: [{
           input: function(attributes, model) {
