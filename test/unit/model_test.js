@@ -4,7 +4,7 @@ var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
 
 var datastored = require('../..');
-var ModelClass = require('../../lib/model').Model;
+var Model = require('../../lib/model').Model;
 
 chai.should();
 chai.use(sinonChai);
@@ -31,7 +31,7 @@ describe('Model', function() {
   });
 
   it('should set `methods` and `staticMethods`', function() {
-    var Model = this.orm.createModel('Model', _.extend({}, options, {
+    var ModelClass = this.orm.createModel('Model', _.extend({}, options, {
       methods: {
         getInstanceThis: function() {return this;}
       },
@@ -41,10 +41,10 @@ describe('Model', function() {
     }));
 
     // Test static methods.
-    Model.getStaticThis().should.deep.equal(Model);
+    ModelClass.getStaticThis().should.deep.equal(Model);
 
     // Test instance methods.
-    var model = Model.create({});
+    var model = ModelClass.create({});
     model.getInstanceThis().should.deep.equal(model);
   });
 
@@ -102,11 +102,11 @@ describe('Model', function() {
   describe('#Model.create()', function() {
 
     beforeEach(function() {
-      sinon.spy(ModelClass.prototype, 'set');
+      sinon.spy(Model.prototype, 'set');
     });
 
     afterEach(function() {
-      ModelClass.prototype.set.restore();
+      Model.prototype.set.restore();
     });
 
     it('should initially set the attributes', function() {
@@ -123,10 +123,28 @@ describe('Model', function() {
     });
   });
 
-  xdescribe('#Model.find()', function() {
-    // this.createModel().find()
+  describe('#Model.find()', function() {
+
     it('should only allow indexed attributes in the query', function() {
-      // try undefined, nonindex, and primary key attributes
+      var model = this.orm.createModel('Model', _.merge({}, options, {
+        attributes: {
+          indexed: {
+            index: true,
+            type: 'string'
+          },
+          name: {
+            type: 'string'
+          }
+        }
+      })).get('foo');
+
+      (function() {
+        model.find({name: 'foo'});
+      }).should.throw('attribute `name` is not indexed');
+
+      (function() {
+        model.find({id: 'foo'});
+      }).should.throw('attribute `id` is not indexed');
     });
 
     it('should find a single model through the datastore', function() {
@@ -199,11 +217,18 @@ describe('Model', function() {
 
   describe('#set()', function() {
 
+    beforeEach(function() {
+      sinon.stub(Model.prototype, 'transform');
+    });
+
+    afterEach(function() {
+      Model.prototype.transform.restore();
+    });
+
     it('should accept a single attribute', function() {
       var model = this.orm.createModel('Model', options).create();
-      model.set('id', 'foo');
+      model.set('id', 'foo', false);
       model.get('id').should.equal('foo');
-      // TODO: Check transform chain here.
     });
 
     it('should accept multiple attributes', function() {
@@ -212,16 +237,27 @@ describe('Model', function() {
       }});
       var model = this.orm.createModel('Model', modelOptions).create();
 
+      model.transform.returns({id: 'transformed', foo: 'transformed'});
       model.set({id: 'foo', foo: 'bar'});
+      model.get(['id', 'foo']).should.deep.equal({
+        id: 'transformed', foo: 'transformed'
+      });
+      model.transform.should.have.been.calledWith({
+        id: 'foo', foo: 'bar'
+      }, 'input');
+
+      model.transform.reset();
+      model.set({id: 'foo', foo: 'bar'}, false);
       model.get(['id', 'foo']).should.deep.equal({id: 'foo', foo: 'bar'});
-      // TODO: Check transform chain here.
+      model.transform.should.not.have.been.called;
     });
 
     it('should omit attributes that are not defined in the ' +
       'schema', function() {
       var model = this.orm.createModel('Model', options).create();
       model.set({id: 'foo', invalid: 'bar'});
-      // TODO: Check transform chain does not receive the undefined attr.
+      // Ensure that transform chain does not receive the undefined attribute.
+      model.transform.should.have.been.calledWith({id: 'foo'});
     });
   });
 
@@ -282,7 +318,7 @@ describe('Model', function() {
     });
   });
 
-  describe.only('#destroy()', function() {
+  describe('#destroy()', function() {
 
     function noop(pk, options, cb) {cb();}
 
