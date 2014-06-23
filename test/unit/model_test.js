@@ -41,7 +41,7 @@ describe('Model', function() {
     }));
 
     // Test static methods.
-    ModelClass.getStaticThis().should.deep.equal(Model);
+    ModelClass.getStaticThis().should.deep.equal(ModelClass);
 
     // Test instance methods.
     var model = ModelClass.create({});
@@ -55,11 +55,11 @@ describe('Model', function() {
 
       (function() {
         orm.createModel('Model', _.omit(options, ['table']));
-      }).should.throw('`table` is not defined');
+      }).should.throw('attribute `table` is not defined');
 
       (function() {
         orm.createModel('Model', _.omit(options, ['schema']));
-      }).should.throw('`schema` is not defined');
+      }).should.throw('attribute `schema` is not defined');
     });
 
     it('should fail if a primary key attribute is not defined', function() {
@@ -111,7 +111,7 @@ describe('Model', function() {
 
     it('should initially set the attributes', function() {
       var model = this.orm.createModel('Model', options).create({id: 'foo'});
-      model.set.should.have.been.called
+      model.set.should.have.been.calledWith({id: 'foo'});
     });
   });
 
@@ -125,18 +125,37 @@ describe('Model', function() {
 
   describe('#Model.find()', function() {
 
-    it('should only allow indexed attributes in the query', function() {
-      var model = this.orm.createModel('Model', _.merge({}, options, {
-        attributes: {
+    beforeEach(function() {
+      this.model = this.orm.createModel('Model', _.merge({}, options, {
+        schema: {
           indexed: {
             index: true,
+            type: 'string'
+          },
+          cachedAndIndexed: {
+            index: true,
+            cache: true,
             type: 'string'
           },
           name: {
             type: 'string'
           }
         }
-      })).get('foo');
+      }));
+
+      sinon.stub(this.model.prototype, 'transform', function(attributes) {
+        _.object(_.map(attributes, function(value, name) {
+          return [name, 'transformed'];
+        }))
+      });
+    });
+
+    afterEach(function() {
+      this.model.transform.restore();
+    });
+
+    it('should only allow indexed attributes in the query', function() {
+      var model = this.model;
 
       (function() {
         model.find({name: 'foo'});
@@ -147,15 +166,90 @@ describe('Model', function() {
       }).should.throw('attribute `id` is not indexed');
     });
 
-    it('should find a single model through the datastore', function() {
-      // TODO: Check transform chain here.
+    it.only('should transform the query by default', function() {
+      sinon.stub(this.model, 'fetchFromDatastores', function(onDatastore) {
+        var datastore = sinon.mock({
+          find: function(query) {
+            query.should.deep.equal({indexed: 'transformed'});
+            done();
+          }
+        });
+        onDatastore(datastore);
+      });
+      this.model.find({indexed: 'foo'});
+    });
+
+    it('should not transform the query if requested', function(done) {
+      sinon.stub(this.model, 'fetchFromDatastores', function(onDatastore) {
+        var datastore = sinon.mock({
+          find: function(query) {
+            query.should.deep.equal({indexed: 'foo'});
+            done();
+          }
+        });
+        onDatastore(datastore);
+      });
+      this.model.find({indexed: 'foo'}, false);
+    });
+
+    it('should use the datastores correctly', function() {
+      // Should pass whether or not to use the cache.
+
+      sinon.stub(this.model, 'fetchFromDatastores', function(cb) {
+        //
+      });
+
+      function noop(pk, options, cb) {cb();}
+
+      beforeEach(function() {
+        sinon.stub(this.redis, 'destroy', noop);
+        sinon.stub(this.cassandra, 'destroy', noop);
+      });
+
+      this.model.fetchFromDatastores.restore();
+
+      sinon.stub(this.model, 'fetchFromDatastores', function(cb) {
+        cb('error');
+      });
+
+      this.model.find({indexed: 'foo'}, function(err) {
+        err.should.equal('error');
+        done();
+      });
+
+      this.model.fetchFromDatastores.restore();
+    });
+
+    it('should callback with `null` if no model was found', function() {
+
+    });
+
+    xit('should find a single model through the datastore', function() {
+      // if index attribute is cached: (check redis for the index)
+      // if fail, check cassandra
+      // if fatal err (return fatal err)
+      // else if none returned, return null
+
+      // this.redis.find
+      this.model.find({indexed: 'foo'}, function(err, model) {
+        // check input transform chain
+        model.get('id').should.equal();
+      });
+
+      // Check errors.
+      this.model.find({indexed: 'foo'}, function(err, model) {
+        err.should.equal('error');
+      });
+
+      this.model.find({indexed: 'foo'}, false, function(err, model) {
+        model.get('id').should.equal();
+      });
 
       // similar to fetch
       // redis first if ()
       // [model options, attribute map] (orm options are already given at init)
       //   should give -> id or null
       // cassandra
-      // err filter (have a function for this pattern and test the function)
       // Check that the pk is set. when datastore returns id, and calls back null
       // if no model was found.
       //
@@ -259,6 +353,10 @@ describe('Model', function() {
       // Ensure that transform chain does not receive the undefined attribute.
       model.transform.should.have.been.calledWith({id: 'foo'});
     });
+
+    xit('should not change immutable attributes', function() {
+
+    });
   });
 
   describe('#get()', function() {
@@ -281,6 +379,10 @@ describe('Model', function() {
     it('should use the output transform chain', function() {
 
     });
+
+    xit('should hide hidden attributes', function() {
+
+    });
   });
 
   xdescribe('#save()', function() {
@@ -301,6 +403,10 @@ describe('Model', function() {
     // - caching
     // - relations
     // - permissions (mixin)
+
+    xit('should validate attributes', function() {
+
+    });
   });
 
   xdescribe('#fetch()', function() {
