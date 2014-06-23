@@ -21,32 +21,24 @@ describe('Model', function() {
     }
   };
 
-  before(function() {
-    this.createModel = function(modelOptions) {
-      modelOptions = modelOptions || {};
-      return this.orm.createModel('Model', _.merge(
-        _.clone(options), modelOptions)
-      );
-    }
-  });
-
   beforeEach(function() {
-    // TODO: Stub the datastores.
     this.orm = datastored.createOrm({
       redisClient: true,
       cassandraClient: true
     });
+    this.redis = this.orm.datastores.redis;
+    this.cassandra = this.orm.datastores.cassandra;
   });
 
   it('should set `methods` and `staticMethods`', function() {
-    var Model = this.createModel({
+    var Model = this.orm.createModel('Model', _.extend({}, options, {
       methods: {
         getInstanceThis: function() {return this;}
       },
       staticMethods: {
         getStaticThis: function() {return this;}
       }
-    });
+    }));
 
     // Test static methods.
     Model.getStaticThis().should.deep.equal(Model);
@@ -74,13 +66,14 @@ describe('Model', function() {
       var orm = this.orm;
 
       (function() {
-        orm.createModel('Model', _.extend(_.clone(options), {
+        orm.createModel('Model', _.extend({}, options, {
           schema: {}
         }));
       }).should.throw('a primary key attribute is required');
     });
 
-    it('should fail if multiple primary key attributes are defined', function() {
+    it('should fail if multiple primary key attributes are ' +
+      'defined', function() {
       var orm = this.orm;
 
       (function() {
@@ -91,21 +84,20 @@ describe('Model', function() {
             id2: {primary: true}
           }
         });
-      }).should.throw('only one primary key attribute can be defined per model');
+      }).should.throw('only one primary key attribute can be defined per ' +
+        'model');
     });
 
     it('should fail if an attribute is defined without a type', function() {
       var orm = this.orm;
 
       (function() {
-        orm.createModel('Model', _.extend(_.clone(options), {
+        orm.createModel('Model', _.extend({}, options, {
           schema: {invalidAttribute: {}}
         }));
       }).should.throw('a primary key attribute is required');
     });
   });
-
-  // TODO: test transform order
 
   describe('#Model.create()', function() {
 
@@ -118,7 +110,7 @@ describe('Model', function() {
     });
 
     it('should initially set the attributes', function() {
-      var model = this.createModel().create({id: 'foo'});
+      var model = this.orm.createModel('Model', options).create({id: 'foo'});
       model.set.should.have.been.called
     });
   });
@@ -126,12 +118,12 @@ describe('Model', function() {
   describe('#Model.get()', function() {
 
     it('should use the primary key attribute', function() {
-      var model = this.createModel().get('foo');
+      var model = this.orm.createModel('Model', options).get('foo');
       model.get('id').should.equal('foo');
     });
   });
 
-  describe('#Model.find()', function() {
+  xdescribe('#Model.find()', function() {
     // this.createModel().find()
     it('should only allow indexed attributes in the query', function() {
       // try undefined, nonindex, and primary key attributes
@@ -157,7 +149,7 @@ describe('Model', function() {
   describe('#transform()', function() {
 
     it('should transform with chains in the right order', function(done) {
-      var model = this.createModel({
+      var model = this.orm.createModel('Model', _.extend({}, options, {
         transforms: [{
           input: function(attributes, model) {
             attributes.foo += '1';
@@ -193,7 +185,7 @@ describe('Model', function() {
             cb(null, attributes);
           }
         }]
-      }).create();
+      })).create();
 
       model.transform({foo: '0'}, 'input').foo.should.equal('012');
       model.transform({foo: '0'}, 'output').foo.should.equal('021');
@@ -208,16 +200,17 @@ describe('Model', function() {
   describe('#set()', function() {
 
     it('should accept a single attribute', function() {
-      var model = this.createModel().create();
+      var model = this.orm.createModel('Model', options).create();
       model.set('id', 'foo');
       model.get('id').should.equal('foo');
       // TODO: Check transform chain here.
     });
 
     it('should accept multiple attributes', function() {
-      var model = this.createModel({schema: {
+      var modelOptions = _.merge({}, options, {schema: {
         foo: {type: 'string'}
-      }}).create();
+      }});
+      var model = this.orm.createModel('Model', modelOptions).create();
 
       model.set({id: 'foo', foo: 'bar'});
       model.get(['id', 'foo']).should.deep.equal({id: 'foo', foo: 'bar'});
@@ -226,17 +219,13 @@ describe('Model', function() {
 
     it('should omit attributes that are not defined in the ' +
       'schema', function() {
-      var model = this.createModel().create();
+      var model = this.orm.createModel('Model', options).create();
       model.set({id: 'foo', invalid: 'bar'});
-      // Check transform chain does not receive the undefined attr.
+      // TODO: Check transform chain does not receive the undefined attr.
     });
   });
 
   describe('#get()', function() {
-
-    it('should not use the output transform chain', function() {
-
-    });
 
     it('should fail when getting an undefined attribute', function() {
       var orm = this.orm;
@@ -293,18 +282,59 @@ describe('Model', function() {
     });
   });
 
-  xdescribe('#destroy()', function() {
+  describe.only('#destroy()', function() {
 
-    it('should destroy the model from both datastores', function() {
+    function noop(pk, options, cb) {cb();}
 
+    beforeEach(function() {
+      sinon.stub(this.redis, 'destroy', noop);
+      sinon.stub(this.cassandra, 'destroy', noop);
     });
 
-    it('should not attempt to destroy from the redis datastore if the model is not marked as cached', function() {
-
+    afterEach(function() {
+      this.redis.destroy.restore();
+      this.cassandra.destroy.restore();
     });
 
-    it('should fail if destroying from any datastore fails', function() {
+    xit('should destroy the model from both datastores', function(done) {
+      var self = this;
+      var model = this.orm.createModel('Model', _.extend({}, options, {
+        cachedVariables: true
+      })).get('foo');
+      model.destroy(function() {
+        var testOptions = {schema: {id: {
+          primary: true, type: 'string'
+        }}, table: 'models'};
+        self.redis.destroy.should.have.been.calledWith(
+          'foo', testOptions, sinon.match.func);
+        self.cassandra.destroy.should.have.been.calledWith(
+          'foo', testOptions, sinon.match.func);
+        done();
+      });
+    });
 
+    it('should not attempt to destroy from the redis datastore if all ' +
+      'attributes are uncached', function() {
+      var self = this;
+      var model = this.orm.createModel('Model', options).get('foo');
+      model.destroy(function() {
+        self.redis.destroy.should.not.have.been.called;
+        self.cassandra.destroy.should.have.been.called;
+      });
+    });
+
+    it('should fail if destroying from any datastore fails', function(done) {
+      var self = this;
+      this.redis.destroy.restore();
+      sinon.stub(this.redis, 'destroy', function(pk, options, cb) {
+        cb('error');
+      });
+      var model = this.orm.createModel('Model', options).get('foo');
+      model.destroy(function(err) {
+        self.cassandra.destroy.should.not.have.been.called;
+        err.should.equal('error');
+        done();
+      });
     });
   });
 });
