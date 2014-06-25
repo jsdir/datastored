@@ -50,6 +50,10 @@ Is the redis key fragment and the cassandra column name. This defaults to the mo
 
 Allows the model to extend the definition of another model.
 
+#### marshaller
+
+Defines the marshaller to use for the model. This will override the orm's `options.modelMarshaller`.
+
 #### relations
 
 Defines the model's relations. Relations are described [here](relations.md) in further detail.
