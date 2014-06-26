@@ -1,5 +1,5 @@
-ORM
-===
+## ORM
+
 The orm is a single unit that manages configuration and model definitions. It is best practice to export an orm instance from a module so that it behaves like a singleton and can be easily required when creating models.
 
 ```js
@@ -23,19 +23,21 @@ module.exports = datastored.createOrm({
 });
 ```
 
-Options
--------
+### Options
 
-`datastored.createOrm(settings)` has the following settings:
+`datastored.createOrm(options)` can use the following options:
 
-#### `redisClient` (required)
-A [redis client](https://github.com/mranney/node_redis).
+#### redisClient
 
-#### `cassandraClient` (required)
-A [cassandra client](https://github.com/jorgebay/node-cassandra-cql).
+**(required)** A [redis client](https://github.com/mranney/node_redis).
 
-#### `generateId`
-A function that calls an errback with a unique id on invocation. `generateId` defaults to uuid4.
+#### cassandraClient
+
+**(required)** A [cassandra client](https://github.com/jorgebay/node-cassandra-cql).
+
+#### generateId
+
+A function that calls an errback with a unique id on invocation. `generateId` defaults to lodash's `uniqueId`.
 
 ```js
 var settings = {
@@ -47,11 +49,14 @@ var settings = {
 };
 ```
 
-#### `redisNamespace`
-A namespace for redis to use. This option is useful when running multiple orm instances on the same redis server. The default namespace is `ds`.
+#### redisNamespace
 
-#### `modelTransforms`
+Defines the namespace for redis to use. This option is useful when running multiple orm instances on the same redis server. The default namespace is `ds`.
+
+#### modelTransforms
+
 Datstored uses several base transforms on model for features such as hidden attributes and validation. These transforms cannot be changed. `modelTransforms` are added to the transform chain immediately after the immutable ones added by datastored.
 
-`modelTransforms` defaults to:
-- `BasicMarshaller`: an input/output serializer/unserializer for JSON-friendly values.
+#### modelMarshaller
+
+Defines a default marshaller to use for each model. This can be overridden per model. `modelMarshaller` defaults to `marshaller.JSONMarshaller`. A list of available marshallers is documented [here](marshallers.md).
