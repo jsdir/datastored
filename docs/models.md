@@ -182,9 +182,9 @@ Book.find({isbn: 123}, function(err, book) {
 
 Instance methods can be called on model instances.
 
-### Mutation requests
+### Access requests
 
-Some of these methods have a `req` parameter. This is an optional mutation request, an `object` that can be used to implement ACLs and authorization subsystems with mixins.
+Some of these methods have a `req` parameter. This is an optional access request, an `object` that can be used to implement ACLs and authorization subsystems with mixins.
 
 #### .set(`attributes`[, `raw`])
 
@@ -281,10 +281,10 @@ console.log(nameData); // -> {"id": 2, "name": "foo"}
 
 Save can be called on any model instance. If the model instance does not have a set primary key, the orm will automatically generate and assign one to the model instance using `generateId`.
 
-| Description      | Type       | Required |
-|:-----------------|:-----------|:---------|
-| Mutation request | `{}`       | No       |
-| Callback         | `function` | Yes      |
+| Description    | Type       | Required |
+|:---------------|:-----------|:---------|
+| Access request | `{}`       | No       |
+| Callback       | `function` | Yes      |
 
 ```js
 // Saving without a primary key:
@@ -314,11 +314,11 @@ book2.save(function(err, model) {
 
 Fetches a model with the given scope. If `scope` is not defined, all attributes will be included. This method can only be called on model instances that have a set primary key.
 
-| Description      | Type       | Required |
-|:-----------------|:-----------|:---------|
-| Mutation request | `{}`       | No       |
-| Scope name       | `string`   | No       |
-| Callback         | `function` | Yes      |
+| Description    | Type       | Required |
+|:---------------|:-----------|:---------|
+| Access request | `{}`       | No       |
+| Scope name     | `string`   | No       |
+| Callback       | `function` | Yes      |
 
 ```js
 var book = Book.get(2);
@@ -335,10 +335,10 @@ book.fetch('onlyName', function(err) {
 
 Removes all model references. If model's `options.softDelete` is not set to `true`, the model is permanently deleted from the datastores. This method can only be called on model instances that have a set primary key.
 
-| Description      | Type       | Required |
-|:-----------------|:-----------|:---------|
-| Mutation request | `{}`       | No       |
-| Callback         | `function` | Yes      |
+| Description    | Type       | Required |
+|:---------------|:-----------|:---------|
+| Access request | `{}`       | No       |
+| Callback       | `function` | Yes      |
 
 ```js
 var book = Book.get(2);
