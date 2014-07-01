@@ -29,8 +29,7 @@ This is datastored's implementation of a **1:1** relationship between models.
 #### Options
 - **`join`**: (type: boolean, default: false) Embeds the related model within the attributes of the parent model. All of the model's attributes are joined by default.
 - **`joinedAttributes`**: (type: array, default: all) Joins only certain attributes from the related model.
-- **`reverseRelation`**: Reverse relations
-
+- **`relation`**: Reverse key
 
 HasMany
 -------
@@ -40,6 +39,8 @@ This is the ORM's implementation of a **1:n** relationship between models. The o
 - **`audit`**: (type: boolean, default: false) Includes the time when the relationship was made.
 - **`sortable`**: (type: boolean, default: false) Includes the time when the relationship was made.
 - **`useJoinTable`**: (type: boolean, default: false) Forces cassandra to use a column family as a join table. By default, cassandra uses columns when mapping the related models in a `HasMany` relationship. A join table might be needed for a large number of related models or for spreading the data more evenly across the cluster.
+
+- **`relation`**: Reverse key
 
 
 ManyToMany
