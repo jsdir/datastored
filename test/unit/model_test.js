@@ -357,6 +357,10 @@ describe('Model', function() {
     xit('should not change immutable attributes', function() {
 
     });
+
+    xit('should set `changedAttributes`', function() {
+
+    });
   });
 
   describe('#get()', function() {
@@ -406,6 +410,24 @@ describe('Model', function() {
 
     xit('should validate attributes', function() {
 
+    });
+
+    it('should not fail when no attributes have changed', function(done) {
+      this.model.save(function(err) {
+        expect(err).to.be.undefined;
+        done();
+      });
+    });
+
+    it('should reset changed attributes when done', function(done) {
+      var model = this.model;
+      model.set('foo', 'bar');
+
+      model.save(function(err) {
+        expect(err).to.be.undefined;
+        model.changedAttributes.should.be.empty;
+        done();
+      });
     });
   });
 
