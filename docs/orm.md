@@ -29,11 +29,15 @@ module.exports = datastored.createOrm({
 
 #### redisClient
 
-**(required)** A [redis client](https://github.com/mranney/node_redis).
+A [redis client](https://github.com/mranney/node_redis).
 
 #### cassandraClient
 
-**(required)** A [cassandra client](https://github.com/jorgebay/node-cassandra-cql).
+A [cassandra client](https://github.com/jorgebay/node-cassandra-cql).
+
+#### memory
+
+Uses in-memory datastores instead of redis/cassandra. This is used for testing. Defaults to `false`.
 
 #### generateId
 
@@ -57,6 +61,6 @@ Defines the namespace for redis to use. This option is useful when running multi
 
 Datstored uses several base transforms on model for features such as hidden attributes and validation. These transforms cannot be changed. `modelTransforms` are added to the transform chain immediately after the immutable ones added by datastored.
 
-#### modelMarshaller
+#### marshaller
 
-Defines a default marshaller to use for each model. This can be overridden per model. `modelMarshaller` defaults to `marshaller.JSONMarshaller`. A list of available marshallers is documented [here](marshallers.md).
+Defines a default marshaller to use for each model. This can be overridden per model. `modelMarshaller` defaults to `marshallers.JSONMarshaller`. A list of available marshallers is documented [here](marshallers.md).

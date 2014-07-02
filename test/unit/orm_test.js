@@ -1,7 +1,7 @@
 var _ = require('lodash');
 var chai = require('chai');
 
-var datastored = require('../..')
+var datastored = require('../..');
 
 chai.should()
 
@@ -31,12 +31,12 @@ describe('datastored.createOrm()', function() {
   })
 });
 
-describe('Orm', function() {
+describe('orm', function() {
 
   describe('#createModel()', function() {
 
-    it('should fail if the model name has already been ' +
-      'registered', function() {
+    it('should fail if the model name has already been registered',
+    function() {
       var orm = datastored.createOrm(options);
       var model = orm.createModel('Model', {});
       (function() {
