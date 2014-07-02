@@ -9,7 +9,7 @@ var orm = require('./orm');
 
 var Book = orm.createModel('Book', {
   column: 'books',
-  schema: {
+  properties: {
     id: {
       type: 'number'
     },
@@ -42,7 +42,7 @@ The model name is case-insensitive and must be unique to the orm.
 
 Is the redis key fragment and the cassandra column name. This defaults to the model's name in lowercase.
 
-#### schema
+#### properties
 
 **(required)** Defines the model's properties.
 
@@ -78,14 +78,14 @@ Defines methods for the model instance. This option will overwrite any existing 
 
 Defines methods for the model constructor. This option will overwrite any existing static methods on conflict.
 
-## Schema
+## Properties
 
-Schema describes model properties and their values. Every model has a default primary `id` property that uses the orm's `generateId` to set the value. This property can be overridden.
+The `properties` option describes model properties and their values. Every model has a default primary `id` property that uses the orm's `generateId` to set the value. This property can be overridden.
 
 Because they have their own options, properties are defined with the names as keys and the options as values:
 
 ```js
-schema: {
+properties: {
   title: {
     type: 'string',
     cached: true
@@ -100,7 +100,7 @@ schema: {
 }
 ```
 
-### Attribute options
+### Property options
 
 #### type
 
@@ -117,6 +117,10 @@ Unlike the `primary` option, any property can become indexed if `index` is set t
 #### cached
 
 When set to `true`, the property will be cached. Defaults to `false`.
+
+#### immutable
+
+When set to `true`, datastored will only be able to set this attribute on a new, unsaved model. In all other occurrences, setting the variable will be ignored. Defaults to `false`.
 
 #### rules
 
@@ -252,7 +256,7 @@ Returns a hash of the model's transformed attributes that are included by `scope
 
 ```js
 var Book = orm.createClass('Book', {
-  schema: {
+  properties: {
     id: {
       primary: true,
       type: 'number'
