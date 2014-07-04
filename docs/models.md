@@ -227,7 +227,7 @@ var name = book.get('name');
 console.log(name); // -> "foo"
 ```
 
-##### Alternative usage: .get(`attributes`[, `raw`])
+##### Alternative usage: .get(`attributes`[, `raw`]) -> `*`
 
 The alternative usage can be used to get multiple `attributes`.
 
@@ -241,7 +241,7 @@ var data = book.get(['isbn', 'name']);
 console.log(data); // -> {"isbn": 123, "name": "foo"}
 ```
 
-#### model.toObject([`scope`[, `raw`]])
+#### model.toObject([`scope`[, `raw`]]) -> `{}`
 
 Returns a hash of the model's transformed attributes that are included by `scope`. If `scope` is not defined, all attributes will be included. If `raw` is set to `true`, the result object will not be passed through `output` mutation.
 
@@ -277,7 +277,7 @@ console.log(data); // -> {"id": 2, "name": "foo", "isbn": 123}
 console.log(nameData); // -> {"id": 2, "name": "foo"}
 ```
 
-#### model.save([`req`,]`cb`)
+#### model.save([`req`,]`cb`) -> `Instance`
 
 Save can be called on any model instance. If the model instance does not have a set primary key, the orm will automatically generate and assign one to the model instance using `generateId`. `cb` will immediately return an error if the model is invalid.
 
@@ -355,6 +355,6 @@ book.destroy(function(err) {
 
 Returns a boolean value indicating if the model is valid.
 
-#### model.inputErrors
+#### model.inputErrors -> `{}`
 
 Contains all input errors.
