@@ -57,9 +57,9 @@ var settings = {
 
 Defines the namespace for redis to use. This option is useful when running multiple orm instances on the same redis server. The default namespace is `ds`.
 
-#### modelTransforms
+#### mutators
 
-Datstored uses several base transforms on model for features such as hidden attributes and validation. These transforms cannot be changed. `modelTransforms` are added to the transform chain immediately after the immutable ones added by datastored.
+Datstored uses several base attribute mutations for features such as hidden attributes, validation. These transforms cannot be changed. `mutators` are added to the function chain immediately after the immutable ones added by datastored. More documentation about mutators can be found [here](mutators.md).
 
 #### marshaller
 

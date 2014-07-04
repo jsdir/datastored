@@ -62,9 +62,9 @@ Defines the model's scopes.
 
 When set to `true`, only references will be destroyed when a model is deleted. The model itself will not be deleted from the datastores. Defaults to `false`.
 
-#### transforms
+#### mutators
 
-Defines the model's transforms. Transforms are described [here](transforms.md) in further detail.
+Defines mutator methods for `input`, `output`, `save`, and `fetch`. Mutators are chained when the model is extended. More documentation about mutators can be found [here](mutators.md).
 
 #### methods
 
@@ -130,29 +130,29 @@ Multiple model types can be classified under a parent model. The model types wil
 
 Static methods are called on the model class.
 
-For most of these methods, the callback is optional. If a callback is not specified, the method will return a chainable object. Also, many of these methods have a `raw` parameter. Set `raw` to `true` when you know the values that you are putting into the model and to `false` when using values from user input.
+For most of these methods, the callback is optional. If a callback is not specified, the method will return a chainable object. Also, many of these methods have a `raw` parameter. Set `raw` to `true` when you know the values that you are putting into the model and to `false` when using values from user input. `raw` will always default to false.
 
-#### .create(`attributes`[, `raw`])
+#### .create(`attributes`[, `raw`]) -> `Instance`
 
-Will construct a new instance of the model with `attributes`. If `raw` is set to `false`, `attributes` will be passed through the `input` transform chain and will also be deserialized.
+Will construct a new instance of the model with `attributes`. If `raw` is set to `true`, `attributes` will not be passed through `input` mutation. If the input is invalid, errors will be merged into `model.inputErrors` and the model will be marked as invalid.
 
 | Description         | Type       | Required | Default |
 |:--------------------|:-----------|:---------|:--------|
 | Model attributes    | `{}`       | Yes      |         |
-| Use raw attributes? | `boolean`  | No       | `true`  |
+| Use raw attributes? | `boolean`  | No       | `false` |
 
 ```js
 var book = Book.create({isbn: 123});
 ```
 
-#### .get(`pk`[, `raw`])
+#### .get(`pk`[, `raw`]) -> `Instance`
 
-Gets a model from a primary key. This method does not fetch from any datastores, it is just a convenience method that creates a new model and assigns the primary key to `pk`. If `raw` is set to `false`, `pk` will be passed through the `input` transform chain and will also be deserialized.
+Gets a model from a primary key. This method does not fetch from any datastores, it is just a convenience method that creates a new model and assigns the primary key to `pk`. If `raw` is set to `true`, `pk` will not be passed through `input` mutation. If `pk` is an invalid value, the error will be merged into `model.inputErrors` and the model will be marked as invalid.
 
 | Description         | Type      | Required | Default |
 |:--------------------|:----------|:---------|:--------|
 | Primary key         | `*`       | Yes      |         |
-| Use raw attributes? | `boolean` | No       | `true`  |
+| Use raw attributes? | `boolean` | No       | `false` |
 
 ```js
 var book = Book.get(2);
@@ -160,12 +160,12 @@ var book = Book.get(2);
 
 #### .find(`query`[, `raw`], `callback`)
 
-Finds any model that matches `query`. `query` is a hash with attribute names as keys and attributes values as values. If `raw` is set to `false`, `query` will be passed through the `input` transform chain and will also be deserialized.
+Finds any model that matches `query`. `query` is a hash with attribute names as keys and attributes values as values. If `raw` is set to `true`, `query` will not be passed through `input` mutation. If any of the query values are invalid, errors will be merged into `model.inputErrors` and the model will be marked as invalid.
 
 | Description         | Type       | Required | Default |
 |:--------------------|:-----------|:---------|:--------|
 | Query               | `{}`       | Yes      |         |
-| Use raw attributes? | `boolean`  | No       | `true`  |
+| Use raw attributes? | `boolean`  | No       | `false` |
 | Callback            | `function` | True     |         |
 
 ```js
@@ -186,20 +186,20 @@ Instance methods can be called on model instances.
 
 Some of these methods have a `req` parameter. This is an optional access request, an `object` that can be used to implement ACLs and authorization subsystems with mixins.
 
-#### .set(`attributes`[, `raw`])
+#### .set(`attributes`[, `raw`]) -> `Instance`
 
-Set `attributes` and overwrites existing ones on conflict. If `raw` is set to `false`, `attributes` will be passed through the `input` transform chain and will also be deserialized.
+Set `attributes` and overwrites existing ones on conflict. If `raw` is set to `true`, `attributes` will not be passed through `input` mutation. If the input is invalid, errors will be merged into `model.inputErrors` and the model will be marked as invalid. `set` will delete errors from `inputErrors` if the value is valid. If the new value is invalid, the error message will overwrite any existing messages in `inputErrors`.
 
 | Description         | Type       | Required | Default |
 |:--------------------|:-----------|:---------|:--------|
 | Model attributes    | `{}`       | Yes      |         |
-| Use raw attributes? | `boolean`  | No       | `true`  |
+| Use raw attributes? | `boolean`  | No       | `false` |
 
 ```js
 book.set({name: 'foo', isbn: 123});
 ```
 
-##### Alternative usage: .set(`name`, `value`[, `raw`])
+##### Alternative usage: .set(`name`, `value`[, `raw`]) -> Instance
 
 The alternative usage can be used to set a single attribute.
 
@@ -207,20 +207,20 @@ The alternative usage can be used to set a single attribute.
 |:--------------------|:----------|:---------|:--------|
 | Attribute name      | `string`  | Yes      |         |
 | Attribute value     | `*`       | Yes      |         |
-| Use raw attributes? | `boolean` | No       | `true`  |
+| Use raw attributes? | `boolean` | No       | `false` |
 
 ```js
 book.set('isbn', 123);
 ```
 
-#### .get(`attribute`[, `raw`])
+#### .get(`attribute`[, `raw`]) -> `*`
 
-Gets the value of `attribute`. If `raw` is set to `false`, the result will be passed through the `output` transform chain and will also be serialized.
+Gets the value of `attribute`. If `raw` is set to `true`, the result value will not be passed through `output` mutation.
 
 | Description       | Type      | Required | Default |
 |:------------------|:----------|:---------|:--------|
 | Attribute name    | `string`  | Yes      |         |
-| Return raw value? | `boolean` | No       | `true`  |
+| Return raw value? | `boolean` | No       | `false` |
 
 ```js
 var name = book.get('name');
@@ -234,7 +234,7 @@ The alternative usage can be used to get multiple `attributes`.
 | Description       | Type      | Required | Default |
 |:------------------|:----------|:---------|:--------|
 | Attribute names   | `array`   | Yes      |         |
-| Return raw value? | `boolean` | No       | `true`  |
+| Return raw value? | `boolean` | No       | `false` |
 
 ```js
 var data = book.get(['isbn', 'name']);
@@ -243,12 +243,12 @@ console.log(data); // -> {"isbn": 123, "name": "foo"}
 
 #### model.toObject([`scope`[, `raw`]])
 
-Returns a hash of the model's transformed attributes that are included by `scope`. If `scope` is not defined, all attributes will be included. If `raw` is set to `false`, the result will be passed through the `output` transform chain and will also be serialized.
+Returns a hash of the model's transformed attributes that are included by `scope`. If `scope` is not defined, all attributes will be included. If `raw` is set to `true`, the result object will not be passed through `output` mutation.
 
 | Description       | Type       | Required | Default |
 |:------------------|:-----------|:---------|:--------|
 | Scope name        | `string`   | No       |         |
-| Return raw value? | `boolean`  | No       | `true`  |
+| Return raw value? | `boolean`  | No       | `false` |
 
 ```js
 var Book = orm.createClass('Book', {
@@ -279,7 +279,7 @@ console.log(nameData); // -> {"id": 2, "name": "foo"}
 
 #### model.save([`req`,]`cb`)
 
-Save can be called on any model instance. If the model instance does not have a set primary key, the orm will automatically generate and assign one to the model instance using `generateId`.
+Save can be called on any model instance. If the model instance does not have a set primary key, the orm will automatically generate and assign one to the model instance using `generateId`. `cb` will immediately return an error if the model is invalid.
 
 | Description    | Type       | Required |
 |:---------------|:-----------|:---------|
@@ -312,7 +312,7 @@ book2.save(function(err, model) {
 
 #### model.fetch([`req`, [`scope`,]] `cb`)
 
-Fetches a model with the given scope. If `scope` is not defined, all attributes will be included. This method can only be called on model instances that have a set primary key.
+Fetches a model with the given scope. If `scope` is not defined, all attributes will be included. This method can only be called on model instances that have a set primary key. `cb` will immediately return an error if the model is invalid or if the model has no primary attribute value.
 
 | Description    | Type       | Required |
 |:---------------|:-----------|:---------|
@@ -333,7 +333,7 @@ book.fetch('onlyName', function(err) {
 
 #### model.destroy([`req`,] `cb`)
 
-Removes all model references. If model's `options.softDelete` is not set to `true`, the model is permanently deleted from the datastores. This method can only be called on model instances that have a set primary key.
+Removes all model references. If model's `options.softDelete` is not set to `true`, the model is permanently deleted from the datastores. This method can only be called on model instances that have a set primary key. `cb` will immediately return an error if the model is invalid or if the model has no primary attribute value.
 
 | Description    | Type       | Required |
 |:---------------|:-----------|:---------|
@@ -350,3 +350,11 @@ book.destroy(function(err) {
   }
 });
 ```
+
+#### model.isValid() -> `bool`
+
+Returns a boolean value indicating if the model is valid.
+
+#### model.inputErrors
+
+Contains all input errors.
