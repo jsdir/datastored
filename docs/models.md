@@ -62,6 +62,10 @@ Defines the model's scopes.
 
 When set to `true`, only references will be destroyed when a model is deleted. The model itself will not be deleted from the datastores. Defaults to `false`.
 
+#### audit
+
+When set to `true`, the model will be given two new fields, `created_at` and `updated_at`. These fields will be controlled by datastored. Defaults to `false`.
+
 #### mutators
 
 Defines mutator methods for `input`, `output`, `save`, and `fetch`. Mutators are chained when the model is extended. More documentation about mutators can be found [here](mutators.md).
