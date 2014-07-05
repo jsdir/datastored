@@ -59,7 +59,7 @@ Defines the namespace for redis to use. This option is useful when running multi
 
 #### mutators
 
-Datstored uses several base attribute mutations for features such as hidden attributes, validation. These transforms cannot be changed. `mutators` are added to the function chain immediately after the immutable ones added by datastored. More documentation about mutators can be found [here](mutators.md).
+Defines mutators to use for each model instance. More documentation about mutators can be found [here](mutators.md).
 
 #### marshaller
 
