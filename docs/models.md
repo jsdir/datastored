@@ -68,7 +68,7 @@ When set to `true`, the model will be given two new fields, `created_at` and `up
 
 #### mutators
 
-Defines mutator methods for `input`, `output`, `save`, and `fetch`. Mutators are chained when the model is extended. More documentation about mutators can be found [here](mutators.md).
+Defines mutator methods for the model. Mutators are chained when the model is extended. More documentation about mutators can be found [here](mutators.md).
 
 #### methods
 
