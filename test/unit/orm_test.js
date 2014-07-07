@@ -10,24 +10,24 @@ var options = {
   cassandraClient: true
 };
 
-describe('datastored.createOrm()', function() {
+describe.only('datastored.createOrm()', function() {
 
   it('should fail when any required option is not defined', function() {
     (function() {
       datastored.createOrm(_.omit(options, ['redisClient']))
-    }).should.throw('`redisClient` is not defined');
+    }).should.throw('"redisClient" is not defined');
 
     (function() {
       datastored.createOrm(_.omit(options, ['cassandraClient']))
-    }).should.throw('`cassandraClient` is not defined');
+    }).should.throw('"cassandraClient" is not defined');
   });
 
-  it('should use a default id generator if `generateId` is not ' +
+  it('should use an incrementing id generator if `generateId` is not ' +
     'defined', function() {
     var orm = datastored.createOrm(options);
 
-    orm.options.generateId().should.equal(1);
-    orm.options.generateId().should.equal(2);
+    orm.generateId().should.equal(1);
+    orm.generateId().should.equal(2);
   })
 });
 
@@ -41,7 +41,7 @@ describe('orm', function() {
       var model = orm.createModel('Model', {});
       (function() {
         orm.createModel('Model', {});
-      }).should.throw('model `Model` is already defined');
+      }).should.throw('model "Model" is already defined');
     });
   });
 });

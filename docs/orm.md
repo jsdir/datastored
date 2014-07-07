@@ -37,7 +37,7 @@ A [cassandra client](https://github.com/jorgebay/node-cassandra-cql).
 
 #### memory
 
-Uses in-memory datastores instead of redis/cassandra. This is used for testing. Defaults to `false`.
+If set to `true`, the orm will use in-memory datastores instead of redis and cassandra. This is useful for testing. Defaults to `false`.
 
 #### generateId
 
