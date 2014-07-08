@@ -9,7 +9,48 @@ var Model = require('../../lib/model').Model;
 chai.should();
 chai.use(sinonChai);
 
+function createOrm() {
+  return datastored.createOrm({
+    redisClient: true,
+    cassandraClient: true
+  });
+}
+
+var options = {
+  table: 'models'
+};
+
 describe('Model', function() {
+
+  beforeEach(function() {
+    this.orm = createOrm();
+  });
+
+  it('should have "staticMethods" from options', function() {
+    var modelClass = this.orm.createModel('Model', _.extend({}, options, {
+      staticMethods: {foo: function() {return this;}}
+    }));
+    modelClass.foo().should.deep.equal(modelClass);
+  });
+});
+
+describe('Instance', function() {
+
+  beforeEach(function() {
+    this.orm = createOrm();
+  });
+
+  it('should have "methods" from options', function() {
+    var modelClass = this.orm.createModel('Model', _.extend({}, options, {
+      methods: {foo: function() {return this;}}
+    }));
+    var model = modelClass.create({});
+    model.foo().should.deep.equal(model);
+  });
+});
+
+/*
+xdescribe('_Model', function() {
 
   var options = {
     table: 'models',
@@ -502,3 +543,4 @@ describe('Model', function() {
     });
   });
 });
+*/
