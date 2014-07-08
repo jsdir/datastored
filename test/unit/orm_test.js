@@ -10,7 +10,7 @@ var options = {
   cassandraClient: true
 };
 
-describe.only('datastored.createOrm()', function() {
+describe('datastored.createOrm()', function() {
 
   it('should fail when any required option is not defined', function() {
     (function() {

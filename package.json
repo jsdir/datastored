@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "mocha -R spec test/**/orm_test.js"
+    "test": "mocha -R spec test/unit/{orm,model}_test.js"
   },
   "repository": {
     "type": "git",
