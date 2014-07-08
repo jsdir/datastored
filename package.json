@@ -7,7 +7,8 @@
     "test": "test"
   },
   "scripts": {
-    "test": "mocha -R spec test/unit/{orm,model}_test.js"
+    "test": "mocha -R spec test/unit/{orm,model}_test.js",
+    "watch-test": "mocha -w -R spec test/unit/{orm,model}_test.js"
   },
   "repository": {
     "type": "git",

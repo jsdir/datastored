@@ -32,6 +32,23 @@ describe('Model', function() {
     }));
     modelClass.foo().should.deep.equal(modelClass);
   });
+
+  describe('#create()', function() {
+
+    beforeEach(function() {
+      this.TestModel = this.orm.createModel('TestModel', {});
+    });
+
+    it('should mutated attributes by default', function() {
+      var model = this.TestModel.create({foo: 'bar'});
+      model.get('foo', true).should.eq('mutated');
+    });
+
+    it('should not mutate attributes when requested', function() {
+      var model = this.TestModel.create({foo: 'bar'}, true);
+      model.get('foo', true).should.eq('bar');
+    });
+  });
 });
 
 describe('Instance', function() {
