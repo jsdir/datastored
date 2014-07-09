@@ -48,7 +48,7 @@ Is the redis key fragment and the cassandra column name. This defaults to the mo
 
 #### extends
 
-Allows the model to extend the definition of another model.
+Allows the model to extend the definition of another model. If a model is extended with options and an overlapping callback is found, the callbacks will be chained with the existing callback running before the extension's callback.
 
 #### relations
 
@@ -69,6 +69,10 @@ When set to `true`, the model will be given two new fields, `created_at` and `up
 #### mutators
 
 Defines mutator methods for the model. Mutators are chained when the model is extended. More documentation about mutators can be found [here](mutators.md).
+
+#### callbacks
+
+Defines actions to perform at different times in the model's lifecycle. More documentation about callbacks can be found [here](callbacks.md).
 
 #### methods
 
