@@ -50,6 +50,16 @@ Is the redis key fragment and the cassandra column name. This defaults to the mo
 
 Allows the model to extend the definition of another model. If a model is extended with options and an overlapping callback is found, the callbacks will be chained with the existing callback running before the extension's callback.
 
+#### mixins
+
+Can be used to extend a model's options. Options are extended differently by type:
+
+- option properties (attributes)
+  - If the option property is not an object (`column`, `softDelete`) are overwritten by the mixin on conflict.
+  - If the option property is an object, the objects keys are overwritten on naming conflict.
+- option functions
+  - `callbacks` are composed synchronously or asynchronously based on the function name. More details about how different callbacks are composed can be found in the [documentation for callbacks](callbacks.md).
+
 #### relations
 
 Defines the model's relations. Relations are described [here](relations.md) in further detail.
@@ -65,10 +75,6 @@ When set to `true`, only references will be destroyed when a model is deleted. T
 #### audit
 
 When set to `true`, the model will be given two new fields, `created_at` and `updated_at`. These fields will be controlled by datastored. Defaults to `false`.
-
-#### mutators
-
-Defines mutator methods for the model. Mutators are chained when the model is extended. More documentation about mutators can be found [here](mutators.md).
 
 #### callbacks
 
