@@ -4,7 +4,7 @@ var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
 
 var datastored = require('../..');
-var Model = require('../../lib/model').Model;
+var Instance = require('../../lib/model').Instance;
 
 chai.should();
 chai.use(sinonChai);
@@ -35,18 +35,19 @@ describe('Model', function() {
 
   describe('#create()', function() {
 
-    beforeEach(function() {
-      this.TestModel = this.orm.createModel('TestModel', {});
+    before(function() {
+      sinon.stub(Instance.prototype, 'set');
     });
 
-    it('should mutated attributes by default', function() {
-      var model = this.TestModel.create({foo: 'bar'});
-      model.get('foo', true).should.eq('mutated');
+    after(function() {
+      Instance.prototype.set.restore();
     });
 
-    it('should not mutate attributes when requested', function() {
-      var model = this.TestModel.create({foo: 'bar'}, true);
-      model.get('foo', true).should.eq('bar');
+    it('should construct instances correctly', function() {
+      var TestModel = this.orm.createModel('TestModel', {});
+      var instance = TestModel.create('attributes', true);
+      instance.set.should.have.been.calledWith('attributes', true);
+      instance.isValid.should.eq(true);
     });
   });
 });
@@ -63,6 +64,42 @@ describe('Instance', function() {
     }));
     var model = modelClass.create({});
     model.foo().should.deep.equal(model);
+  });
+
+  before(function() {
+    this.TestModel = this.orm.createModel('TestModel', {});
+  });
+
+  describe('#get()', function() {
+    it('should mutate attributes by default', function() {
+      var model = this.TestModel.create({foo: 'bar'});
+      model.get('foo', true).should.eq('mutated');
+    });
+
+    it('should not mutate attributes when requested', function() {
+      var model = this.TestModel.create({foo: 'bar'}, true);
+      model.get('foo', true).should.eq('bar');
+    });
+  });
+
+  describe('#set()', function() {
+    it('should mutate attributes by default', function() {
+      var model = this.TestModel.create({foo: 'bar'});
+      model.get('foo', true).should.eq('mutated');
+    });
+
+    it('should not mutate attributes when requested', function() {
+      var model = this.TestModel.create({foo: 'bar'}, true);
+      model.get('foo', true).should.eq('bar');
+    });
+
+    it('should store errors and become invalid on mutation error', function() {
+      // stub marshaller or _mutators_ to return error
+      TestModel.create({});
+
+      model.isValid.should.eq(false);
+      model.inputErrors.should.deep.eq({'foo': 'message'});
+    });
   });
 });
 
