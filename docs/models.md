@@ -365,6 +365,14 @@ book.destroy(function(err) {
 });
 ```
 
+#### model.incr(`attribute`, `amount`)
+
+Atomically increments `attribute` by `amount`.
+
+#### model.decr(`attribute`, `amount`)
+
+Atomically decrements `attribute` by `amount`.
+
 #### model.isValid() -> `bool`
 
 Returns a boolean value indicating if the model is valid.
