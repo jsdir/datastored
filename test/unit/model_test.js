@@ -101,6 +101,8 @@ describe('Instance', function() {
       model.inputErrors.should.deep.eq({'foo': 'message'});
     });
   });
+
+  // changed attributes
 });
 
 /*
