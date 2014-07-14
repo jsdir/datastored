@@ -33,7 +33,8 @@
     "validator": "~3.16.1",
     "node-cassandra-cql": "~0.4.4",
     "redis": "~0.11.0",
-    "hiredis": "~0.1.17"
+    "hiredis": "~0.1.17",
+    "elasticsearch": "~2.3.0"
   },
   "devDependencies": {
     "sinon-chai": "~2.5.0",
