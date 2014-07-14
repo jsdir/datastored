@@ -38,9 +38,18 @@ describe('orm', function() {
     it('should fail if the model name has already been registered',
     function() {
       var orm = datastored.createOrm(options);
-      var model = orm.createModel('Model', {});
+      var modelOptions = {
+        column: 'models',
+        properties: {
+          id: {
+            type: 'string',
+            primary: true
+          }
+        }
+      };
+      var model = orm.createModel('Model', modelOptions);
       (function() {
-        orm.createModel('Model', {});
+        orm.createModel('Model', modelOptions);
       }).should.throw('model "Model" is already defined');
     });
   });

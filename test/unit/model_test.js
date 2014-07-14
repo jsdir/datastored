@@ -8,6 +8,7 @@ var Instance = require('../../lib/model').Instance;
 
 chai.should();
 chai.use(sinonChai);
+var expect = chai.expect;
 
 function createOrm() {
   return datastored.createOrm({
@@ -16,21 +17,94 @@ function createOrm() {
   });
 }
 
-var options = {
-  table: 'models'
+var onBefore = function() {
+  var orm = createOrm();
+  this.orm = orm;
+  this.createModel = function(options, name) {
+    return orm.createModel(name || _.uniqueId(), _.merge({}, {
+      column: 'models',
+      properties: {
+        id: {
+          type: 'string',
+          primary: true
+        }
+      }
+    }, options));
+  };
 };
 
 describe('Model', function() {
 
-  beforeEach(function() {
-    this.orm = createOrm();
-  });
+  before(onBefore);
 
   it('should have "staticMethods" from options', function() {
-    var modelClass = this.orm.createModel('Model', _.extend({}, options, {
+    var modelClass = this.createModel({
       staticMethods: {foo: function() {return this;}}
-    }));
+    });
     modelClass.foo().should.deep.equal(modelClass);
+  });
+
+  it('should require a column name', function() {
+    var _this = this;
+    (function() {
+      _this.orm.createModel('Model', {
+        id: {
+          type: 'string',
+          primary: true
+        }
+      });
+    }).should.throw('"column" is not defined');
+  });
+
+  it('should require a primary key property', function() {
+    var _this = this;
+    (function() {
+      _this.orm.createModel('Model', {
+        column: 'models',
+        relations: {foo: {primary: true}}
+      });
+    }).should.throw('no primary key property defined');
+  });
+
+  it('should not have multiple primary key properties', function() {
+    var _this = this;
+    (function() {
+      _this.createModel({
+        properties: {
+          otherId: {
+            type: 'string',
+            primary: true
+          }
+        }
+      });
+    }).should.throw('multiple primary key properties defined: id,otherId');
+  });
+
+  it('should not allow the primary key property to be hidden', function() {
+    var _this = this;
+    (function() {
+      _this.orm.createModel('Model', {
+        column: 'models',
+        properties: {
+          id: {
+            type: 'string',
+            primary: true,
+            hidden: true
+          }
+        }
+      });
+    }).should.throw('primary key property "id" cannot be hidden');
+  });
+
+  it('should not allow properties without types', function() {
+    var _this = this;
+    (function() {
+      _this.createModel({
+        properties: {
+          typeless: {}
+        }
+      });
+    }).should.throw('property "typeless" requires a type');
   });
 
   describe('#create()', function() {
@@ -44,65 +118,114 @@ describe('Model', function() {
     });
 
     it('should construct instances correctly', function() {
-      var TestModel = this.orm.createModel('TestModel', {});
+      var TestModel = this.createModel({});
       var instance = TestModel.create('attributes', true);
       instance.set.should.have.been.calledWith('attributes', true);
-      instance.isValid.should.eq(true);
+      instance.errors.should.deep.eq({});
     });
   });
 });
 
 describe('Instance', function() {
 
-  beforeEach(function() {
-    this.orm = createOrm();
+  before(onBefore);
+
+  before(function() {
+    this.Model = this.createModel({properties: {
+      foo: {type: 'string'},
+      bar: {type: 'string'}
+    }});
+
+    this.CallbackModel = this.createModel({
+      properties: {
+        foo: {type: 'string'}
+      },
+      callbacks: {
+        beforeInput: function(values, cb) {
+          values.foo += ',beforeInput';
+          cb(null, values);
+        },
+        afterInput: function(values, cb) {
+          values.foo += ',afterInput';
+          cb(null, values);
+        },
+        beforeOutput: function(values) {
+          values.foo += ',beforeOutput';
+          return values;
+        },
+        afterOutput: function(values) {
+          values.foo += ',afterOutput';
+          return values;
+        }
+      }
+    }, 'CallbackModel');
+
+    this.ErrorModel = this.createModel({
+      properties: {
+        foo: {type: 'string'}
+      },
+      callbacks: {
+        beforeInput: function(values, cb) {
+          cb({foo: 'message'});
+        }
+      }
+    }, 'ErrorModel');
   });
 
   it('should have "methods" from options', function() {
-    var modelClass = this.orm.createModel('Model', _.extend({}, options, {
+    var modelClass = this.createModel({
       methods: {foo: function() {return this;}}
-    }));
+    });
     var model = modelClass.create({});
     model.foo().should.deep.equal(model);
   });
 
-  before(function() {
-    this.TestModel = this.orm.createModel('TestModel', {});
-  });
-
   describe('#get()', function() {
     it('should mutate attributes by default', function() {
-      var model = this.TestModel.create({foo: 'bar'});
-      model.get('foo', true).should.eq('mutated');
+      var model = this.CallbackModel.create({foo: 'bar'}, true);
+      model.get('foo').should.deep.eq('bar,beforeOutput,afterOutput');
     });
 
     it('should not mutate attributes when requested', function() {
-      var model = this.TestModel.create({foo: 'bar'}, true);
+      var model = this.CallbackModel.create({foo: 'bar'}, true);
       model.get('foo', true).should.eq('bar');
+    });
+
+    it('should support getting multiple values', function() {
+      var model = this.Model.create({foo: 'foo', bar: 'bar'}, true);
+      model.get(['foo', 'bar']).should.deep.eq({foo: 'foo', bar: 'bar'});
     });
   });
 
   describe('#set()', function() {
     it('should mutate attributes by default', function() {
-      var model = this.TestModel.create({foo: 'bar'});
-      model.get('foo', true).should.eq('mutated');
+      var model = this.CallbackModel.create();
+      model.set({foo: 'bar'});
+      model.get('foo', true).should.eq('bar,beforeInput,afterInput');
     });
 
     it('should not mutate attributes when requested', function() {
-      var model = this.TestModel.create({foo: 'bar'}, true);
+      var model = this.CallbackModel.create();
+      model.set({foo: 'bar'}, true);
       model.get('foo', true).should.eq('bar');
     });
 
-    it('should store errors and become invalid on mutation error', function() {
-      // stub marshaller or _mutators_ to return error
-      TestModel.create({});
+    it('should ignore attributes that are not defined', function() {
+      var model = this.Model.create();
+      model.set({baz: 123}, true);
+      expect(model.get('baz')).to.be.undefined;
+    });
 
-      model.isValid.should.eq(false);
-      model.inputErrors.should.deep.eq({'foo': 'message'});
+    it('should store errors and become invalid on mutation error', function() {
+      var model = this.ErrorModel.create();
+      model.set({foo: 'bar'});
+      model.errors.should.deep.eq({'foo': 'message'});
     });
   });
 
-  // changed attributes
+  // [ ] only changed attributes and relations should be sent to the datastore.
+  // [ ] changed attributes
+  // [ ] test multiple callback mixin ordering
 });
 
 /*
