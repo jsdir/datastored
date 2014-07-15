@@ -107,6 +107,18 @@ describe('Model', function() {
     }).should.throw('property "typeless" requires a type');
   });
 
+  it('should run options through the `initialize` callback', function() {
+    var Model = this.createModel({
+      callbacks: {
+        initialize: function(options) {
+          options.foo = this;
+          return options;
+        }
+      }
+    });
+    Model.options.foo.should.eq(Model);
+  });
+
   describe('#create()', function() {
 
     before(function() {
@@ -223,8 +235,9 @@ describe('Instance', function() {
     });
   });
 
+
+
   // [ ] only changed attributes and relations should be sent to the datastore.
-  // [ ] changed attributes
   // [ ] test multiple callback mixin ordering
 });
 
