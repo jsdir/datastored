@@ -201,6 +201,16 @@ describe('Instance', function() {
     model.foo().should.deep.equal(model);
   });
 
+  it('should make the primary key property immutable', function() {
+    var model1 = this.Model.create();
+    model1.set('id', 'foo', true);
+    model1.get('id', true).should.eq('foo');
+
+    var model2 = this.Model.get('foo', true);
+    model2.set('id', 'bar', true);
+    model2.get('id', true).should.eq('foo');
+  });
+
   describe('#get()', function() {
     it('should mutate attributes by default', function() {
       var model = this.CallbackModel.create({foo: 'bar'}, true);
