@@ -130,10 +130,19 @@ describe('Model', function() {
     });
 
     it('should construct instances correctly', function() {
-      var TestModel = this.createModel({});
-      var instance = TestModel.create('attributes', true);
+      var Model = this.createModel();
+      var instance = Model.create('attributes', true);
       instance.set.should.have.been.calledWith('attributes', true);
       instance.errors.should.deep.eq({});
+    });
+  });
+
+  describe('#get()', function() {
+
+    it('should use the primary key property', function() {
+      var Model = this.createModel();
+      var model = Model.get('foo');
+      model.get('id').should.equal('foo');
     });
   });
 });
