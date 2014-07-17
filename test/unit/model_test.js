@@ -51,7 +51,7 @@ function onBefore() {
       }
     }
   }, 'CallbackModel');
-};
+}
 
 function appendValue(data, appendedValue) {
   return _.object(_.map(data, function(value, key) {
@@ -62,6 +62,97 @@ function appendValue(data, appendedValue) {
 describe('Model', function() {
 
   before(onBefore);
+
+  describe('mixins', function() {
+
+    function createMixin(n) {
+      return {
+        column: 'mixin',
+        properties: {
+          foo: {type: 'string'}
+        },
+        callbacks: {
+          initialize: function(options) {
+            return options;
+          },
+          beforeOutput: function(values) {
+            return values;
+          },
+          afterOutput: function(values) {
+            return values;
+          },
+          beforeInput: function(values, cb) {
+            cb(null, values);
+          },
+          afterInput: function(values, cb) {
+            cb(null, values);
+          },
+          beforeFetch: function(options, attributes, cb) {
+            cb(null, options, attributes);
+          },
+          afterFetch: function(options, values, cb) {
+            cb(null, options, values);
+          },
+          beforeSave: function(options, values, cb) {
+            cb(null, options, values);
+          },
+          afterSave: function(options, values, cb) {
+            cb(null, options, values);
+          },
+          beforeDestroy: function(options, cb) {
+            cb(null, options);
+          },
+          afterDestroy: function(options, cb) {
+            cb(null, options);
+          }
+        }
+      }
+    }
+
+    it('should combine correctly', function() {
+      var Model = this.createModel({
+        mixins: [createMixin(1), createMixin(2)],
+        callbacks: {
+          initialize: function(options) {
+            options.foo = 'bar';
+            return options;
+          },
+          beforeOutput: function(values) {
+            return values;
+          },
+          afterOutput: function(values) {
+            return values;
+          },
+          beforeInput: function(values, cb) {
+            cb(null, values);
+          },
+          afterInput: function(values, cb) {
+            cb(null, values);
+          },
+          beforeFetch: function(options, attributes, cb) {
+            cb(null, options, attributes);
+          },
+          afterFetch: function(options, values, cb) {
+            cb(null, options, values);
+          },
+          beforeSave: function(options, values, cb) {
+            cb(null, options, values);
+          },
+          afterSave: function(options, values, cb) {
+            cb(null, options, values);
+          },
+          beforeDestroy: function(options, cb) {
+            cb(null, options);
+          },
+          afterDestroy: function(options, cb) {
+            cb(null, options);
+          }
+        }
+      });
+
+      Model.options.column.should.eq('mixin');
+    });
+  });
 
   it('should have "staticMethods" from options', function() {
     var modelClass = this.createModel({
@@ -122,6 +213,18 @@ describe('Model', function() {
     }).should.throw('primary key property "id" cannot be hidden');
   });
 
+  it('should require the primary key property to have string or integer type',
+  function() {
+    var _this = this;
+    function createModelWithIdType(type) {
+      _this.createModel({properties: {id: {type: type}}});
+    }
+    createModelWithIdType('integer');
+    (function() {createModelWithIdType('date');})
+      .should.throw('primary key property "id" must have string or integer ' +
+        'type');
+  });
+
   it('should not allow properties without types', function() {
     var _this = this;
     (function() {
@@ -175,6 +278,10 @@ describe('Model', function() {
       model.get('id', true).should.equal('foo');
     });
   });
+
+  xdescribe('#find()', function() {
+    
+  });
 });
 
 describe('Instance', function() {
@@ -186,6 +293,15 @@ describe('Instance', function() {
       foo: {type: 'string'},
       bar: {type: 'string'}
     }});
+
+    this.HiddenModel = this.createModel({
+      properties: {
+        password: {
+          type: 'string',
+          hidden: true
+        }
+      }
+    });
 
     this.ErrorModel = this.createModel({
       properties: {
@@ -232,6 +348,16 @@ describe('Instance', function() {
       var model = this.Model.create({foo: 'foo', bar: 'bar'}, true);
       model.get(['foo', 'bar']).should.deep.eq({foo: 'foo', bar: 'bar'});
     });
+
+    it('should not return hidden attributes by default', function() {
+      var model = this.HiddenModel.create({password: 'secret'}, true);
+      expect(model.get('password')).to.be.undefined;
+    });
+
+    it('should return hidden attributes if requested', function() {
+      var model = this.HiddenModel.create({password: 'secret'}, true);
+      model.get('password', true).should.eq('secret');
+    });
   });
 
   describe('#set()', function() {
@@ -247,7 +373,7 @@ describe('Instance', function() {
       model.get('foo', true).should.eq('bar');
     });
 
-    it('should ignore attributes that are not defined', function() {
+    it('should not set attributes that are not defined', function() {
       var model = this.Model.create();
       model.set({baz: 123}, true);
       expect(model.get('baz')).to.be.undefined;
@@ -272,8 +398,119 @@ describe('Instance', function() {
     });
   });
 
+  xdescribe('#save()', function() { // no relations
+
+    xit('should fail if model errors exist', function() {
+
+    });
+
+    xit('should only save changed attributes to the datastores', function() {
+
+    });
+
+    xit('should callback if no attributes were changed', function() {
+
+    });
+
+    xit('should fail with error encountered through beforeSave', function() {
+
+    });
+
+    xit('should execute all callbacks', function() {
+
+    });
+
+    xit('should validate before saving', function() {
+
+    });
+
+    xit('should save a new model to the datastore', function() {
+      // spy to make sure that only the change attributes were actually saved.
+      // verify with fetch
+      // verify that all properties exist
+    });
+
+    xit('should save an existing model to the datastore', function() {
+      // verify with fetch
+      // verify that all properties exist
+    });
+
+    // - caches
+    //   - anything can be cached except the id
+    //   - cache (exclusive)
+    //   - cacheOnly (exclusive)
+    //
+    //   model needs a method that can group attributes by redis, cassandra, or both
+    //
+    // - partitions (since partitions are abstracted away from the orm, use a spy
+    // to test the params sent to datastore.save)
+    //     - if no attribute has a partition, the model is treated like normal
+    //     - if one attribute has a partition, all of the others have a separate one
+    //     - all attributes with the same partition are grouped together
+    //     - both properties and relations can be separated into partitions
+    //     - id cannot be included
+    //     - for best performance, scopes should never overlap more than one partition
+    //     
+    // - partitions:
+    //    p_name:
+    //      attributes
+    //    p2_name:
+    //      attributes (must not be duplicated)
+    //      leave option testing near the actual test
+  });
+
+  xdescribe('#fetch()', function() {
+
+    xit('should fail if model errors exist', function() {
+
+    });
+
+    xit('should fail if the model\'s primary key property is not set',
+    function() {
+
+    });
+
+    xit('should select the correct datastores to fetch each attribute from ' +
+    'based on the attribute definitions', function() {
+
+    });
+
+    xit('should call the datastores correctly');
+
+    xit('should execute all callbacks');
+  });
+
+  // - scope
+  //   - delimit both properties and attributes to fetch.
+
   // [ ] only changed attributes and relations should be sent to the datastore.
   // [ ] test multiple callback mixin ordering
+  // [ ] parse-time errors
+  //   - limit primary key to only be type string or integer
+  //
+
+  xdescribe('#delete()', function() {
+
+    xit('should fail if model errors exist', function() {
+
+    });
+
+    xit('should fail if the model\'s primary key property is not set',
+    function() {
+
+    });
+
+    xit('should delete the model from the datastores', function() {
+      // also select the correct datastore(s) to delete from.
+    });
+
+    xit('should execute all callbacks', function() {
+
+    });
+  });
+
+  // Decide separation between redis and cassandra: There can be overlap,
+  // both records can suggest looking in only one datastore instead of two.
 });
 
 /*
