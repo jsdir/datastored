@@ -191,6 +191,19 @@ describe('Instance', function() {
         }
       }
     }, 'ErrorModel');
+
+    this.MutatedIdModel = this.createModel({
+      callbacks: {
+        beforeOutput: function(values) {
+          values.id += ',beforeOutput';
+          return values;
+        },
+        afterOutput: function(values) {
+          values.id += ',afterOutput';
+          return values;
+        }
+      }
+    });
   });
 
   it('should have "methods" from options', function() {
@@ -217,7 +230,7 @@ describe('Instance', function() {
       model.get('foo').should.deep.eq('bar,beforeOutput,afterOutput');
     });
 
-    it('should not mutate attributes when requested', function() {
+    it('should not mutate attributes if requested', function() {
       var model = this.CallbackModel.create({foo: 'bar'}, true);
       model.get('foo', true).should.eq('bar');
     });
@@ -235,7 +248,7 @@ describe('Instance', function() {
       model.get('foo', true).should.eq('bar,beforeInput,afterInput');
     });
 
-    it('should not mutate attributes when requested', function() {
+    it('should not mutate attributes if requested', function() {
       var model = this.CallbackModel.create();
       model.set({foo: 'bar'}, true);
       model.get('foo', true).should.eq('bar');
@@ -254,7 +267,17 @@ describe('Instance', function() {
     });
   });
 
+  describe('#getPkValue()', function() {
+    it('should mutate the result by default', function() {
+      var model = this.MutatedIdModel.get('foo', true);
+      model.getPkValue().should.eq('foo,beforeOutput,afterOutput');
+    });
 
+    it('should not mutate the result if requested', function() {
+      var model = this.MutatedIdModel.get('foo', true);
+      model.getPkValue(true).should.eq('foo');
+    });
+  });
 
   // [ ] only changed attributes and relations should be sent to the datastore.
   // [ ] test multiple callback mixin ordering
