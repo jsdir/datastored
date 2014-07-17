@@ -17,7 +17,7 @@ function createOrm() {
   });
 }
 
-var onBefore = function() {
+function onBefore() {
   var orm = createOrm();
   this.orm = orm;
   this.createModel = function(options, name) {
@@ -32,6 +32,12 @@ var onBefore = function() {
     }, options));
   };
 };
+
+function appendValue(data, appendedValue) {
+  return _.object(_.map(data, function(value, key) {
+    return [key, value + ',' + appendedValue]
+  }));
+}
 
 describe('Model', function() {
 
@@ -163,20 +169,16 @@ describe('Instance', function() {
       },
       callbacks: {
         beforeInput: function(values, cb) {
-          values.foo += ',beforeInput';
-          cb(null, values);
+          cb(null, appendValue(values, 'beforeInput'));
         },
         afterInput: function(values, cb) {
-          values.foo += ',afterInput';
-          cb(null, values);
+          cb(null, appendValue(values, 'afterInput'));
         },
         beforeOutput: function(values) {
-          values.foo += ',beforeOutput';
-          return values;
+          return appendValue(values, 'beforeOutput');
         },
         afterOutput: function(values) {
-          values.foo += ',afterOutput';
-          return values;
+          return appendValue(values, 'afterOutput');
         }
       }
     }, 'CallbackModel');
@@ -191,19 +193,6 @@ describe('Instance', function() {
         }
       }
     }, 'ErrorModel');
-
-    this.MutatedIdModel = this.createModel({
-      callbacks: {
-        beforeOutput: function(values) {
-          values.id += ',beforeOutput';
-          return values;
-        },
-        afterOutput: function(values) {
-          values.id += ',afterOutput';
-          return values;
-        }
-      }
-    });
   });
 
   it('should have "methods" from options', function() {
@@ -269,12 +258,12 @@ describe('Instance', function() {
 
   describe('#getPkValue()', function() {
     it('should mutate the result by default', function() {
-      var model = this.MutatedIdModel.get('foo', true);
+      var model = this.CallbackModel.get('foo', true);
       model.getPkValue().should.eq('foo,beforeOutput,afterOutput');
     });
 
     it('should not mutate the result if requested', function() {
-      var model = this.MutatedIdModel.get('foo', true);
+      var model = this.CallbackModel.get('foo', true);
       model.getPkValue(true).should.eq('foo');
     });
   });
