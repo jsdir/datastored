@@ -31,6 +31,26 @@ function onBefore() {
       }
     }, options));
   };
+
+  this.CallbackModel = this.createModel({
+    properties: {
+      foo: {type: 'string'}
+    },
+    callbacks: {
+      beforeInput: function(values, cb) {
+        cb(null, appendValue(values, 'beforeInput'));
+      },
+      afterInput: function(values, cb) {
+        cb(null, appendValue(values, 'afterInput'));
+      },
+      beforeOutput: function(values) {
+        return appendValue(values, 'beforeOutput');
+      },
+      afterOutput: function(values) {
+        return appendValue(values, 'afterOutput');
+      }
+    }
+  }, 'CallbackModel');
 };
 
 function appendValue(data, appendedValue) {
@@ -145,10 +165,14 @@ describe('Model', function() {
 
   describe('#get()', function() {
 
-    it('should use the primary key property', function() {
-      var Model = this.createModel();
-      var model = Model.get('foo');
-      model.get('id').should.equal('foo');
+    it('should mutate the primary key by default', function() {
+      var model = this.CallbackModel.get('foo');
+      model.get('id', true).should.equal('foo,beforeInput,afterInput');
+    });
+
+    it('should not mutate the primary key if requested', function() {
+      var model = this.CallbackModel.get('foo', true);
+      model.get('id', true).should.equal('foo');
     });
   });
 });
@@ -162,26 +186,6 @@ describe('Instance', function() {
       foo: {type: 'string'},
       bar: {type: 'string'}
     }});
-
-    this.CallbackModel = this.createModel({
-      properties: {
-        foo: {type: 'string'}
-      },
-      callbacks: {
-        beforeInput: function(values, cb) {
-          cb(null, appendValue(values, 'beforeInput'));
-        },
-        afterInput: function(values, cb) {
-          cb(null, appendValue(values, 'afterInput'));
-        },
-        beforeOutput: function(values) {
-          return appendValue(values, 'beforeOutput');
-        },
-        afterOutput: function(values) {
-          return appendValue(values, 'afterOutput');
-        }
-      }
-    }, 'CallbackModel');
 
     this.ErrorModel = this.createModel({
       properties: {
