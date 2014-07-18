@@ -398,10 +398,14 @@ describe('Instance', function() {
     });
   });
 
-  xdescribe('#save()', function() { // no relations
+  describe('#save()', function() {
 
-    xit('should fail if model errors exist', function() {
-
+    it('should fail if model errors exist', function(done) {
+      var model = this.ErrorModel.create({foo: 'foo'});
+      model.save(function(err) {
+        err.should.deep.eq({foo: 'message'});
+        done();
+      });
     });
 
     xit('should only save changed attributes to the datastores', function() {
@@ -459,15 +463,24 @@ describe('Instance', function() {
     //      leave option testing near the actual test
   });
 
-  xdescribe('#fetch()', function() {
+  describe('#fetch()', function() {
 
-    xit('should fail if model errors exist', function() {
-
+    it('should fail if model errors exist', function(done) {
+      var model = this.ErrorModel.get('foo', true);
+      model.set('foo', 'bar');
+      model.fetch(function(err) {
+        err.should.deep.eq({foo: 'message'});
+        done();
+      });
     });
 
-    xit('should fail if the model\'s primary key property is not set',
+    it('should fail if the model\'s primary key property is not set',
     function() {
+      var model = this.Model.create({foo: 'bar'});
 
+      (function() {
+        model.fetch('scope', function(err) {});
+      }).should.throw('the model primary key "id" must be set');
     });
 
     xit('should select the correct datastores to fetch each attribute from ' +
@@ -489,10 +502,15 @@ describe('Instance', function() {
   //   - limit primary key to only be type string or integer
   //
 
-  xdescribe('#delete()', function() {
+  describe('#delete()', function() {
 
-    xit('should fail if model errors exist', function() {
-
+    it('should fail if model errors exist', function(done) {
+      var model = this.ErrorModel.get('foo', true);
+      model.set('foo', 'bar');
+      model.destroy(function(err) {
+        err.should.deep.eq({foo: 'message'});
+        done();
+      });
     });
 
     xit('should fail if the model\'s primary key property is not set',
