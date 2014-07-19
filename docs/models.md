@@ -11,7 +11,8 @@ var Book = orm.createModel('Book', {
   column: 'books',
   properties: {
     id: {
-      type: 'number'
+      type: 'number',
+      primary: true
     },
     title: {
       type: 'string',
@@ -67,10 +68,6 @@ Defines the model's relations. Relations are described [here](relations.md) in f
 #### scopes
 
 Defines the model's scopes.
-
-#### softDelete
-
-When set to `true`, only references will be destroyed when a model is deleted. The model itself will not be deleted from the datastores. Defaults to `false`.
 
 #### audit
 
@@ -172,18 +169,19 @@ Gets a model from a primary key. This method does not fetch from any datastores,
 var book = Book.get(2);
 ```
 
-#### .find(`query`[, `raw`], `callback`)
+#### .find(`attribute`, `value`, [, `raw`], `callback`)
 
-Finds any model that matches `query`. `query` is a hash with attribute names as keys and attributes values as values. If `raw` is set to `true`, `query` will not be passed through `input` mutation. If any of the query values are invalid, errors will be merged into `model.inputErrors` and the model will be marked as invalid.
+Finds any model that has index `attribute` that matches `value`. If `raw` is set to `true`, `value` will not be passed through `input` mutation. If any of the query values are invalid, errors will be merged into `model.inputErrors` and the model will be marked as invalid.
 
 | Description         | Type       | Required | Default |
 |:--------------------|:-----------|:---------|:--------|
-| Query               | `{}`       | Yes      |         |
+| Attribute           | `string`   | Yes      |         |
+| Value               | `*`        | Yes      |         |
 | Use raw attributes? | `boolean`  | No       | `false` |
 | Callback            | `function` | True     |         |
 
 ```js
-Book.find({isbn: 123}, function(err, book) {
+Book.find('isbn', 123, function(err, book) {
   if (err) {
     console.error('Error:', err);
   } else {

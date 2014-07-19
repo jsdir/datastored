@@ -32,6 +32,11 @@ function onBefore() {
     }, options));
   };
 
+  this.Model = this.createModel({properties: {
+    foo: {type: 'string'},
+    bar: {type: 'string'}
+  }});
+
   this.CallbackModel = this.createModel({
     properties: {
       foo: {type: 'string'}
@@ -259,8 +264,7 @@ describe('Model', function() {
     });
 
     it('should construct instances correctly', function() {
-      var Model = this.createModel();
-      var instance = Model.create('attributes', true);
+      var instance = this.Model.create('attributes', true);
       instance.set.should.have.been.calledWith('attributes', true);
       instance.errors.should.deep.eq({});
     });
@@ -279,7 +283,19 @@ describe('Model', function() {
     });
   });
 
-  xdescribe('#find()', function() {
+  describe('#find()', function() {
+
+    it('should require the attribute to be an index', function() {
+      var Model = this.Model;
+      (function() {Model.find('foo', 'bar', function() {});})
+        .should.throw('attribute "foo" is not an index');
+    });
+
+    xit('should not mutate the index value if requested', function() {
+      var Model = this.Model;
+      (function() {Model.find('foo', 'bar', function() {});})
+        .should.throw('attribute "foo" is not an index');
+    });
   });
 });
 
@@ -288,11 +304,6 @@ describe('Instance', function() {
   before(onBefore);
 
   before(function() {
-    this.Model = this.createModel({properties: {
-      foo: {type: 'string'},
-      bar: {type: 'string'}
-    }});
-
     this.HiddenModel = this.createModel({
       properties: {
         password: {
@@ -490,16 +501,9 @@ describe('Instance', function() {
     xit('should call the datastores correctly');
 
     xit('should execute all callbacks');
+
+    xit('should only send changed attributes to the datastore');
   });
-
-  // - scope
-  //   - delimit both properties and attributes to fetch.
-
-  // [ ] only changed attributes and relations should be sent to the datastore.
-  // [ ] test multiple callback mixin ordering
-  // [ ] parse-time errors
-  //   - limit primary key to only be type string or integer
-  //
 
   describe('#delete()', function() {
 
