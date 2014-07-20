@@ -253,6 +253,24 @@ describe('Model', function() {
     Model.options.foo.should.eq(Model);
   });
 
+  it('should only allow properties to be indexed', function() {
+    var Model = this.createModel({
+      properties: {
+        property: {
+          type: 'string',
+          index: true
+        }
+      },
+      relations: {
+        relation: {
+          index: true
+        }
+      }
+    });
+
+    Model.attrGroups.index.should.not.contain('relation');
+  });
+
   describe('#create()', function() {
 
     before(function() {
