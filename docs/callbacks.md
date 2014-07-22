@@ -41,26 +41,26 @@ Methods to perform before internal mutations like serialization and immutability
 
 Methods to perform after internal mutations like serialization and immutability filtering. Must call `cb(err, values)` synchronously.
 
-### beforeFetch: func(req, attributes, cb)
+### beforeFetch: func(options, attributes, cb)
 
-Calls `cb(err, req, attributes)`.
+Calls `cb(err, options, attributes)`.
 
-### afterFetch: func(req, values, cb)
+### afterFetch: func(options, values, cb)
 
-Calls `cb(err, req, values)`.
+Calls `cb(err, options, values)`.
 
-### beforeSave: func(req, values, cb)
+### beforeSave: func(options, values, cb)
 
-Calls `cb(err, req, values)`.
+Calls `cb(err, options, values)`.
 
-### afterSave: func(req, values, cb)
+### afterSave: func(options, values, cb)
 
-Calls `cb(err, req, values)`.
+Calls `cb(err, options, values)`.
 
-### beforeDestroy: func(req, cb)
+### beforeDestroy: func(options, cb)
 
-Calls `cb(err, req)`.
+Calls `cb(err, options)`.
 
-### afterDestroy: func(req, cb)
+### afterDestroy: func(options, cb)
 
-Calls `cb(err, req)`.
+Calls `cb(err, options)`.

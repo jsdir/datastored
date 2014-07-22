@@ -141,7 +141,7 @@ For most of these methods, the callback is optional. If a callback is not specif
 
 #### model.create(`attributes`[, `raw`]) -> `Instance`
 
-Will construct a new instance of the model with `attributes`. If `raw` is set to `true`, `attributes` will not be passed through `input` mutation. If the input is invalid, errors will be merged into `model.inputErrors` and the model will be marked as invalid.
+Will construct a new instance of the model with `attributes`. If `raw` is set to `true`, `attributes` will not be passed through `input` mutation. If the input is invalid, errors will be merged into `model.errors` and the model will be marked as invalid.
 
 | Description         | Type       | Required | Default |
 |:--------------------|:-----------|:---------|:--------|
@@ -154,7 +154,7 @@ var book = Book.create({isbn: 123});
 
 #### model.get(`pk`[, `raw`]) -> `Instance`
 
-Gets a model from a primary key. This method does not fetch from any datastores, it is just a convenience method that creates a new model and assigns the primary key to `pk`. If `raw` is set to `true`, `pk` will not be passed through `input` mutation. If `pk` is an invalid value, the error will be merged into `model.inputErrors` and the model will be marked as invalid.
+Gets a model from a primary key. This method does not fetch from any datastores, it is just a convenience method that creates a new model and assigns the primary key to `pk`. If `raw` is set to `true`, `pk` will not be passed through `input` mutation. If `pk` is an invalid value, the error will be merged into `model.errors` and the model will be marked as invalid.
 
 | Description         | Type      | Required | Default |
 |:--------------------|:----------|:---------|:--------|
@@ -167,7 +167,7 @@ var book = Book.get(2);
 
 #### model.find(`attribute`, `value`, [, `raw`], `callback`)
 
-Finds any model that has index `attribute` that matches `value`. If `raw` is set to `true`, `value` will not be passed through `input` mutation. If any of the query values are invalid, errors will be merged into `model.inputErrors` and the model will be marked as invalid.
+Finds any model that has index `attribute` that matches `value`. If `raw` is set to `true`, `value` will not be passed through `input` mutation. If any of the query values are invalid, errors will be merged into `model.errors` and the model will be marked as invalid.
 
 | Description         | Type       | Required | Default |
 |:--------------------|:-----------|:---------|:--------|
@@ -200,7 +200,7 @@ Some of these methods have a `req` parameter. This is an optional access request
 
 #### instance.set(`attributes`[, `raw`]) -> `Instance`
 
-Set `attributes` and overwrites existing ones on conflict. If `raw` is set to `true`, `attributes` will not be passed through `input` mutation. If the input is invalid, errors will be merged into `model.inputErrors` and the model will be marked as invalid. `set` will delete errors from `inputErrors` if the value is valid. If the new value is invalid, the error message will overwrite any existing messages in `inputErrors`.
+Set `attributes` and overwrites existing ones on conflict. If `raw` is set to `true`, `attributes` will not be passed through `input` mutation. If the input is invalid, errors will be merged into `model.errors` and the model will be marked as invalid. `set` will delete errors from `errors` if the value is valid. If the new value is invalid, the error message will overwrite any existing messages in `errors`.
 
 | Description         | Type       | Required | Default |
 |:--------------------|:-----------|:---------|:--------|
