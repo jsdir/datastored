@@ -69,10 +69,6 @@ Defines the model's relations. Relations are described [here](relations.md) in f
 
 Defines the model's scopes.
 
-#### audit
-
-When set to `true`, the model will be given two new fields, `created_at` and `updated_at`. These fields will be controlled by datastored. Defaults to `false`.
-
 #### callbacks
 
 Defines actions to perform at different times in the model's lifecycle. More documentation about callbacks can be found [here](callbacks.md).
@@ -143,7 +139,7 @@ Static methods are called on the model class.
 
 For most of these methods, the callback is optional. If a callback is not specified, the method will return a chainable object. Also, many of these methods have a `raw` parameter. Set `raw` to `true` when you know the values that you are putting into the model and to `false` when using values from user input. `raw` will always default to false.
 
-#### .create(`attributes`[, `raw`]) -> `Instance`
+#### model.create(`attributes`[, `raw`]) -> `Instance`
 
 Will construct a new instance of the model with `attributes`. If `raw` is set to `true`, `attributes` will not be passed through `input` mutation. If the input is invalid, errors will be merged into `model.inputErrors` and the model will be marked as invalid.
 
@@ -156,7 +152,7 @@ Will construct a new instance of the model with `attributes`. If `raw` is set to
 var book = Book.create({isbn: 123});
 ```
 
-#### .get(`pk`[, `raw`]) -> `Instance`
+#### model.get(`pk`[, `raw`]) -> `Instance`
 
 Gets a model from a primary key. This method does not fetch from any datastores, it is just a convenience method that creates a new model and assigns the primary key to `pk`. If `raw` is set to `true`, `pk` will not be passed through `input` mutation. If `pk` is an invalid value, the error will be merged into `model.inputErrors` and the model will be marked as invalid.
 
@@ -169,7 +165,7 @@ Gets a model from a primary key. This method does not fetch from any datastores,
 var book = Book.get(2);
 ```
 
-#### .find(`attribute`, `value`, [, `raw`], `callback`)
+#### model.find(`attribute`, `value`, [, `raw`], `callback`)
 
 Finds any model that has index `attribute` that matches `value`. If `raw` is set to `true`, `value` will not be passed through `input` mutation. If any of the query values are invalid, errors will be merged into `model.inputErrors` and the model will be marked as invalid.
 
@@ -190,6 +186,10 @@ Book.find('isbn', 123, function(err, book) {
 });
 ```
 
+#### model.fetchMany(`ids`[, `raw`], `cb`)
+
+`cb` returns a hash of id to fetched model.
+
 ## Instance Methods
 
 Instance methods can be called on model instances.
@@ -198,7 +198,7 @@ Instance methods can be called on model instances.
 
 Some of these methods have a `req` parameter. This is an optional access request, an `object` that can be used to implement ACLs and authorization subsystems with mixins.
 
-#### .set(`attributes`[, `raw`]) -> `Instance`
+#### instance.set(`attributes`[, `raw`]) -> `Instance`
 
 Set `attributes` and overwrites existing ones on conflict. If `raw` is set to `true`, `attributes` will not be passed through `input` mutation. If the input is invalid, errors will be merged into `model.inputErrors` and the model will be marked as invalid. `set` will delete errors from `inputErrors` if the value is valid. If the new value is invalid, the error message will overwrite any existing messages in `inputErrors`.
 
@@ -211,7 +211,7 @@ Set `attributes` and overwrites existing ones on conflict. If `raw` is set to `t
 book.set({name: 'foo', isbn: 123});
 ```
 
-##### Alternative usage: .set(`name`, `value`[, `raw`]) -> Instance
+##### Alternative usage: instance.set(`name`, `value`[, `raw`]) -> Instance
 
 The alternative usage can be used to set a single attribute.
 
@@ -225,7 +225,7 @@ The alternative usage can be used to set a single attribute.
 book.set('isbn', 123);
 ```
 
-#### .get(`attribute`[, `raw`]) -> `*`
+#### instance.get(`attribute`[, `raw`]) -> `*`
 
 Gets the value of `attribute`. If `raw` is set to `true`, the result value will not be passed through `output` mutation.
 
@@ -239,7 +239,7 @@ var name = book.get('name');
 console.log(name); // -> "foo"
 ```
 
-##### Alternative usage: .get(`attributes`[, `raw`]) -> `*`
+##### Alternative usage: instance.get(`attributes`[, `raw`]) -> `*`
 
 The alternative usage can be used to get multiple `attributes`.
 
@@ -253,7 +253,7 @@ var data = book.get(['isbn', 'name']);
 console.log(data); // -> {"isbn": 123, "name": "foo"}
 ```
 
-#### model.toObject([`scope`[, `raw`]]) -> `{}`
+#### instance.toObject([`scope`[, `raw`]]) -> `{}`
 
 Returns a hash of the model's transformed attributes that are included by `scope`. If `scope` is not defined, all attributes will be included. If `raw` is set to `true`, the result object will not be passed through `output` mutation.
 
@@ -289,7 +289,7 @@ console.log(data); // -> {"id": 2, "name": "foo", "isbn": 123}
 console.log(nameData); // -> {"id": 2, "name": "foo"}
 ```
 
-#### model.save([`req`,]`cb`) -> `Instance`
+#### instance.save([`req`,]`cb`) -> `Instance`
 
 Save can be called on any model instance. If the model instance does not have a set primary key, the orm will automatically generate and assign one to the model instance using `generateId`. `cb` will immediately return an error if the model is invalid.
 
@@ -322,7 +322,7 @@ book2.save(function(err, model) {
 });
 ```
 
-#### model.fetch([`req`, [`scope`,]] `cb`)
+#### instance.fetch([`req`, [`scope`,]] `cb`) :: (err, model)
 
 Fetches a model with the given scope. If `scope` is not defined, all attributes will be included. This method can only be called on model instances that have a set primary key. `cb` will immediately return an error if the model is invalid or if the model has no primary attribute value.
 
@@ -343,7 +343,7 @@ book.fetch('onlyName', function(err) {
 });
 ```
 
-#### model.destroy([`req`,] `cb`)
+#### instance.destroy([`req`,] `cb`)
 
 Removes all model references. If model's `options.softDelete` is not set to `true`, the model is permanently deleted from the datastores. This method can only be called on model instances that have a set primary key. `cb` will immediately return an error if the model is invalid or if the model has no primary attribute value.
 
@@ -363,18 +363,14 @@ book.destroy(function(err) {
 });
 ```
 
-#### model.incr(`attribute`, `amount`)
+#### instance.incr(`attribute`, `amount`)
 
 Atomically increments `attribute` by `amount`.
 
-#### model.decr(`attribute`, `amount`)
+#### instance.decr(`attribute`, `amount`)
 
 Atomically decrements `attribute` by `amount`.
 
-#### model.isValid() -> `bool`
-
-Returns a boolean value indicating if the model is valid.
-
-#### model.inputErrors -> `{}`
+#### instance.errors -> `{}`
 
 Contains all input errors.
