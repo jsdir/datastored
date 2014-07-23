@@ -3,6 +3,7 @@
 Defines actions to perform at different times in the model's lifecycle.
 
 - initialize
+- create
 
 - beforeOutput
 - afterOutput
@@ -24,6 +25,10 @@ Model callbacks are defined in model options as the `callbacks` option. Datastor
 ### initialize: func(options) -> options
 
 Return modified `options`.
+
+### create: func() -> values
+
+Returns initial values for an `Instance`.
 
 ### beforeOutput: func(values) -> values
 
