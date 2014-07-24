@@ -426,7 +426,7 @@ describe('Instance', function() {
     });
   });
 
-  describe('#save()', function() {
+  xdescribe('#save()', function() {
 
     it('should fail if model errors exist', function(done) {
       var model = this.ErrorModel.create({foo: 'foo'});
@@ -436,15 +436,31 @@ describe('Instance', function() {
       });
     });
 
-    xit('should only save changed attributes to the datastores', function() {
-
+    it('should only save changed attributes to the datastores',
+    function(done) {
+      var model = Model.create({foo: 'bar'});
+      model.save(function(err) {
+        if (err) {done(err);}
+        datastore.save.should.have.been.calledWith();
+        model.set('foo', 'baz').save(function(err) {
+          if (err) {done(err);}
+          datastore.save.should.have.been.calledWith();
+        });
+      });
     });
 
-    xit('should callback if no attributes were changed', function() {
-
+    it('should callback if no attributes were changed', function(done) {
+      var model = Model.create({foo: 'bar'});
+      model.save(function(err) {
+        if (err) {throw err;}
+        model.save(function(err) {
+          if (err) {throw err;}
+          datastore.save.should.not.have.beenCalled();
+        });
+      });
     });
 
-    xit('should fail with error encountered through beforeSave', function() {
+    xit('should fail with callback errors', function() {
 
     });
 
@@ -453,6 +469,10 @@ describe('Instance', function() {
     });
 
     xit('should validate before saving', function() {
+
+    });
+
+    xit('should generate a model id with "orm.generateId"', function(done) {
 
     });
 
@@ -466,32 +486,9 @@ describe('Instance', function() {
       // verify with fetch
       // verify that all properties exist
     });
-
-    // - caches
-    //   - anything can be cached except the id
-    //   - cache (exclusive)
-    //   - cacheOnly (exclusive)
-    //
-    //   model needs a method that can group attributes by redis, cassandra, or both
-    //
-    // - partitions (since partitions are abstracted away from the orm, use a spy
-    // to test the params sent to datastore.save)
-    //     - if no attribute has a partition, the model is treated like normal
-    //     - if one attribute has a partition, all of the others have a separate one
-    //     - all attributes with the same partition are grouped together
-    //     - both properties and relations can be separated into partitions
-    //     - id cannot be included
-    //     - for best performance, scopes should never overlap more than one partition
-    //
-    // - partitions:
-    //    p_name:
-    //      attributes
-    //    p2_name:
-    //      attributes (must not be duplicated)
-    //      leave option testing near the actual test
   });
 
-  describe('#fetch()', function() {
+  xdescribe('#fetch()', function() {
 
     it('should fail if model errors exist', function(done) {
       var model = this.ErrorModel.get('foo', true);
@@ -513,17 +510,41 @@ describe('Instance', function() {
 
     xit('should select the correct datastores to fetch each attribute from ' +
     'based on the attribute definitions', function() {
+    });
+
+    xit('should fail with callback errors', function() {
 
     });
 
-    xit('should call the datastores correctly');
+    xit('should execute all callbacks', function(done) {
+      // check user and options
+      var Model = orm.createModel({callbacks: {
+        beforeFetch: function(options, attributes, cb) {
+          options.should.eq('options');
+          attributes.should.eq(['attribute']);
+          cb(options);
+        },
+        afterFetch: function(options, values, cb) {
+          options.should.eq('options');
+          values.should.eq('values');
+          cb(options);
+        }
+      }});
 
-    xit('should execute all callbacks');
+      Model.create({}).save(function(err) {
+        if (err) {throw err;}
+        model.fetch(done);
+        model.fetch('options', done);
+        model.fetch([attributes], 'options', done);
+      });
+    });
 
-    xit('should only send changed attributes to the datastore');
+    it('should use scopes', function() {
+
+    });
   });
 
-  describe('#delete()', function() {
+  xdescribe('#destroy()', function() {
 
     it('should fail if model errors exist', function(done) {
       var model = this.ErrorModel.get('foo', true);
@@ -534,17 +555,41 @@ describe('Instance', function() {
       });
     });
 
-    xit('should fail if the model\'s primary key property is not set',
+    it('should fail if the model\'s primary key property is not set',
     function() {
+      var model = this.Model.create();
 
+      (function() {
+        model.destroy(function() {});
+      }).should.throw('the model primary key "id" must be set');
     });
 
     xit('should delete the model from the datastores', function() {
       // also select the correct datastore(s) to delete from.
     });
 
-    xit('should execute all callbacks', function() {
+    xit('should fail with callback errors', function() {
 
+    });
+
+    xit('should execute all callbacks', function(done) {
+      // check user and options
+      var Model = orm.createModel({callbacks: {
+        beforeDestroy: function(options, cb) {
+          options.should.eq('options');
+          cb(null, options);
+        },
+        afterDestroy: function(options, cb) {
+          options.should.eq('options');
+          cb(null, options);
+        }
+      }});
+
+      Model.create({}).save(function(err) {
+        if (err) {throw err;}
+        model.destroy(done);
+        model.destroy('options', done);
+      });
     });
   });
 });
