@@ -12,11 +12,11 @@ var expect = chai.expect;
 
 var datastores = {
   // CassandraDatastore: CassandraDatastore,
-  /*RedisDatastore: new RedisDatastore({
+  RedisDatastore: new RedisDatastore({
     client: redis.createClient(),
     keyspace: 'datastored_test'
-  }),*/
-  MemoryDatastore: new MemoryDatastore()
+  }),
+  //MemoryDatastore: new MemoryDatastore()
 };
 
 _.each(datastores, function(datastore, name) {
@@ -26,6 +26,11 @@ _.each(datastores, function(datastore, name) {
       datastore.reset(cb);
     });
 
+    var baseTypes = {
+      bar: 'integer',
+      baz: 'string'
+    };
+
     var baseOptions = {
       column: 'column',
       indexes: [],
@@ -34,10 +39,7 @@ _.each(datastores, function(datastore, name) {
         bar: 123,
         baz: 'foobar'
       },
-      types: {
-        bar: 'integer',
-        baz: 'string'
-      }
+      types: baseTypes
     };
 
     function assertFind(column, index, value, id, cb) {
@@ -60,7 +62,7 @@ _.each(datastores, function(datastore, name) {
 
     function assertNotFound(id, cb) {
       datastore.fetch({
-        column: 'column', ids: [id], attributes: ['bar']
+        column: 'column', ids: [id], attributes: ['bar'], types: baseTypes
       }, function(err, data) {
         if (err) {return cb(err);}
         var expectedData = {};
@@ -72,13 +74,14 @@ _.each(datastores, function(datastore, name) {
 
     describe('#save()', function() {
 
-      it('should save a row with an id of type string', function(done) {
+      it.only('should save a row with an id of type string', function(done) {
         var options = _.merge({}, baseOptions, {id: 'foo'});
         datastore.save(options, function(err) {
           datastore.fetch({
             column: 'column',
             ids: ['foo'],
-            attributes: ['bar', 'baz']
+            attributes: ['bar', 'baz'],
+            types: baseTypes
           }, function(err, data) {
             if (err) {return done(err);}
             data.should.deep.eq({foo: {bar: 123, baz: 'foobar'}});
@@ -93,7 +96,8 @@ _.each(datastores, function(datastore, name) {
           datastore.fetch({
             column: 'column',
             ids: [2],
-            attributes: ['bar', 'baz']
+            attributes: ['bar', 'baz'],
+            types: baseTypes
           }, function(err, data) {
             if (err) {return done(err);}
             data.should.deep.eq({2: {bar: 123, baz: 'foobar'}});
@@ -162,7 +166,8 @@ _.each(datastores, function(datastore, name) {
             datastore.fetch({
               column: 'column',
               ids: ['foo'],
-              attributes: ['bar', 'baz']
+              attributes: ['bar', 'baz'],
+              types: baseTypes
             }, function(err, data) {
               if (err) {return done(err);}
               data['foo'].bar.should.eq(456);
@@ -183,7 +188,7 @@ _.each(datastores, function(datastore, name) {
 
       it('should only fetch the requested attributes', function(done) {
         datastore.fetch({
-          column: 'column', ids: ['foo'], attributes: ['bar']
+          column: 'column', ids: ['foo'], attributes: ['bar'], types: baseTypes
         }, function(err, data) {
           if (err) {return cb(err);}
           data.should.deep.eq({
@@ -252,7 +257,10 @@ _.each(datastores, function(datastore, name) {
           }, function(err) {
             if (err) {return cb(err);}
             datastore.fetch({
-              column: 'column', ids: ['foo'], attributes: ['bar']
+              column: 'column',
+              ids: ['foo'],
+              attributes: ['bar'],
+              types: baseTypes
             }, function(err, data) {
               if (err) {return cb(err);}
               data['foo'].bar.should.eq(result);
