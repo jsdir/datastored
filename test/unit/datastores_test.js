@@ -16,7 +16,7 @@ var datastores = {
     client: redis.createClient(),
     keyspace: 'datastored_test'
   }),
-  //MemoryDatastore: new MemoryDatastore()
+  MemoryDatastore: new MemoryDatastore()
 };
 
 _.each(datastores, function(datastore, name) {
@@ -179,7 +179,7 @@ _.each(datastores, function(datastore, name) {
       });
     });
 
-    describe.only('#fetch()', function() {
+    describe('#fetch()', function() {
 
       beforeEach(function(cb) {
         var options = _.merge({}, baseOptions, {id: 'foo'});
