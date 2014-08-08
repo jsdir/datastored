@@ -18,25 +18,25 @@ var datastores = {
 _.each(datastores, function(datastore, name) {
   describe(name, function() {
 
+    var baseOptions = {
+      column: 'column',
+      indexes: [],
+      replaceIndexes: [],
+      data: {
+        bar: 123,
+        baz: 'foobar'
+      },
+      types: {
+        bar: 'integer',
+        baz: 'string'
+      }
+    };
+
     beforeEach(function(cb) {
       datastore.reset(cb);
     });
 
     describe('#save()', function() {
-
-      var baseOptions = {
-        column: 'column',
-        indexes: [],
-        replaceIndexes: [],
-        data: {
-          bar: 123,
-          baz: 'foobar'
-        },
-        types: {
-          bar: 'integer',
-          baz: 'string'
-        }
-      };
 
       function assertFind(column, index, value, id, cb) {
         datastore.find({
@@ -46,6 +46,14 @@ _.each(datastores, function(datastore, name) {
           expect(res).to.eq(id);
           cb();
         });
+      }
+
+      function saveIndexedModel(value, replaceIndexValues, cb) {
+        var options = _.merge({}, baseOptions, {
+          id: 'foo', indexes: ['bar'], data: {bar: value},
+          replaceIndexValues: replaceIndexValues
+        });
+        datastore.save(options, cb);
       }
 
       it('should save a row with an id of type string', function(done) {
@@ -77,14 +85,6 @@ _.each(datastores, function(datastore, name) {
           });
         });
       });
-
-      function saveIndexedModel(value, replaceIndexValues, cb) {
-        var options = _.merge({}, baseOptions, {
-          id: 'foo', indexes: ['bar'], data: {bar: value},
-          replaceIndexValues: replaceIndexValues
-        });
-        datastore.save(options, cb);
-      }
 
       it('should save indexes', function(done) {
         saveIndexedModel(123, [], function(err) {
@@ -186,10 +186,34 @@ _.each(datastores, function(datastore, name) {
       });
     });
 
-    xdescribe('#incr()', function() {
+    describe('#incr()', function() {
 
-      it('should increment a column within a row', function() {
-        // check +, 0, -
+      it('should increment a column within a row', function(done) {
+        function testIncr(amount, result, cb) {
+          datastore.incr({
+            column: 'column', id: 'foo', attribute: 'bar', amount: amount
+          }, function(err) {
+            if (err) {return cb(err);}
+            datastore.fetch({
+              column: 'column', ids: ['foo'], attributes: ['bar']
+            }, function(err, data) {
+              if (err) {return cb(err);}
+              data['foo'].bar.should.eq(result);
+              cb();
+            });
+          });
+        }
+
+        var options = _.merge({}, baseOptions, {id: 'foo'});
+
+        datastore.save(options, function(err) {
+          if (err) {done(err);}
+          async.series([
+            function(cb) {testIncr(1, 124, cb);},
+            function(cb) {testIncr(0, 124, cb);},
+            function(cb) {testIncr(-3, 121, cb);}
+          ], done);
+        });
       });
     });
 
