@@ -1,6 +1,7 @@
 var _ = require('lodash');
 var async = require('async');
 var chai = require('chai');
+var redis = require('redis');
 
 var CassandraDatastore = require('../../lib/datastores/cassandra');
 var RedisDatastore = require('../../lib/datastores/redis');
@@ -11,7 +12,10 @@ var expect = chai.expect;
 
 var datastores = {
   // CassandraDatastore: CassandraDatastore,
-  // RedisDatastore: RedisDatastore,
+  /*RedisDatastore: new RedisDatastore({
+    client: redis.createClient(),
+    keyspace: 'datastored_test'
+  }),*/
   MemoryDatastore: new MemoryDatastore()
 };
 
@@ -99,10 +103,20 @@ _.each(datastores, function(datastore, name) {
       });
 
       it('should save indexes', function(done) {
-        saveIndexedModel(123, [], function(err) {
+        saveIndexedModel(123, {}, function(err) {
           if (err) {done(err);}
           assertFind('column', 'bar', 123, 'foo', done);
         });
+      });
+
+      it('should keep indexes unique', function(done) {
+        async.series([
+          function(cb) {saveIndexedModel(123, {}, cb)},
+          function(cb) {saveIndexedModel(123, {}, function(err) {
+            err.should.eq('index already exists');
+            cb();
+          })}
+        ], done);
       });
 
       it('should not replace indexes when requested', function(done) {
@@ -202,8 +216,8 @@ _.each(datastores, function(datastore, name) {
 
       it('should destroy all indexes', function(done) {
         async.series([
-          function(cb) {saveIndexedModel(123, {}, cb);},
-          function(cb) {saveIndexedModel(456, {bar: 123}, cb);},
+          function(cb) {saveIndexedModel(124, {}, cb);},
+          function(cb) {saveIndexedModel(456, {bar: 124}, cb);},
           function(cb) {
             var options = _.merge({}, baseOptions, {
               id: 'foo', indexes: ['bar', 'baz'], data: {baz: 'baz'}
@@ -220,7 +234,7 @@ _.each(datastores, function(datastore, name) {
             if (err) {return done(err);}
             // Ensure indexes are deleted.
             async.parallel([
-              function(cb) {assertFind('column', 'bar', 123, undefined, cb);},
+              function(cb) {assertFind('column', 'bar', 124, undefined, cb);},
               function(cb) {assertFind('column', 'bar', 456, undefined, cb);},
               function(cb) {assertFind('column', 'baz', 'baz', undefined, cb);}
             ], done);
