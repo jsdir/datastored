@@ -164,14 +164,33 @@ _.each(datastores, function(datastore, name) {
       });
     });
 
-    xdescribe('#fetch()', function() {
+    describe('#fetch()', function() {
 
-      it('should only fetch the requested attributes', function() {
-
+      beforeEach(function(cb) {
+        var options = _.merge({}, baseOptions, {id: 'foo'});
+        datastore.save(options, cb);
       });
 
-      it('should callback with null if no row was found', function() {
+      it('should only fetch the requested attributes', function(done) {
+        datastore.fetch({
+          column: 'column', ids: ['foo'], attributes: ['bar']
+        }, function(err, data) {
+          if (err) {return cb(err);}
+          data.should.deep.eq({
+            foo: {bar: 123}
+          });
+          done();
+        });
+      });
 
+      it('should callback with null if no row was found', function(done) {
+        datastore.fetch({
+          column: 'column', ids: ['bar'], attributes: ['bar']
+        }, function(err, data) {
+          if (err) {return cb(err);}
+          data.should.deep.eq({bar: null});
+          done();
+        });
       });
     });
 
