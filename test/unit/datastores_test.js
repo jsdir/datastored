@@ -18,6 +18,10 @@ var datastores = {
 _.each(datastores, function(datastore, name) {
   describe(name, function() {
 
+    beforeEach(function(cb) {
+      datastore.reset(cb);
+    });
+
     var baseOptions = {
       column: 'column',
       indexes: [],
@@ -32,29 +36,37 @@ _.each(datastores, function(datastore, name) {
       }
     };
 
-    beforeEach(function(cb) {
-      datastore.reset(cb);
-    });
+    function assertFind(column, index, value, id, cb) {
+      datastore.find({
+        column: column, index: index, value: value
+      }, function(err, res) {
+        if (err) {return cb(err);}
+        expect(res).to.eq(id);
+        cb();
+      });
+    }
+
+    function saveIndexedModel(value, replaceIndexValues, cb) {
+      var options = _.merge({}, baseOptions, {
+        id: 'foo', indexes: ['bar'], data: {bar: value},
+        replaceIndexValues: replaceIndexValues
+      });
+      datastore.save(options, cb);
+    }
+
+    function assertNotFound(id, cb) {
+      datastore.fetch({
+        column: 'column', ids: [id], attributes: ['bar']
+      }, function(err, data) {
+        if (err) {return cb(err);}
+        var expectedData = {};
+        expectedData[id] = null;
+        data.should.deep.eq(expectedData);
+        cb();
+      });
+    }
 
     describe('#save()', function() {
-
-      function assertFind(column, index, value, id, cb) {
-        datastore.find({
-          column: column, index: index, value: value
-        }, function(err, res) {
-          if (err) {return cb(err);}
-          expect(res).to.eq(id);
-          cb();
-        });
-      }
-
-      function saveIndexedModel(value, replaceIndexValues, cb) {
-        var options = _.merge({}, baseOptions, {
-          id: 'foo', indexes: ['bar'], data: {bar: value},
-          replaceIndexValues: replaceIndexValues
-        });
-        datastore.save(options, cb);
-      }
 
       it('should save a row with an id of type string', function(done) {
         var options = _.merge({}, baseOptions, {id: 'foo'});
@@ -95,42 +107,26 @@ _.each(datastores, function(datastore, name) {
 
       it('should not replace indexes when requested', function(done) {
         async.series([
-          function(cb) {
-            saveIndexedModel(123, {}, cb);
-          },
-          function(cb) {
-            saveIndexedModel(456, {}, cb);
-          }
+          function(cb) {saveIndexedModel(123, {}, cb);},
+          function(cb) {saveIndexedModel(456, {}, cb);}
         ], function(err) {
           if (err) {done(err);}
           async.parallel([
-            function(cb) {
-              assertFind('column', 'bar', 456, 'foo', cb);
-            },
-            function(cb) {
-              assertFind('column', 'bar', 123, 'foo', cb);
-            }
+            function(cb) {assertFind('column', 'bar', 456, 'foo', cb);},
+            function(cb) {assertFind('column', 'bar', 123, 'foo', cb);}
           ], done);
         });
       });
 
       it('should replace indexes when requested', function(done) {
         async.series([
-          function(cb) {
-            saveIndexedModel(123, {}, cb);
-          },
-          function(cb) {
-            saveIndexedModel(456, {bar: 123}, cb);
-          }
+          function(cb) {saveIndexedModel(123, {}, cb);},
+          function(cb) {saveIndexedModel(456, {bar: 123}, cb);}
         ], function(err) {
           if (err) {done(err);}
           async.parallel([
-            function(cb) {
-              assertFind('column', 'bar', 456, 'foo', cb);
-            },
-            function(cb) {
-              assertFind('column', 'bar', 123, undefined, cb);
-            }
+            function(cb) {assertFind('column', 'bar', 456, 'foo', cb);},
+            function(cb) {assertFind('column', 'bar', 123, undefined, cb);}
           ], done);
         });
       });
@@ -184,24 +180,47 @@ _.each(datastores, function(datastore, name) {
       });
 
       it('should callback with null if no row was found', function(done) {
-        datastore.fetch({
-          column: 'column', ids: ['bar'], attributes: ['bar']
-        }, function(err, data) {
-          if (err) {return cb(err);}
-          data.should.deep.eq({bar: null});
-          done();
-        });
+        assertNotFound('bar', done);
       });
     });
 
-    xdescribe('#destroy()', function() {
+    describe('#destroy()', function() {
 
-      it('should destroy the row', function() {
-        // check presence with fetch
+      beforeEach(function(cb) {
+        var options = _.merge({}, baseOptions, {
+          id: 'foo', indexes: ['bar', 'baz']
+        });
+        datastore.save(options, cb);
       });
 
-      it('should destroy all indexes', function() {
+      it('should destroy the row', function(done) {
+        datastore.destroy({column: 'column', ids: ['foo']}, function(err) {
+          if (err) {return done(err);}
+          assertNotFound('foo', done);
+        });
+      });
 
+      it('should destroy all indexes', function(done) {
+        async.series([
+          function(cb) {saveIndexedModel(123, {}, cb);},
+          function(cb) {saveIndexedModel(456, {bar: 123}, cb);},
+          function(cb) {
+            var options = _.merge({}, baseOptions, {
+              id: 'foo', indexes: ['bar', 'baz'], data: {baz: 'baz'}
+            });
+            datastore.save(options, cb);
+          }
+        ], function(err) {
+          datastore.destroy({column: 'column', ids: ['foo']}, function(err) {
+            if (err) {return done(err);}
+            // Ensure indexes are deleted.
+            async.parallel([
+              function(cb) {assertFind('column', 'bar', 456, undefined, cb);},
+              function(cb) {assertFind('column', 'bar', 123, undefined, cb);},
+              function(cb) {assertFind('column', 'baz', 'baz', undefined, cb);}
+            ], done);
+          });
+        });
       });
     });
 
