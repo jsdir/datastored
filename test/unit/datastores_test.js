@@ -211,12 +211,17 @@ _.each(datastores, function(datastore, name) {
             datastore.save(options, cb);
           }
         ], function(err) {
-          datastore.destroy({column: 'column', ids: ['foo']}, function(err) {
+          datastore.destroy({
+            column: 'column', ids: ['foo'], indexValues: {
+              values: {bar: [456], baz: ['baz']}, // current values from orm
+              replaceIndexes: ['bar']
+            }
+          }, function(err) {
             if (err) {return done(err);}
             // Ensure indexes are deleted.
             async.parallel([
-              function(cb) {assertFind('column', 'bar', 456, undefined, cb);},
               function(cb) {assertFind('column', 'bar', 123, undefined, cb);},
+              function(cb) {assertFind('column', 'bar', 456, undefined, cb);},
               function(cb) {assertFind('column', 'baz', 'baz', undefined, cb);}
             ], done);
           });
