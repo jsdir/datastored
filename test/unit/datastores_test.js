@@ -74,7 +74,7 @@ _.each(datastores, function(datastore, name) {
 
     describe('#save()', function() {
 
-      it.only('should save a row with an id of type string', function(done) {
+      it('should save a row with an id of type string', function(done) {
         var options = _.merge({}, baseOptions, {id: 'foo'});
         datastore.save(options, function(err) {
           datastore.fetch({
@@ -144,7 +144,7 @@ _.each(datastores, function(datastore, name) {
           if (err) {done(err);}
           async.parallel([
             function(cb) {assertFind('column', 'bar', 456, 'foo', cb);},
-            function(cb) {assertFind('column', 'bar', 123, undefined, cb);}
+            function(cb) {assertFind('column', 'bar', 123, null, cb);}
           ], done);
         });
       });
@@ -179,7 +179,7 @@ _.each(datastores, function(datastore, name) {
       });
     });
 
-    describe('#fetch()', function() {
+    describe.only('#fetch()', function() {
 
       beforeEach(function(cb) {
         var options = _.merge({}, baseOptions, {id: 'foo'});
@@ -239,9 +239,9 @@ _.each(datastores, function(datastore, name) {
             if (err) {return done(err);}
             // Ensure indexes are deleted.
             async.parallel([
-              function(cb) {assertFind('column', 'bar', 124, undefined, cb);},
-              function(cb) {assertFind('column', 'bar', 456, undefined, cb);},
-              function(cb) {assertFind('column', 'baz', 'baz', undefined, cb);}
+              function(cb) {assertFind('column', 'bar', 124, null, cb);},
+              function(cb) {assertFind('column', 'bar', 456, null, cb);},
+              function(cb) {assertFind('column', 'baz', 'baz', null, cb);}
             ], done);
           });
         });
