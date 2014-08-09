@@ -1,5 +1,6 @@
 var marshallers = require('../../lib/marshallers.js');
 
+/*
 describe('BasicMarshaller', function() {
 
   it('should serialize geotags', function() {
@@ -28,3 +29,4 @@ describe('BasicMarshaller', function() {
     }).should.deep.equal(['invalid geolocation']);
   });
 });
+*/
