@@ -39,7 +39,7 @@ xdescribe('Model', function() {
     });
 
     it('should only save changed attributes to the datastores',
-    function(done) {
+      function(done) {
       var model = Model.create({foo: 'bar'});
       model.save(function(err) {
         if (err) {done(err);}
@@ -95,7 +95,7 @@ xdescribe('Model', function() {
     });
 
     it('should fail if the model\'s primary key property is not set',
-    function() {
+      function() {
       var model = this.Model.create({foo: 'bar'});
 
       (function() {
@@ -155,7 +155,7 @@ xdescribe('Model', function() {
     });
 
     it('should fail if the model\'s primary key property is not set',
-    function() {
+      function() {
       var model = this.Model.create();
 
       (function() {

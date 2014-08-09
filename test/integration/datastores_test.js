@@ -12,13 +12,13 @@ chai.should();
 var expect = chai.expect;
 
 var datastores = {
-  /*CassandraDatastore: new CassandraDatastore({
+  CassandraDatastore: new CassandraDatastore({
     client: new cql.Client({
       hosts: ['localhost:9042'],
       keyspace: 'datastored_test'
     }),
     columns: ['column']
-  }),*/
+  }),
   RedisDatastore: new RedisDatastore({
     client: redis.createClient(),
     keyspace: 'datastored_test'
@@ -28,6 +28,8 @@ var datastores = {
 
 _.each(datastores, function(datastore, name) {
   describe(name, function() {
+
+    var isCassandra = name === 'CassandraDatastore';
 
     beforeEach(function(cb) {
       datastore.reset(cb);
@@ -122,11 +124,11 @@ _.each(datastores, function(datastore, name) {
       });
 
       it('should save a row with an id of type integer', function(done) {
-        var options = _.merge({}, baseOptions, {id: 2});
+        var options = _.merge({}, baseOptions, {id: 2, column: 'column_int'});
         datastore.save(options, function(err) {
           if (err) {return done(err);}
           datastore.fetch({
-            column: 'column',
+            column: 'column_int',
             ids: [2],
             attributes: ['bar', 'baz'],
             types: baseTypes
@@ -135,49 +137,6 @@ _.each(datastores, function(datastore, name) {
             data.should.deep.eq({2: {bar: 123, baz: 'foobar'}});
             done();
           });
-        });
-      });
-
-      it('should save indexes', function(done) {
-        saveIndexedModel(123, {}, function(err) {
-          if (err) {done(err);}
-          assertFind('column', 'bar', 123, 'foo', done);
-        });
-      });
-
-      it('should keep indexes unique', function(done) {
-        async.series([
-          function(cb) {saveIndexedModel(123, {}, cb)},
-          function(cb) {saveIndexedModel(123, {}, function(err) {
-            err.should.eq('index already exists');
-            cb();
-          })}
-        ], done);
-      });
-
-      it('should not replace indexes when requested', function(done) {
-        async.series([
-          function(cb) {saveIndexedModel(123, {}, cb);},
-          function(cb) {saveIndexedModel(456, {}, cb);}
-        ], function(err) {
-          if (err) {done(err);}
-          async.parallel([
-            function(cb) {assertFind('column', 'bar', 456, 'foo', cb);},
-            function(cb) {assertFind('column', 'bar', 123, 'foo', cb);}
-          ], done);
-        });
-      });
-
-      it('should replace indexes when requested', function(done) {
-        async.series([
-          function(cb) {saveIndexedModel(123, {}, cb);},
-          function(cb) {saveIndexedModel(456, {bar: 123}, cb);}
-        ], function(err) {
-          if (err) {done(err);}
-          async.parallel([
-            function(cb) {assertFind('column', 'bar', 456, 'foo', cb);},
-            function(cb) {assertFind('column', 'bar', 123, null, cb);}
-          ], done);
         });
       });
 
@@ -201,14 +160,61 @@ _.each(datastores, function(datastore, name) {
               attributes: ['bar', 'baz'],
               types: baseTypes
             }, function(err, data) {
-              if (err) {return done(err);}
+              if (err) {return cb(err);}
               data['foo'].bar.should.eq(456);
               expect(data['foo'].baz).to.be.undefined;
-              done();
+              cb();
             });
           }
         ], done);
       });
+
+      // CassandraDatastore shouldn't implement these yet.
+      if (!isCassandra) {
+
+        it('should save indexes', function(done) {
+          saveIndexedModel(123, {}, function(err) {
+            if (err) {done(err);}
+            assertFind('column', 'bar', 123, 'foo', done);
+          });
+        });
+
+        it('should keep indexes unique', function(done) {
+          async.series([
+            function(cb) {saveIndexedModel(123, {}, cb)},
+            function(cb) {saveIndexedModel(123, {}, function(err) {
+              err.should.eq('index already exists');
+              cb();
+            })}
+          ], done);
+        });
+
+        it('should not replace indexes when requested', function(done) {
+          async.series([
+            function(cb) {saveIndexedModel(123, {}, cb);},
+            function(cb) {saveIndexedModel(456, {}, cb);}
+          ], function(err) {
+            if (err) {done(err);}
+            async.parallel([
+              function(cb) {assertFind('column', 'bar', 456, 'foo', cb);},
+              function(cb) {assertFind('column', 'bar', 123, 'foo', cb);}
+            ], done);
+          });
+        });
+
+        it('should replace indexes when requested', function(done) {
+          async.series([
+            function(cb) {saveIndexedModel(123, {}, cb);},
+            function(cb) {saveIndexedModel(456, {bar: 123}, cb);}
+          ], function(err) {
+            if (err) {done(err);}
+            async.parallel([
+              function(cb) {assertFind('column', 'bar', 456, 'foo', cb);},
+              function(cb) {assertFind('column', 'bar', 123, null, cb);}
+            ], done);
+          });
+        });
+      }
     });
 
     describe('#fetch()', function() {
@@ -251,33 +257,36 @@ _.each(datastores, function(datastore, name) {
         });
       });
 
-      it('should destroy all indexes', function(done) {
-        async.series([
-          function(cb) {saveIndexedModel(124, {}, cb);},
-          function(cb) {saveIndexedModel(456, {bar: 124}, cb);},
-          function(cb) {
-            var options = _.merge({}, baseOptions, {
-              id: 'foo', indexes: ['bar', 'baz'], data: {baz: 'baz'}
-            });
-            datastore.save(options, cb);
-          }
-        ], function(err) {
-          datastore.destroy({
-            column: 'column', ids: ['foo'], indexValues: {
-              values: {bar: [456], baz: ['baz']}, // current values from orm
-              replaceIndexes: ['bar']
+      if (!isCassandra) {
+
+        it('should destroy all indexes', function(done) {
+          async.series([
+            function(cb) {saveIndexedModel(124, {}, cb);},
+            function(cb) {saveIndexedModel(456, {bar: 124}, cb);},
+            function(cb) {
+              var options = _.merge({}, baseOptions, {
+                id: 'foo', indexes: ['bar', 'baz'], data: {baz: 'baz'}
+              });
+              datastore.save(options, cb);
             }
-          }, function(err) {
-            if (err) {return done(err);}
-            // Ensure indexes are deleted.
-            async.parallel([
-              function(cb) {assertFind('column', 'bar', 124, null, cb);},
-              function(cb) {assertFind('column', 'bar', 456, null, cb);},
-              function(cb) {assertFind('column', 'baz', 'baz', null, cb);}
-            ], done);
+          ], function(err) {
+            datastore.destroy({
+              column: 'column', ids: ['foo'], indexValues: {
+                values: {bar: [456], baz: ['baz']}, // current values from orm
+                replaceIndexes: ['bar']
+              }
+            }, function(err) {
+              if (err) {return done(err);}
+              // Ensure indexes are deleted.
+              async.parallel([
+                function(cb) {assertFind('column', 'bar', 124, null, cb);},
+                function(cb) {assertFind('column', 'bar', 456, null, cb);},
+                function(cb) {assertFind('column', 'baz', 'baz', null, cb);}
+              ], done);
+            });
           });
         });
-      });
+      }
     });
 
     describe('#incr()', function() {

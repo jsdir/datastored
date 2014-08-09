@@ -3,7 +3,21 @@ CREATE KEYSPACE datastored_test WITH replication = {'class': 'SimpleStrategy', '
 USE datastored_test;
 
 CREATE TABLE column (
-  id varchar PRIMARY KEY,
+  id text PRIMARY KEY,
   bar int,
-  baz varchar
+  baz text,
+  "booleanTrue" boolean,
+  "booleanFalse" boolean,
+  datetime timestamp,
+  date int
+);
+
+CREATE TABLE column_int (
+  id int PRIMARY KEY,
+  bar int,
+  baz text,
+  "booleanTrue" boolean,
+  "booleanFalse" boolean,
+  datetime timestamp,
+  date int
 );
