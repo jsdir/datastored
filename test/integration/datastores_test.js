@@ -42,6 +42,9 @@ _.each(datastores, function(datastore, name) {
       date: 'date'
     };
 
+    var datetime = 1264982400000;
+    var date = 1264982400000;
+
     var baseOptions = {
       column: 'column',
       indexes: [],
@@ -51,8 +54,8 @@ _.each(datastores, function(datastore, name) {
         baz: 'foobar',
         booleanTrue: true,
         booleanFalse: false,
-        datetime: new Date(2010, 1, 2, 3, 4, 5, 6),
-        date: new Date(2010, 1, 1)
+        datetime: new Date(datetime),
+        date: new Date(date)
       },
       types: baseTypes
     };
@@ -111,8 +114,8 @@ _.each(datastores, function(datastore, name) {
             data['foo'].baz.should.eq('foobar');
             data['foo'].booleanTrue.should.be.true;
             data['foo'].booleanFalse.should.be.false;
-            data['foo'].datetime.getTime().should.equal(1265101445006);
-            data['foo'].date.getTime().should.equal(1265004000000);
+            data['foo'].datetime.getTime().should.equal(datetime);
+            data['foo'].date.getTime().should.equal(date);
             done();
           });
         });
