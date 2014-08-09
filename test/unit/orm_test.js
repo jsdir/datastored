@@ -2,6 +2,7 @@ var _ = require('lodash');
 var chai = require('chai');
 
 var datastored = require('../..');
+var testUtils = require('../utils');
 
 chai.should()
 
@@ -37,19 +38,10 @@ describe('orm', function() {
 
     it('should fail if the model name has already been registered',
     function() {
-      var orm = datastored.createOrm(options);
-      var modelOptions = {
-        table: 'models',
-        properties: {
-          id: {
-            type: 'string',
-            primary: true
-          }
-        }
-      };
-      var model = orm.createModel('Model', modelOptions);
+      var orm = testUtils.createTestOrm();
+      orm.createModel('Model', testUtils.baseOptions);
       (function() {
-        orm.createModel('Model', modelOptions);
+        orm.createModel('Model', testUtils.baseOptions);
       }).should.throw('model "Model" is already defined');
     });
   });

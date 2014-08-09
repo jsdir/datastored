@@ -4,11 +4,18 @@ var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
 
 var datastored = require('../..');
+var testUtils = require('../utils');
 var Instance = require('../../lib/model').Instance;
 
 chai.should();
 chai.use(sinonChai);
 var expect = chai.expect;
+
+function appendValue(data, appendedValue) {
+  return _.object(_.map(data, function(value, key) {
+    return [key, value + ',' + appendedValue]
+  }));
+}
 
 function onBefore() {
   var orm = datastored.createOrm({memory: true});
@@ -17,10 +24,7 @@ function onBefore() {
     return orm.createModel(name || _.uniqueId(), _.merge({}, {
       table: 'model',
       properties: {
-        id: {
-          type: 'string',
-          primary: true
-        }
+        id: {type: 'string', primary: true}
       }
     }, options));
   };
@@ -49,12 +53,6 @@ function onBefore() {
       }
     }
   }, 'CallbackModel');
-}
-
-function appendValue(data, appendedValue) {
-  return _.object(_.map(data, function(value, key) {
-    return [key, value + ',' + appendedValue]
-  }));
 }
 
 describe('Model', function() {
