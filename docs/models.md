@@ -371,6 +371,10 @@ Atomically increments `attribute` by `amount`.
 
 Atomically decrements `attribute` by `amount`.
 
+#### instance.getId -> `*`
+
+Returns the instance id.
+
 #### instance.errors -> `{}`
 
 Contains all input errors.
