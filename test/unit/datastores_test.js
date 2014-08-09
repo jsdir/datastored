@@ -2,6 +2,7 @@ var _ = require('lodash');
 var async = require('async');
 var chai = require('chai');
 var redis = require('redis');
+var cql = require('node-cassandra-cql');
 
 var CassandraDatastore = require('../../lib/datastores/cassandra');
 var RedisDatastore = require('../../lib/datastores/redis');
@@ -11,7 +12,13 @@ chai.should();
 var expect = chai.expect;
 
 var datastores = {
-  // CassandraDatastore: CassandraDatastore,
+  /*CassandraDatastore: new CassandraDatastore({
+    client: new cql.Client({
+      hosts: ['localhost:9042'],
+      keyspace: 'datastored_test'
+    }),
+    columns: ['column']
+  }),*/
   RedisDatastore: new RedisDatastore({
     client: redis.createClient(),
     keyspace: 'datastored_test'
@@ -28,7 +35,11 @@ _.each(datastores, function(datastore, name) {
 
     var baseTypes = {
       bar: 'integer',
-      baz: 'string'
+      baz: 'string',
+      booleanTrue: 'boolean',
+      booleanFalse: 'boolean',
+      datetime: 'datetime',
+      date: 'date'
     };
 
     var baseOptions = {
@@ -37,7 +48,11 @@ _.each(datastores, function(datastore, name) {
       replaceIndexes: [],
       data: {
         bar: 123,
-        baz: 'foobar'
+        baz: 'foobar',
+        booleanTrue: true,
+        booleanFalse: false,
+        datetime: new Date(2010, 1, 2, 3, 4, 5, 6),
+        date: new Date(2010, 1, 1)
       },
       types: baseTypes
     };
@@ -77,14 +92,27 @@ _.each(datastores, function(datastore, name) {
       it('should save a row with an id of type string', function(done) {
         var options = _.merge({}, baseOptions, {id: 'foo'});
         datastore.save(options, function(err) {
+          if (err) {return done(err);}
           datastore.fetch({
             column: 'column',
             ids: ['foo'],
-            attributes: ['bar', 'baz'],
+            attributes: [
+              'bar',
+              'baz',
+              'booleanTrue',
+              'booleanFalse',
+              'datetime',
+              'date'
+            ],
             types: baseTypes
           }, function(err, data) {
             if (err) {return done(err);}
-            data.should.deep.eq({foo: {bar: 123, baz: 'foobar'}});
+            data['foo'].bar.should.eq(123);
+            data['foo'].baz.should.eq('foobar');
+            data['foo'].booleanTrue.should.be.true;
+            data['foo'].booleanFalse.should.be.false;
+            data['foo'].datetime.getTime().should.equal(1265101445006);
+            data['foo'].date.getTime().should.equal(1265004000000);
             done();
           });
         });
@@ -93,6 +121,7 @@ _.each(datastores, function(datastore, name) {
       it('should save a row with an id of type integer', function(done) {
         var options = _.merge({}, baseOptions, {id: 2});
         datastore.save(options, function(err) {
+          if (err) {return done(err);}
           datastore.fetch({
             column: 'column',
             ids: [2],
