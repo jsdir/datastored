@@ -1,6 +1,6 @@
 var datastored = require('../..');
 
-describe('HasOne relation', function() {
+xdescribe('HasOne relation', function() {
 
   before(function() {
     this.ParentModel = orm.createModel({

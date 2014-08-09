@@ -5,7 +5,7 @@ var transforms = require('../../lib/transforms');
 var expect = chai.expect;
 chai.should();
 
-describe('transforms', function() {
+xdescribe('transforms', function() {
 
   describe('validate', function() {
     var options = {

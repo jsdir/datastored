@@ -39,7 +39,7 @@ describe('orm', function() {
     function() {
       var orm = datastored.createOrm(options);
       var modelOptions = {
-        column: 'models',
+        table: 'models',
         properties: {
           id: {
             type: 'string',

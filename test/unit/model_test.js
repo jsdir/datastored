@@ -10,19 +10,12 @@ chai.should();
 chai.use(sinonChai);
 var expect = chai.expect;
 
-function createOrm() {
-  return datastored.createOrm({
-    redisClient: true,
-    cassandraClient: true
-  });
-}
-
 function onBefore() {
-  var orm = createOrm();
+  var orm = datastored.createOrm({memory: true});
   this.orm = orm;
   this.createModel = function(options, name) {
     return orm.createModel(name || _.uniqueId(), _.merge({}, {
-      column: 'models',
+      table: 'model',
       properties: {
         id: {
           type: 'string',
@@ -72,7 +65,7 @@ describe('Model', function() {
 
     function createMixin(n) {
       return {
-        column: 'mixin',
+        table: 'mixin',
         properties: {
           foo: {type: 'string'}
         },
@@ -155,7 +148,7 @@ describe('Model', function() {
         }
       });
 
-      Model.options.column.should.eq('mixin');
+      Model.options.table.should.eq('mixin');
     });
   });
 
@@ -166,7 +159,7 @@ describe('Model', function() {
     modelClass.foo().should.deep.equal(modelClass);
   });
 
-  it('should require a column name', function() {
+  it('should require a table name', function() {
     var _this = this;
     (function() {
       _this.orm.createModel('Model', {
@@ -175,14 +168,14 @@ describe('Model', function() {
           primary: true
         }
       });
-    }).should.throw('"column" is not defined');
+    }).should.throw('"table" is not defined');
   });
 
   it('should require a primary key property', function() {
     var _this = this;
     (function() {
       _this.orm.createModel('Model', {
-        column: 'models',
+        table: 'models',
         relations: {foo: {primary: true}}
       });
     }).should.throw('no primary key property defined');
@@ -206,7 +199,7 @@ describe('Model', function() {
     var _this = this;
     (function() {
       _this.orm.createModel('Model', {
-        column: 'models',
+        table: 'models',
         properties: {
           id: {
             type: 'string',
@@ -304,12 +297,6 @@ describe('Model', function() {
   describe('#find()', function() {
 
     it('should require the attribute to be an index', function() {
-      var Model = this.Model;
-      (function() {Model.find('foo', 'bar', function() {});})
-        .should.throw('attribute "foo" is not an index');
-    });
-
-    xit('should not mutate the index value if requested', function() {
       var Model = this.Model;
       (function() {Model.find('foo', 'bar', function() {});})
         .should.throw('attribute "foo" is not an index');
@@ -423,173 +410,6 @@ describe('Instance', function() {
     it('should not mutate the result if requested', function() {
       var model = this.CallbackModel.get('foo', true);
       model.getPkValue(true).should.eq('foo');
-    });
-  });
-
-  xdescribe('#save()', function() {
-
-    it('should fail if model errors exist', function(done) {
-      var model = this.ErrorModel.create({foo: 'foo'});
-      model.save(function(err) {
-        err.should.deep.eq({foo: 'message'});
-        done();
-      });
-    });
-
-    it('should only save changed attributes to the datastores',
-    function(done) {
-      var model = Model.create({foo: 'bar'});
-      model.save(function(err) {
-        if (err) {done(err);}
-        datastore.save.should.have.been.calledWith();
-        model.set('foo', 'baz').save(function(err) {
-          if (err) {done(err);}
-          datastore.save.should.have.been.calledWith();
-        });
-      });
-    });
-
-    it('should callback if no attributes were changed', function(done) {
-      var model = Model.create({foo: 'bar'});
-      model.save(function(err) {
-        if (err) {throw err;}
-        model.save(function(err) {
-          if (err) {throw err;}
-          datastore.save.should.not.have.beenCalled();
-        });
-      });
-    });
-
-    xit('should fail with callback errors', function() {
-
-    });
-
-    xit('should execute all callbacks', function() {
-
-    });
-
-    xit('should validate before saving', function() {
-
-    });
-
-    xit('should generate a model id with "orm.generateId"', function(done) {
-
-    });
-
-    xit('should save a new model to the datastore', function() {
-      // spy to make sure that only the change attributes were actually saved.
-      // verify with fetch
-      // verify that all properties exist
-    });
-
-    xit('should save an existing model to the datastore', function() {
-      // verify with fetch
-      // verify that all properties exist
-    });
-  });
-
-  xdescribe('#fetch()', function() {
-
-    it('should fail if model errors exist', function(done) {
-      var model = this.ErrorModel.get('foo', true);
-      model.set('foo', 'bar');
-      model.fetch(function(err) {
-        err.should.deep.eq({foo: 'message'});
-        done();
-      });
-    });
-
-    it('should fail if the model\'s primary key property is not set',
-    function() {
-      var model = this.Model.create({foo: 'bar'});
-
-      (function() {
-        model.fetch('scope', function(err) {});
-      }).should.throw('the model primary key "id" must be set');
-    });
-
-    xit('should select the correct datastores to fetch each attribute from ' +
-    'based on the attribute definitions', function() {
-    });
-
-    xit('should fail with callback errors', function() {
-
-    });
-
-    xit('should execute all callbacks', function(done) {
-      // check user and options
-      var Model = orm.createModel({callbacks: {
-        beforeFetch: function(options, attributes, cb) {
-          options.should.eq('options');
-          attributes.should.eq(['attribute']);
-          cb(options);
-        },
-        afterFetch: function(options, values, cb) {
-          options.should.eq('options');
-          values.should.eq('values');
-          cb(options);
-        }
-      }});
-
-      Model.create({}).save(function(err) {
-        if (err) {throw err;}
-        model.fetch(done);
-        model.fetch('options', done);
-        model.fetch([attributes], 'options', done);
-      });
-    });
-
-    it('should use scopes', function() {
-
-    });
-  });
-
-  xdescribe('#destroy()', function() {
-
-    it('should fail if model errors exist', function(done) {
-      var model = this.ErrorModel.get('foo', true);
-      model.set('foo', 'bar');
-      model.destroy(function(err) {
-        err.should.deep.eq({foo: 'message'});
-        done();
-      });
-    });
-
-    it('should fail if the model\'s primary key property is not set',
-    function() {
-      var model = this.Model.create();
-
-      (function() {
-        model.destroy(function() {});
-      }).should.throw('the model primary key "id" must be set');
-    });
-
-    xit('should delete the model from the datastores', function() {
-      // also select the correct datastore(s) to delete from.
-    });
-
-    xit('should fail with callback errors', function() {
-
-    });
-
-    xit('should execute all callbacks', function(done) {
-      // check user and options
-      var Model = orm.createModel({callbacks: {
-        beforeDestroy: function(options, cb) {
-          options.should.eq('options');
-          cb(null, options);
-        },
-        afterDestroy: function(options, cb) {
-          options.should.eq('options');
-          cb(null, options);
-        }
-      }});
-
-      Model.create({}).save(function(err) {
-        if (err) {throw err;}
-        model.destroy(done);
-        model.destroy('options', done);
-      });
     });
   });
 });

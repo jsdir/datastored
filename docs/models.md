@@ -8,7 +8,7 @@ A model can be defined with `orm.createModel`. `orm.createModel` is called with 
 var orm = require('./orm');
 
 var Book = orm.createModel('Book', {
-  column: 'books',
+  table: 'books',
   properties: {
     id: {
       type: 'number',
@@ -39,9 +39,9 @@ The model name is case-insensitive and must be unique to the orm.
 
 ### Options
 
-#### column
+#### table
 
-Is the redis key fragment and the cassandra column name. This defaults to the model's name in lowercase.
+Is the redis key fragment and the cassandra column family name. This defaults to the model's name in lowercase.
 
 #### properties
 
@@ -56,7 +56,7 @@ Allows the model to extend the definition of another model. If a model is extend
 Can be used to extend a model's options. Options are extended differently by type:
 
 - option properties (attributes)
-  - If the option property is not an object (`column`, `softDelete`) are overwritten by the mixin on conflict.
+  - If the option property is not an object (`table`, `softDelete`) are overwritten by the mixin on conflict.
   - If the option property is an object, the objects keys are overwritten on naming conflict.
 - option functions
   - `callbacks` are composed synchronously or asynchronously based on the function name. More details about how different callbacks are composed can be found in the [documentation for callbacks](callbacks.md).
@@ -131,7 +131,7 @@ Defines the property's rules. Rules are described [here](rules.md) in further de
 
 ## Extending a model
 
-Multiple model types can be classified under a parent model. The model types will be stored in the parent model's column.
+Multiple model types can be classified under a parent model. The model types will be stored in the parent model's table.
 
 ## Static Methods
 
