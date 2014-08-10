@@ -26,6 +26,8 @@ var datastores = {
   MemoryDatastore: new MemoryDatastore()
 };
 
+datastores = _.pick(datastores, ['RedisDatastore']);
+
 _.each(datastores, function(datastore, name) {
   describe(name, function() {
 
@@ -169,7 +171,32 @@ _.each(datastores, function(datastore, name) {
         ], done);
       });
 
-      // CassandraDatastore shouldn't implement these yet.
+      it('should increment columns within a row', function(done) {
+        var options = {
+          id: 'foo', column: 'column',
+          types: {i1: 'integer', i2: 'integer', i3: 'integer'}
+        };
+
+        var saveOptions = _.extend({}, options, {data: {i1: 1, i2: 2, i3: 3}});
+        datastore.save(saveOptions, function(err) {
+          if (err) {return done(err);}
+          var saveOptions = _.extend({}, options, {
+            increments: {i1: -1, i2: 0, i3: 1}
+          });
+          datastore.save(saveOptions, function(err) {
+            if (err) {return done(err);}
+            var saveOptions = _.extend({}, options, {
+              ids: ['foo'], attributes: ['i1', 'i2', 'i3']
+            });
+            datastore.fetch(saveOptions, function(err, data) {
+              data['foo'].should.deep.eq({i1: 0, i2: 2, i3: 4});
+              done();
+            });
+          });
+        });
+      });
+
+      // CassandraDatastore should not implement these yet.
       if (!isCassandra) {
 
         it('should save indexes', function(done) {
@@ -288,79 +315,5 @@ _.each(datastores, function(datastore, name) {
         });
       }
     });
-
-    describe('#incr()', function() {
-
-      it('should increment a column within a row', function(done) {
-        function testIncr(amount, result, cb) {
-          datastore.incr({
-            column: 'column', id: 'foo', attribute: 'bar', amount: amount
-          }, function(err) {
-            if (err) {return cb(err);}
-            datastore.fetch({
-              column: 'column',
-              ids: ['foo'],
-              attributes: ['bar'],
-              types: baseTypes
-            }, function(err, data) {
-              if (err) {return cb(err);}
-              data['foo'].bar.should.eq(result);
-              cb();
-            });
-          });
-        }
-
-        var options = _.merge({}, baseOptions, {id: 'foo'});
-
-        datastore.save(options, function(err) {
-          if (err) {done(err);}
-          async.series([
-            function(cb) {testIncr(1, 124, cb);},
-            function(cb) {testIncr(0, 124, cb);},
-            function(cb) {testIncr(-3, 121, cb);}
-          ], done);
-        });
-      });
-    });
-
-    /*
-    xdescribe('#createCollection()', function() { // ?
-
-    });
-
-    xdescribe('#destroyCollection()', function() { // ?
-
-    });
-
-    xdescribe('#getCollectionSize()', function() {
-
-    });
-
-    xdescribe('#addToCollection()', function() {
-
-    });
-
-    xdescribe('#removeFromCollection()', function() {
-
-      it('should remove values from set', function(done) {
-
-      });
-
-      it('should remove values from list', function(done) {
-
-      });
-
-      it('should remove values from sorted set', function(done) {
-
-      });
-    });
-
-    xdescribe('#isMember()', function() {
-
-      it('should show if a value is a member of a collection', function(done) {
-        done();
-      });
-    });
-    */
   });
 });
