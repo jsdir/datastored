@@ -21,3 +21,10 @@ CREATE TABLE column_int (
   datetime timestamp,
   date int
 );
+
+CREATE TABLE count (
+  id text PRIMARY KEY,
+  i1 counter,
+  i2 counter,
+  i3 counter
+);

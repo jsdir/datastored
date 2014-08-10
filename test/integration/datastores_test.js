@@ -26,7 +26,7 @@ var datastores = {
   MemoryDatastore: new MemoryDatastore()
 };
 
-datastores = _.pick(datastores, ['RedisDatastore']);
+// datastores = _.pick(datastores, ['RedisDatastore']);
 
 _.each(datastores, function(datastore, name) {
   describe(name, function() {
@@ -142,6 +142,34 @@ _.each(datastores, function(datastore, name) {
         });
       });
 
+      it('should overwrite existing values', function(done) {
+         async.series([
+          function(cb) {
+            var options = _.merge({}, baseOptions, {id: 'foo'});
+            datastore.save(options, cb);
+          },
+          function(cb) {
+            var options = _.merge({}, baseOptions, {
+              id: 'foo', data: {baz: 'foo'}
+            });
+            datastore.save(options, cb);
+          },
+          function(cb) {
+            datastore.fetch({
+              column: 'column',
+              ids: ['foo'],
+              attributes: ['bar', 'baz'],
+              types: baseTypes
+            }, function(err, data) {
+              if (err) {return cb(err);}
+              data['foo'].bar.should.eq(123);
+              data['foo'].baz.should.eq('foo');
+              cb();
+            });
+          }
+        ], done);
+      });
+
       it('should delete row values when set to null', function(done) {
         async.series([
           function(cb) {
@@ -171,33 +199,33 @@ _.each(datastores, function(datastore, name) {
         ], done);
       });
 
-      it('should increment columns within a row', function(done) {
-        var options = {
-          id: 'foo', column: 'column',
-          types: {i1: 'integer', i2: 'integer', i3: 'integer'}
-        };
+      // CassandraDatastore should not implement these yet.
+      if (!isCassandra) {
 
-        var saveOptions = _.extend({}, options, {data: {i1: 1, i2: 2, i3: 3}});
-        datastore.save(saveOptions, function(err) {
-          if (err) {return done(err);}
-          var saveOptions = _.extend({}, options, {
-            increments: {i1: -1, i2: 0, i3: 1}
-          });
+        it('should increment columns within a row', function(done) {
+          var options = {
+            id: 'foo', column: 'count',
+            types: {i1: 'integer', i2: 'integer', i3: 'integer'}
+          };
+
+          var saveOptions = _.extend({}, options, {data: {i1: 1, i2: 2, i3: 3}});
           datastore.save(saveOptions, function(err) {
             if (err) {return done(err);}
             var saveOptions = _.extend({}, options, {
-              ids: ['foo'], attributes: ['i1', 'i2', 'i3']
+              increments: {i1: -1, i2: 0, i3: 1}
             });
-            datastore.fetch(saveOptions, function(err, data) {
-              data['foo'].should.deep.eq({i1: 0, i2: 2, i3: 4});
-              done();
+            datastore.save(saveOptions, function(err) {
+              if (err) {return done(err);}
+              var saveOptions = _.extend({}, options, {
+                ids: ['foo'], attributes: ['i1', 'i2', 'i3']
+              });
+              datastore.fetch(saveOptions, function(err, data) {
+                data['foo'].should.deep.eq({i1: 0, i2: 2, i3: 4});
+                done();
+              });
             });
           });
         });
-      });
-
-      // CassandraDatastore should not implement these yet.
-      if (!isCassandra) {
 
         it('should save indexes', function(done) {
           saveIndexedModel(123, {}, function(err) {
