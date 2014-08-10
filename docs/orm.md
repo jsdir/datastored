@@ -45,11 +45,7 @@ A function that calls an errback with a unique id on invocation. `generateId` de
 
 ```js
 var settings = {
-  generateId: function(cb) {
-    generateIdAsync(function(err, id) {
-      cb(err, id);
-    });
-  }
+  generateId: generateIdAsync
 };
 ```
 
