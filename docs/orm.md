@@ -41,7 +41,7 @@ If set to `true`, the orm will use in-memory datastores instead of redis and cas
 
 #### generateId
 
-A function that calls an errback with a unique id on invocation. `generateId` defaults to lodash's `uniqueId`.
+A function that calls an errback with a unique id on invocation. `generateId` defaults to lodash's `uniqueId`. Datastored requires this function to call back with a unique id in respect to the database. If the orm will be running on multiple nodes, use a package like [flake-idgen](https://github.com/T-PWK/flake-idgen) to generate unique, cluster-wide ids.
 
 ```js
 var settings = {
