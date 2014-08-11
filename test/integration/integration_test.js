@@ -12,6 +12,11 @@ describe('Orm', function() {
   before(function() {
     // Define test models.
     this.BasicModel = this.createModel();
+
+    this.ValidatedModel = this.createModel({properties: {
+      foo: {type: 'string', rules: {min: 5}},
+      bar: {type: 'string', required: true}
+    }});
   });
 
   describe('Model', function() {
@@ -107,12 +112,12 @@ describe('Orm', function() {
         });
       });
 
-      xit('should validate data', function(done) {
+      it('should validate data', function(done) {
         var instance = this.ValidatedModel.create({foo: 123});
         instance.save(function(err) {
           err.should.deep.eq({
-            foo: '"foo" is supposed to be required',
-            bar: '"bar" is supposed to be less than 4'
+            foo: 'attribute "foo" must have a minimum of 5 characters',
+            bar: 'attribute "bar" is required'
           });
           done();
         });
