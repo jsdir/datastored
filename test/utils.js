@@ -8,6 +8,9 @@ var baseOptions = {
     id: {type: 'string', primary: true},
     foo: {type: 'string'},
     bar: {type: 'string'}
+  },
+  scopes: {
+    foo: ['foo']
   }
 };
 

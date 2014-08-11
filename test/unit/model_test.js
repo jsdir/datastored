@@ -268,6 +268,7 @@ describe('Orm', function() {
     });
 
     describe('#getId()', function() {
+
       it('should mutate the result by default', function() {
         var model = this.CallbackModel.get('foo', true);
         var value = 'foo,beforeOutput,beforeOutput,afterOutput,afterOutput';
@@ -277,6 +278,32 @@ describe('Orm', function() {
       it('should not mutate the result if requested', function() {
         var model = this.CallbackModel.get('foo', true);
         model.getId(true).should.eq('foo');
+      });
+    });
+
+    describe('#toObject()', function() {
+
+      it('should return data in the correct scope', function() {
+        var instance = this.CallbackModel.get('foo', true);
+        instance.set({foo: 'foo', bar: 'bar'}, true);
+
+        instance.toObject('foo').should.deep.eq({
+          id: 'foo,beforeOutput,beforeOutput,afterOutput,afterOutput',
+          foo: 'foo,beforeOutput,beforeOutput,afterOutput,afterOutput'
+        });
+
+        instance.toObject(['bar']).should.deep.eq({
+          id: 'foo,beforeOutput,beforeOutput,afterOutput,afterOutput',
+          bar: 'bar,beforeOutput,beforeOutput,afterOutput,afterOutput'
+        });
+
+        instance.toObject('foo', true).should.deep.eq({
+          id: 'foo', foo: 'foo'
+        });
+
+        instance.toObject(['bar'], true).should.deep.eq({
+          id: 'foo', bar: 'bar'
+        });
       });
     });
   });

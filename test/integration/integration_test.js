@@ -4,19 +4,6 @@ xdescribe('Model', function() {
     this.orm._resetDatastores(cb);
   });
 
-  describe('#find()', function() {
-
-    xit('should mutate the index value by default', function() {
-
-    });
-
-    xit('should not mutate the index value if requested', function() {
-      var Model = this.Model;
-      (function() {Model.find('foo', 'bar', function() {});})
-        .should.throw('attribute "foo" is not an index');
-    });
-  });
-
   describe('#save()', function() {
 
     it('should fail if model errors exist', function(done) {
@@ -139,6 +126,19 @@ xdescribe('Model', function() {
     });
   });
 
+  describe('#find()', function() {
+
+    xit('should mutate the index value by default', function() {
+
+    });
+
+    xit('should not mutate the index value if requested', function() {
+      var Model = this.Model;
+      (function() {Model.find('foo', 'bar', function() {});})
+        .should.throw('attribute "foo" is not an index');
+    });
+  });
+
   xdescribe('#destroy()', function() {
 
     beforeEach(function(cb) {
@@ -192,3 +192,77 @@ xdescribe('Model', function() {
     });
   });
 });
+
+/*
+save
+
+  (the following should be tested without options) [m.save(cb)]
+
+  - test saving without specifying a generateId sets an id
+  - test saving and fetching a model with all datatypes works with C*.
+    - check for new random id (mock generateid)
+  - test saving and fetching a model with all datatypes works with redis. (cached)
+    - check for new random id (mock generateid)
+  - check that saving with any invalid data will not work. (one attribute)
+  - check that things can be updated. Have update no set a required variable. should still work.
+  - check that saving with unset required variables will not work.
+
+  (use options for the following) [m.save(options, cb)]
+
+  - test beforeSave w/ mixin order (maybe change a value)
+  - test save fails when beforeSave fails
+  - test afterSave w/ mixin order
+  - test save fails when afterSave fails
+
+  - changedAttributes is implicit
+
+incr
+  - then save
+  - should only work if indexed and type marked as "counter" for now.
+  - incr -> save -> incr -> save -> fetch should work.
+
+fetch
+
+  - throws error with invalid scope
+  - test beforeFetch w/ mixin order (maybe change a value)
+    - test scope
+  - test fetch fails when beforeFetch fails
+  - test afterFetch w/ mixin order
+    - test scope
+  - test fetch fails when afterFetch fails
+
+  - test scopes
+    - none(all props)
+    - scopename
+    - array
+
+  - test saving with variables of mixed cache (default(nocache), cache, cacheOnly)
+    and fetch should only use the required datastores to set the correct result
+
+  - test that fetch should change local values and unset changed variables
+
+destroy
+
+  - test beforeDestroy w/ mixin order (maybe change a value)
+  - test destroy fails when beforeSave fails
+  - test afterDestroy w/ mixin order
+  - test destroy fails when afterSave fails
+  - test the model is actually destroyed (create -> destroy -> fetch)
+
+Indexing
+
+  - test that only cached values can be indexed only (for now)
+  - test replace (test that refs are deleted)
+  - test no replace (test that refs are kept)
+  - test destroy removes both types of indexes.
+  - test that changing an attribute will also update an index
+
+find
+
+  - should only find indexes
+  - should follow raw param (2 state)
+  - should return null if nothing found
+  - should return model with id only if found
+
+Multi (?)
+ */
