@@ -1,4 +1,5 @@
 var _ = require('lodash');
+var async = require('async');
 var chai = require('chai');
 
 var datastored = require('../..');
@@ -24,11 +25,25 @@ describe('datastored.createOrm()', function() {
   });
 
   it('should use an incrementing id generator if `generateId` is not ' +
-    'defined', function() {
+    'defined', function(done) {
     var orm = datastored.createOrm(options);
 
-    orm.generateId().should.equal(1);
-    orm.generateId().should.equal(2);
+    async.series([
+      function(cb) {
+        orm.generateId(function(err, id) {
+          if (err) {return cb(err);}
+          id.should.eq(1);
+          cb();
+        });
+      },
+      function(cb) {
+        orm.generateId(function(err, id) {
+          if (err) {return cb(err);}
+          id.should.eq(2);
+          cb();
+        });
+      }
+    ], done);
   })
 });
 
