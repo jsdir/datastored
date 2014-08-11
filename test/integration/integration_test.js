@@ -223,7 +223,6 @@ incr
 
 fetch
 
-  - throws error with invalid scope
   - test beforeFetch w/ mixin order (maybe change a value)
     - test scope
   - test fetch fails when beforeFetch fails
@@ -232,7 +231,6 @@ fetch
   - test fetch fails when afterFetch fails
 
   - test scopes
-    - none(all props)
     - scopename
     - array
 
@@ -251,7 +249,6 @@ destroy
 
 Indexing
 
-  - test that only cached values can be indexed only (for now)
   - test replace (test that refs are deleted)
   - test no replace (test that refs are kept)
   - test destroy removes both types of indexes.

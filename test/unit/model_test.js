@@ -35,6 +35,13 @@ describe('Orm', function() {
       methods: {foo: function() {return this;}}
     });
 
+    this.ErrorModel = this.createModel({
+      properties: {foo: {type: 'string'}},
+      callbacks: {
+        beforeInput: function(values, cb) {cb({foo: 'message'});}
+      }
+    });
+
     var callbacks = {
       beforeInput: function(values, cb) {
         cb(null, appendValue(values, 'beforeInput'));
@@ -231,13 +238,6 @@ describe('Orm', function() {
     describe('#set()', function() {
 
       before(function() {
-        this.ErrorModel = this.createModel({
-          properties: {foo: {type: 'string'}},
-          callbacks: {
-            beforeInput: function(values, cb) {cb({foo: 'message'});}
-          }
-        });
-
         this.ImmutableModel = this.createModel({
           properties: {foo: {type: 'string', immutable: true}}
         });
@@ -317,6 +317,17 @@ describe('Orm', function() {
 
         instance.toObject(['bar'], true).should.deep.eq({
           id: 'foo', bar: 'bar'
+        });
+      });
+    });
+
+    describe('#save()', function() {
+
+      it('should fail if model errors exist', function(done) {
+        var model = this.ErrorModel.create({foo: 'foo'});
+        model.save(function(err) {
+          err.should.deep.eq({foo: 'message'});
+          done();
         });
       });
     });
