@@ -1,3 +1,5 @@
+var async = require('async');
+
 var testUtils = require('../utils');
 
 describe('Orm', function() {
@@ -123,20 +125,28 @@ describe('Orm', function() {
         });
       });
 
-      xit('should update values', function(done) {
-        var instance = this.Model.create({foo: 'foo', bar: 1});
-        async.series([
-          instance.save,
+      it('should update values', function(done) {
+        var ValidatedModel = this.ValidatedModel;
+
+        async.waterfall([
           function(cb) {
-            instance.set({bar: 2});
-            instance.save(cb);
+            var instance = ValidatedModel.create({foo: 'foooo', bar: 'bar'});
+            instance.save(function(err) {
+              if (err) {return cb(err);}
+              instance.set({bar: 'baz'});
+              instance.save(function(err) {
+                if (err) {return cb(err);}
+                cb(null, instance.getId());
+              });
+            });
           },
-          function(cb) {
-            var instance = this.Model.get('mock_id');
-            instance.fetch(['bar'], cb)
-          },
-          function(cb) {
-            instance.get('bar').should.eq(2);
+          function(id, cb) {
+            var instance = ValidatedModel.get(id);
+            instance.fetch(['bar'], function(err) {
+              if (err) {return cb(err);}
+              instance.get('bar').should.eq('baz');
+              cb();
+            });
           }
         ], done);
       });
