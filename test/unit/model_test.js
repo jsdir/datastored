@@ -107,6 +107,20 @@ describe('Orm', function() {
         'property "typeless" requires a type');
     });
 
+    // Temporary
+
+    it('should only allow cached properties to be indexed', function() {
+      assertFailsWith(this, false, {properties: {
+        foo: {type: 'string', index: true}
+      }}, 'only cached properties can be indexed');
+    });
+
+    it('should only allow cached props to have type counter', function() {
+      assertFailsWith(this, false, {properties: {
+        foo: {type: 'counter'}
+      }}, 'only cached properties can have type "counter"');
+    });
+
     // Callback test
 
     it('should run options through the "initialize" callback', function() {
