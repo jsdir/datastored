@@ -25,8 +25,15 @@ function createModel(orm, baseOptions) {
   }
 }
 
+function appendValue(data, appendedValue) {
+  return _.object(_.map(data, function(value, key) {
+    return [key, value + ',' + appendedValue]
+  }));
+}
+
 module.exports = {
   createTestOrm: createTestOrm,
   createModel: createModel,
-  baseOptions: baseOptions
+  baseOptions: baseOptions,
+  appendValue: appendValue
 };

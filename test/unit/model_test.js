@@ -11,12 +11,6 @@ chai.should();
 chai.use(sinonChai);
 var expect = chai.expect;
 
-function appendValue(data, appendedValue) {
-  return _.object(_.map(data, function(value, key) {
-    return [key, value + ',' + appendedValue]
-  }));
-}
-
 describe('Orm', function() {
 
   before(function() {
@@ -44,16 +38,16 @@ describe('Orm', function() {
 
     var callbacks = {
       beforeInput: function(values, cb) {
-        cb(null, appendValue(values, 'beforeInput'));
+        cb(null, testUtils.appendValue(values, 'beforeInput'));
       },
       afterInput: function(values, cb) {
-        cb(null, appendValue(values, 'afterInput'));
+        cb(null, testUtils.appendValue(values, 'afterInput'));
       },
       beforeOutput: function(values) {
-        return appendValue(values, 'beforeOutput');
+        return testUtils.appendValue(values, 'beforeOutput');
       },
       afterOutput: function(values) {
-        return appendValue(values, 'afterOutput');
+        return testUtils.appendValue(values, 'afterOutput');
       }
     };
     var mixin = {callbacks: callbacks}

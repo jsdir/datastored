@@ -348,37 +348,76 @@ describe('Orm', function() {
       });
     });
 
-    xdescribe('#find()', function() {
+    describe('#find()', function() {
 
-      xit('should mutate the index value by default', function(done) {
-        Model.create({indexed: 'foo'}).save(cb);
-        Model.find('indexed', 'foo', function(err, instance) {
-          instance.getId(true).should.eq('foo');
-          done();
+      before(function() {
+        this.IndexedModel = this.createModel({
+          properties: {
+            indexed: {type: 'string', index: true, cache: true}
+          },
+          callbacks: {
+            beforeInput: function(values, cb) {
+              cb(null, testUtils.appendValue(values, 'beforeInput'));
+            },
+            afterInput: function(values, cb) {
+              cb(null, testUtils.appendValue(values, 'afterInput'));
+            }
+          }
         });
-
-        // check found model id
       });
 
-      xit('should not mutate the index value if requested', function(done) {
-        Model.create({indexed: 'foo'}, true).save(cb);
-        Model.find('indexed', 'foo', true, function(err, instance) {
-          instance.getId(true).should.eq('foo');
-          done();
-        });
-
-        // check found model id
+      it('should mutate the index value by default', function(done) {
+        var self = this;
+        async.waterfall([
+          function(cb) {
+            var instance = self.IndexedModel.create({indexed: 'foo'});
+            instance.save(function(err) {
+              if (err) {return cb(err);}
+              cb(null, instance.getId());
+            });
+          },
+          function(id, cb) {
+            self.IndexedModel.find('indexed', 'foo',
+              function(err, instance) {
+              if (err) {return cb(err);}
+              instance.getId().should.eq(id);
+              cb();
+            });
+          }
+        ], done);
       });
 
-      it('should only work with indexed properties', function(done) {
+      it('should not mutate the index value if requested', function(done) {
+        var self = this;
+        async.waterfall([
+          function(cb) {
+            var instance = self.IndexedModel.create({indexed: 'foo'}, true);
+            instance.save(function(err) {
+              if (err) {return cb(err);}
+              cb(null, instance.getId());
+            });
+          },
+          function(id, cb) {
+            self.IndexedModel.find('indexed', 'foo', true,
+              function(err, instance) {
+              if (err) {return cb(err);}
+              instance.getId().should.eq(id);
+              cb();
+            });
+          }
+        ], done);
+      });
+
+      it('should only work with indexed properties', function() {
+        var self = this;
         (function() {
-          Model.find({nonindex: 'foo'}, function() {});
+          self.BasicModel.find('nonindex', 'foo', function() {});
         }).should.throw('attribute "nonindex" is not an index');
       });
 
       it('should callback with null if nothing is found', function(done) {
-        Model.find('indexed', 'bar', function(err, instance) {
-          instance.should.be.null;
+        this.IndexedModel.find('indexed', 'bar', function(err, instance) {
+          expect(instance).to.be.null;
           done();
         });
       });
