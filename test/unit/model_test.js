@@ -155,6 +155,21 @@ describe('Orm', function() {
       });
     });
 
+    describe('#create()', function() {
+
+      it('should set defaults', function() {
+        var DefaultsModel = this.createModel({properties: {
+          default_property: {type: 'string', default: 'value'},
+          integer_counter: {type: 'integer', counter: true, cache: true},
+          float_counter: {type: 'float', counter: true, cache: true}
+        }});
+        var instance = DefaultsModel.create();
+        instance.get('default_property').should.eq('value');
+        instance.get('integer_counter', true).should.eq(0);
+        instance.get('float_counter', true).should.eq(0.0);
+      });
+    })
+
     describe('#get()', function() {
 
       it('should mutate the primary key by default', function() {

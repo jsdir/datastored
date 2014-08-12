@@ -153,51 +153,84 @@ describe('Orm', function() {
 
       // Saving with options
 
-      /*
-      var callbacks = {
-        beforeInput: function(values, cb) {
-          cb(null, appendValue(values, 'beforeInput'));
-        },
-        afterInput: function(values, cb) {
-          cb(null, appendValue(values, 'afterInput'));
-        },
-        beforeOutput: function(values) {
-          return appendValue(values, 'beforeOutput');
-        },
-        afterOutput: function(values) {
-          return appendValue(values, 'afterOutput');
-        }
-      };
-      var mixin = {callbacks: callbacks}
-      this.CallbackModel = this.createModel({mixins: [mixin],
-        callbacks: callbacks});
-      */
+      it('should run callbacks', function(done) {
+        var Model = this.createModel({
+          callbacks: {
+            beforeSave: function(options, data, cb) {
+              options.should.eq('options');
+              cb(null, options, data);
+            },
+            afterSave: function(options, data, cb) {
+              options.should.eq('options');
+              cb(null, options, data);
+            }
+          }
+        });
 
-      xit('should fail when a callback fails', function(done) {
-
-      });
-
-      xit('should run callbacks', function() {
-        /*
-        - test beforeSave w/ mixin order (maybe change a value)
-        - test save fails when beforeSave fails
-        - test afterSave w/ mixin order
-        - test save fails when afterSave fails
-         */
+        Model.create({foo: 'foo'}).save('options', done);
       });
     });
 
-    xdescribe('#incr()', function() {
+    describe('#incr()', function() {
 
-      it('should only increment properties of type counter', function(done) {
-        'only properties of type "counter" can be incremented'
+      before(function() {
+        this.CounterModel = this.createModel({
+          properties: {
+            integer_count: {type: 'integer', counter: true, cache: true},
+            float_count: {type: 'float', counter: true, cache: true},
+            rel_count: {type: 'integer', counter: true, cache: true}
+          },
+          scopes: {all: ['integer_count', 'float_count', 'rel_count']}
+        });
+      });
+
+      it('should only increment counters', function() {
+        var instance = this.BasicModel.create({foo: 'foo'});
+
+        (function() {instance.incr('foo', 1);}).should.throw(
+          'only counters can be incremented'
+        );
+        (function() {instance.decr('foo', 1);}).should.throw(
+          'only counters can be decremented'
+        );
       });
 
       it('should increment values', function(done) {
-        // increment three variables at -1 0 1
-        // incr save
-        // incr save
-        // fetch compare
+        var self = this;
+
+        async.waterfall([
+          function(cb) {
+            var instance = self.CounterModel.create({rel_count: 2});
+            instance.save(function(err) {
+              if (err) {return cb(err);}
+
+              instance.incr('integer_count', 10);
+              instance.decr('integer_count', 5);
+              instance.incr('rel_count', 10);
+              instance.decr('rel_count', 5);
+              instance.incr('float_count', 9.0);
+              instance.decr('float_count', 1.2);
+              instance.save(function(err) {
+                if (err) {return cb(err);}
+                cb(null, instance.getId());
+              });
+            });
+          },
+          function(id, cb) {
+            var instance = self.CounterModel.get(id);
+            instance.fetch('all', function(err) {
+              if (err) {return cb(err);}
+              instance.get([
+                'integer_count', 'rel_count', 'float_count'
+              ], true).should.deep.eq({
+                integer_count: 5,
+                rel_count: 7,
+                float_count: 7.8
+              });
+              cb();
+            })
+          },
+        ], done);
       });
     });
 
@@ -225,17 +258,16 @@ describe('Orm', function() {
         }).should.throw('the model primary key "id" must be set');
       });
 
-      xit('should ? when no model found');
+      xit('should fail when the model is not found', function(done) {
 
-      xit('should select the correct datastores to fetch each attribute from ' +
-      'based on the attribute definitions', function() {
       });
 
       xit('should fail with callback errors', function() {
-
+        // make function and use for .save()
       });
 
       xit('should execute all callbacks', function(done) {
+        // check scope parameter
         // check user and options
         var Model = orm.createModel({callbacks: {
           beforeFetch: function(options, attributes, cb) {
@@ -259,6 +291,10 @@ describe('Orm', function() {
       });
 
       it('should use scopes', function() {
+        // name or array
+      });
+
+      it('should overwrite local changes', function() {
 
       });
     });
@@ -271,6 +307,8 @@ describe('Orm', function() {
           instance.getId(true).should.eq('foo');
           done();
         });
+
+        // check found model id
       });
 
       xit('should not mutate the index value if requested', function(done) {
@@ -279,6 +317,8 @@ describe('Orm', function() {
           instance.getId(true).should.eq('foo');
           done();
         });
+
+        // check found model id
       });
 
       it('should only work with indexed properties', function(done) {
@@ -287,7 +327,7 @@ describe('Orm', function() {
         }).should.throw('attribute "nonindex" is not an index');
       });
 
-      it('should call back with null if nothing is found', function(done) {
+      it('should callback with null if nothing is found', function(done) {
         Model.find('indexed', 'bar', function(err, instance) {
           instance.should.be.null;
           done();
@@ -319,8 +359,8 @@ describe('Orm', function() {
         }).should.throw('the model primary key "id" must be set');
       });
 
-      xit('should delete the model from the datastores', function() {
-        // also select the correct datastore(s) to delete from.
+      xit('should delete the model', function() {
+        // - test the model is actually destroyed (create -> destroy -> fetch)
       });
 
       xit('should fail with callback errors', function() {
@@ -328,6 +368,12 @@ describe('Orm', function() {
       });
 
       xit('should execute all callbacks', function(done) {
+        /*
+          - test beforeDestroy w/ mixin order (maybe change a value)
+          - test destroy fails when beforeSave fails
+          - test afterDestroy w/ mixin order
+          - test destroy fails when afterSave fails
+         */
         // check user and options
         var Model = orm.createModel({callbacks: {
           beforeDestroy: function(options, cb) {
@@ -347,49 +393,14 @@ describe('Orm', function() {
         });
       });
     });
+
+    describe('indexing', function() {
+      /*
+      - test replace (test that refs are deleted)
+      - test no replace (test that refs are kept)
+      - test destroy removes both types of indexes.
+      - test that changing an attribute will also update an index
+       */
+    });
   });
 });
-/*
-
-fetch
-
-  - test beforeFetch w/ mixin order (maybe change a value)
-    - test scope
-  - test fetch fails when beforeFetch fails
-  - test afterFetch w/ mixin order
-    - test scope
-  - test fetch fails when afterFetch fails
-
-  - test scopes
-    - scopename
-    - array
-
-  - test saving with variables of mixed cache (default(nocache), cache, cacheOnly)
-    and fetch should only use the required datastores to set the correct result
-
-  - test that fetch should change local values and unset changed variables
-
-destroy
-
-  - test beforeDestroy w/ mixin order (maybe change a value)
-  - test destroy fails when beforeSave fails
-  - test afterDestroy w/ mixin order
-  - test destroy fails when afterSave fails
-  - test the model is actually destroyed (create -> destroy -> fetch)
-
-Indexing
-
-  - test replace (test that refs are deleted)
-  - test no replace (test that refs are kept)
-  - test destroy removes both types of indexes.
-  - test that changing an attribute will also update an index
-
-find
-
-  - should only find indexes
-  - should follow raw param (2 state)
-  - should return null if nothing found
-  - should return model with id only if found
-
-Multi (?)
- */

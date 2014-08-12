@@ -54,13 +54,13 @@ Calls `cb(err, options, attributes)`.
 
 Calls `cb(err, options, values)`.
 
-### beforeSave: func(options, values, cb)
+### beforeSave: func(options, data, cb)
 
-Calls `cb(err, options, values)`.
+Calls `cb(err, options, data)`.
 
-### afterSave: func(options, values, cb)
+### afterSave: func(options, data, cb)
 
-Calls `cb(err, options, values)`.
+Calls `cb(err, options, data)`.
 
 ### beforeDestroy: func(options, cb)
 
