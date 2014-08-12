@@ -1,6 +1,9 @@
 var async = require('async');
+var chai = require('chai');
 
 var testUtils = require('../utils');
+
+var expect = chai.expect;
 
 describe('Orm', function() {
 
@@ -234,16 +237,21 @@ describe('Orm', function() {
       });
     });
 
-    xdescribe('#fetch()', function() {
+    describe('#fetch()', function() {
 
-      beforeEach(function(cb) {
-        this.orm._resetDatastores(cb);
+      before(function() {
+        this.ErrorModel = this.createModel({
+          properties: {foo: {type: 'string'}},
+          callbacks: {
+            beforeInput: function(values, cb) {cb({foo: 'message'});}
+          }
+        });
       });
 
       it('should fail if model errors exist', function(done) {
-        var model = this.ErrorModel.get('foo', true);
-        model.set('foo', 'bar');
-        model.fetch(function(err) {
+        var instance = this.ErrorModel.get('foo', true);
+        instance.set('foo', 'bar');
+        instance.fetch(['foo'], function(err) {
           err.should.deep.eq({foo: 'message'});
           done();
         });
@@ -251,15 +259,18 @@ describe('Orm', function() {
 
       it('should fail if the model\'s primary key property is not set',
         function() {
-        var model = this.Model.create({foo: 'bar'});
-
+        var instance = this.BasicModel.create({foo: 'bar'});
         (function() {
-          model.fetch('scope', function(err) {});
+          instance.fetch(['foo'], function(err) {});
         }).should.throw('the model primary key "id" must be set');
       });
 
-      xit('should fail when the model is not found', function(done) {
-
+      it('should fail when the model is not found', function(done) {
+        var instance = this.BasicModel.get('random');
+        instance.fetch(['foo'], function(err, success) {
+          success.should.be.false;
+          done();
+        });
       });
 
       xit('should fail with callback errors', function() {
@@ -290,12 +301,50 @@ describe('Orm', function() {
         });
       });
 
-      it('should use scopes', function() {
-        // name or array
+      it('should use scopes correctly', function(done) {
+        var self = this;
+        var instance = this.BasicModel.create({foo: 'foo', bar: 'bar'});
+        instance.save(function(err) {
+          if (err) {return done(err);}
+          var id = instance.getId();
+          async.series([
+            function(cb) {
+              var fetched = self.BasicModel.get(id);
+              fetched.fetch(['foo', 'bar'], function(err) {
+                if (err) {return cb(err);}
+                fetched.get('foo').should.eq('foo');
+                fetched.get('bar').should.eq('bar');
+                cb();
+              });
+            },
+            function(cb) {
+              var fetched = self.BasicModel.get(id);
+              fetched.fetch('foo', function(err) {
+                if (err) {return cb(err);}
+                fetched.get('foo').should.eq('foo');
+                expect(fetched.get('bar')).to.be.undefined;
+                cb();
+              });
+            }
+          ], done);
+        });
       });
 
-      it('should overwrite local changes', function() {
-
+      it('should overwrite local changes', function(done) {
+        var self = this;
+        var instance = this.BasicModel.create({foo: 'foo', bar: 'bar'});
+        instance.save(function(err) {
+          if (err) {return done(err);}
+          var id = instance.getId();
+          var fetched = self.BasicModel.get(id);
+          fetched.set('foo', 'baz');
+          fetched.get('foo').should.eq('baz');
+          fetched.fetch('foo', function(err) {
+            if (err) {done(err);}
+            fetched.get('foo').should.eq('foo');
+            done();
+          });
+        });
       });
     });
 
