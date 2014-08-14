@@ -1,3 +1,4 @@
+/*
 var chai = require('chai');
 
 var transforms = require('../../lib/transforms');
@@ -37,16 +38,6 @@ xdescribe('transforms', function() {
     });
   });
 
-  /*describe('marshal', function() {
-    it('should marshal input with the given marshaller', function() {
-
-    });
-
-    it('should marshal output with the given marshaller', function() {
-
-    });
-  });*/
-
   describe('hide', function() {
     it('should hide the given attributes', function() {
       transforms.hide(['hide1', 'hide2'])
@@ -70,3 +61,4 @@ xdescribe('transforms', function() {
     });
   });
 });
+*/

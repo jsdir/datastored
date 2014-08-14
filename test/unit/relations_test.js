@@ -1,3 +1,4 @@
+/*
 var datastored = require('../..');
 
 xdescribe('HasOne relation', function() {
@@ -262,3 +263,4 @@ xdescribe('Tree relation', function() {
   //   cachedRefs (linear merkle tree)
   //   dynamicResolve
 });
+*/

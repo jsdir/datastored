@@ -172,6 +172,10 @@ describe('Orm', function() {
 
         Model.create({foo: 'foo'}).save('options', done);
       });
+
+      xit('should change indexes the value changes', function() {
+
+      });
     });
 
     describe('#incr()', function() {
@@ -353,7 +357,10 @@ describe('Orm', function() {
       before(function() {
         this.IndexedModel = this.createModel({
           properties: {
-            indexed: {type: 'string', index: true, cache: true}
+            indexed: {type: 'string', index: true, cache: true},
+            indexed_no_replace: {
+              type: 'string', index: true, cache: true, replace: false
+            }
           },
           callbacks: {
             beforeInput: function(values, cb) {
@@ -377,8 +384,7 @@ describe('Orm', function() {
             });
           },
           function(id, cb) {
-            self.IndexedModel.find('indexed', 'foo',
-              function(err, instance) {
+            self.IndexedModel.find('indexed', 'foo', function(err, instance) {
               if (err) {return cb(err);}
               instance.getId().should.eq(id);
               cb();
@@ -420,6 +426,55 @@ describe('Orm', function() {
           expect(instance).to.be.null;
           done();
         });
+      });
+
+      it('should use old indexes that have not been replaced',
+        function(done) {
+        var self = this;
+        async.waterfall([
+          function(cb) {
+            var instance = self.IndexedModel.create({indexed_no_replace: 'foo'}, true);
+            instance.save(function(err) {
+              if (err) {return cb(err);}
+              instance.set({indexed_no_replace: 'bar'}, true).save(function(err) {
+                if (err) {return cb(err);}
+                cb(null, instance.getId());
+              });
+            });
+          },
+          function(id, cb) {
+            self.IndexedModel.find('indexed_no_replace', 'foo', true,
+              function(err, instance) {
+              if (err) {return cb(err);}
+              instance.getId().should.eq(id);
+              cb();
+            });
+          }
+        ], done);
+      });
+
+      it('should not use indexes that have been replaced', function(done) {
+        var self = this;
+        async.waterfall([
+          function(cb) {
+            var instance = self.IndexedModel.create({indexed: 'foo'}, true);
+            instance.save(function(err) {
+              if (err) {return cb(err);}
+              instance.set({indexed: 'bar'}, true).save(function(err) {
+                if (err) {return cb(err);}
+                cb(null, instance.getId());
+              });
+            });
+          },
+          function(id, cb) {
+            self.IndexedModel.find('indexed', 'foo', true,
+              function(err, instance) {
+              if (err) {return cb(err);}
+              expect(instance).to.be.null;
+              cb();
+            });
+          }
+        ], done);
       });
     });
 
@@ -480,15 +535,14 @@ describe('Orm', function() {
           model.destroy('options', done);
         });
       });
-    });
 
-    describe('indexing', function() {
-      /*
-      - test replace (test that refs are deleted)
-      - test no replace (test that refs are kept)
-      - test destroy removes both types of indexes.
-      - test that changing an attribute will also update an index
-       */
+      xit('should destroy indexes', function() {
+
+      });
+
+      xit('should destroy indexes that replace', function() {
+
+      });
     });
   });
 });
