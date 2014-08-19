@@ -173,6 +173,32 @@ describe('Orm', function() {
         Model.create({foo: 'foo'}).save('options', done);
       });
 
+      it('should fail when "beforeSave" fails', function(done) {
+        var Model = this.createModel({callbacks: {
+          beforeSave: function(options, data, cb) {
+            cb('error', options, data);
+          }
+        }});
+
+        Model.create({foo: 'foo'}).save('options', function(err) {
+          err.should.eq('error');
+          done();
+        });
+      });
+
+      it('should fail when "afterSave" fails', function(done) {
+        var Model = this.createModel({callbacks: {
+          afterSave: function(options, data, cb) {
+            cb('error', options, data);
+          }
+        }});
+
+        Model.create({foo: 'foo'}).save('options', function(err) {
+          err.should.eq('error');
+          done();
+        });
+      });
+
       xit('should change indexes the value changes', function() {
 
       });
@@ -277,10 +303,6 @@ describe('Orm', function() {
         });
       });
 
-      xit('should fail with callback errors', function() {
-        // make function and use for .save()
-      });
-
       xit('should execute all callbacks', function(done) {
         // check scope parameter
         // check user and options
@@ -304,6 +326,10 @@ describe('Orm', function() {
           model.fetch([attributes], 'options', done);
         });
       });
+
+      xit('should fail when "beforeFetch" fails', function() {});
+
+      xit('should fail when "afterFetch" fails', function() {});
 
       it('should use scopes correctly', function(done) {
         var self = this;
@@ -506,16 +532,10 @@ describe('Orm', function() {
         // - test the model is actually destroyed (create -> destroy -> fetch)
       });
 
-      xit('should fail with callback errors', function() {
-
-      });
-
       xit('should execute all callbacks', function(done) {
         /*
           - test beforeDestroy w/ mixin order (maybe change a value)
-          - test destroy fails when beforeSave fails
           - test afterDestroy w/ mixin order
-          - test destroy fails when afterSave fails
          */
         // check user and options
         var Model = orm.createModel({callbacks: {
@@ -535,6 +555,10 @@ describe('Orm', function() {
           model.destroy('options', done);
         });
       });
+
+      xit('should fail when "beforeDestroy" fails', function() {});
+
+      xit('should fail when "afterDestroy" fails', function() {});
 
       xit('should destroy indexes', function() {
 

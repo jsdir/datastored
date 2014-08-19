@@ -267,7 +267,8 @@ describe('Orm', function() {
 
       it('should not set attributes that are not defined', function() {
         var model = this.BasicModel.create();
-        model.set({baz: 123}, true);
+        model.set({foo: 'bar', baz: 123}, true);
+        expect(model.get('foo')).to.eq('bar');
         expect(model.get('baz')).to.be.undefined;
       });
 
