@@ -287,7 +287,7 @@ describe('Orm', function() {
         });
       });
 
-      it('should fail if the model\'s primary key property is not set',
+      it('should fail if the model primary key property is not set',
         function() {
         var instance = this.BasicModel.create({foo: 'bar'});
         (function() {
@@ -303,33 +303,89 @@ describe('Orm', function() {
         });
       });
 
-      xit('should execute all callbacks', function(done) {
-        // check scope parameter
-        // check user and options
-        var Model = orm.createModel({callbacks: {
+      it('should execute all callbacks', function(done) {
+        var Model = this.createModel({callbacks: {
           beforeFetch: function(options, attributes, cb) {
-            options.should.eq('options');
-            attributes.should.eq(['attribute']);
-            cb(options);
+            options.should.deep.eq({});
+            attributes.should.deep.eq(['foo']);
+            cb(null, options, attributes);
           },
-          afterFetch: function(options, values, cb) {
-            options.should.eq('options');
-            values.should.eq('values');
-            cb(options);
+          afterFetch: function(options, data, cb) {
+            options.should.deep.eq({});
+            data.should.deep.eq({foo: 'bar'});
+            cb(null, options, data);
           }
         }});
 
-        Model.create({}).save(function(err) {
-          if (err) {throw err;}
-          model.fetch(done);
-          model.fetch('options', done);
-          model.fetch([attributes], 'options', done);
+        var model = Model.create({foo: 'bar'});
+        model.save(function(err) {
+          if (err) {return done(err);}
+
+          model.fetch('foo', function(err) {
+            if (err) {return done(err);}
+            done();
+          });
         });
       });
 
-      xit('should fail when "beforeFetch" fails', function() {});
+      it('should execute all callbacks with options', function(done) {
+        var Model = this.createModel({callbacks: {
+          beforeFetch: function(options, attributes, cb) {
+            options.should.eq('options');
+            attributes.should.deep.eq(['foo']);
+            cb(null, options, attributes);
+          },
+          afterFetch: function(options, data, cb) {
+            options.should.eq('options');
+            data.should.deep.eq({foo: 'bar'});
+            cb(null, options, data);
+          }
+        }});
 
-      xit('should fail when "afterFetch" fails', function() {});
+        var model = Model.create({foo: 'bar'});
+        model.save(function(err) {
+          if (err) {return done(err);}
+
+          model.fetch('options', ['foo'], function(err) {
+            if (err) {return done(err);}
+            done();
+          });
+        });
+      });
+
+      it('should fail when "beforeFetch" fails', function(done) {
+        var Model = this.createModel({callbacks: {
+          beforeFetch: function(options, data, cb) {
+            cb('error', options, data);
+          }
+        }});
+
+        var model = Model.create({foo: 'bar'});
+        model.save(function(err) {
+          if (err) {return done(err);}
+          model.fetch(['foo'], function(err) {
+            err.should.eq('error');
+            done();
+          });
+        });
+      });
+
+      it('should fail when "afterFetch" fails', function(done) {
+        var Model = this.createModel({callbacks: {
+          afterFetch: function(options, data, cb) {
+            cb('error', options, data);
+          }
+        }});
+
+        var model = Model.create({foo: 'bar'});
+        model.save(function(err) {
+          if (err) {return done(err);}
+          model.fetch(['foo'], function(err) {
+            err.should.eq('error');
+            done();
+          });
+        });
+      });
 
       it('should use scopes correctly', function(done) {
         var self = this;

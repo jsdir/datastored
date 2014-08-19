@@ -50,7 +50,7 @@ Methods to perform after internal mutations like serialization and immutability 
 
 Calls `cb(err, options, attributes)`.
 
-### afterFetch: func(options, values, cb)
+### afterFetch: func(options, data, cb)
 
 Calls `cb(err, options, values)`.
 
