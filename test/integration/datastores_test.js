@@ -26,12 +26,10 @@ var datastores = {
   MemoryDatastore: new MemoryDatastore()
 };
 
-// datastores = _.pick(datastores, ['RedisDatastore']);
-
 _.each(datastores, function(datastore, name) {
   describe(name, function() {
 
-    var isCassandra = name === 'CassandraDatastore';
+    var isCassandra = (name === 'CassandraDatastore');
 
     beforeEach(function(cb) {
       datastore.reset(cb);
