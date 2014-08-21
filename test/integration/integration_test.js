@@ -287,12 +287,11 @@ describe('Orm', function() {
         });
       });
 
-      it('should fail if the model primary key property is not set',
-        function() {
+      it('should fail if the model is not saved', function() {
         var instance = this.BasicModel.create({foo: 'bar'});
         (function() {
           instance.fetch(['foo'], function(err) {});
-        }).should.throw('the model primary key "id" must be set');
+        }).should.throw('the model must be saved');
       });
 
       it('should fail when the model is not found', function(done) {

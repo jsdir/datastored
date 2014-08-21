@@ -143,6 +143,12 @@ describe('Orm', function() {
       after(function() {Instance.prototype.set.restore();});
 
       it('should use #set() correctly', function() {
+        var instance = this.BasicModel.create('attributes');
+        instance.set.should.have.been.calledWith('attributes');
+        instance.errors.should.deep.eq({});
+      });
+
+      it('should use raw #set() correctly', function() {
         var instance = this.BasicModel.create('attributes', true);
         instance.set.should.have.been.calledWith('attributes', true);
         instance.errors.should.deep.eq({});
@@ -162,7 +168,39 @@ describe('Orm', function() {
         instance.get('integer_counter', true).should.eq(0);
         instance.get('float_counter', true).should.eq(0.0);
       });
-    })
+    });
+
+    describe('#createWithId()', function() {
+
+      before(function() {sinon.spy(Instance.prototype, 'set');});
+      after(function() {Instance.prototype.set.restore();});
+
+      it('should set the id without attributes', function(done) {
+        this.BasicModel.createWithId(function(err, instance) {
+          instance.getId().should.exist;
+          done();
+        });
+      });
+
+      it('should use #set() correctly', function(done) {
+        this.BasicModel.createWithId('attributes', function(err, instance) {
+          instance.getId().should.exist;
+          instance.set.should.have.been.calledWith('attributes', false);
+          instance.errors.should.deep.eq({});
+          done();
+        });
+      });
+
+      it('should use raw #set() correctly', function(done) {
+        this.BasicModel.createWithId('attributes', true,
+          function(err, instance) {
+          instance.getId().should.exist;
+          instance.set.should.have.been.calledWith('attributes', true);
+          instance.errors.should.deep.eq({});
+          done();
+        });
+      });
+    });
 
     describe('#get()', function() {
 
