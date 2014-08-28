@@ -1,3 +1,100 @@
+var _ = require('lodash');
+
+var datastored = require('../..');
+var testUtils = require('../utils');
+
+describe('HasOne relation', function() {
+
+  before(function() {
+    _.bind(testUtils.setupOrm, this)();
+  });
+
+  it('should require a "relatedModel" option', function() {
+    var self = this;
+    (function() {
+      self.createModel({
+        relations: {
+          child: {type: datastored.relations.HasOne}
+        }
+      })
+    }).should.throw('relation "child" requires a "relatedModel" option');
+  });
+
+  xit('should only allow the type of "relatedModel"', function() {
+    var model = Model.create();
+    (function() {
+      parentModel.set('child', model);
+    }).should.throw(
+      'relation "child" can only contain a model of type "Child"'
+    );
+  });
+
+  xit('should check that "joinedProperties" are valid properties', function() {
+    (function() {relation}).should.throw(
+      'relation "relation" property "property" is not a valid property'
+    );
+    (function() {id}).should.throw(
+      'relation "relation" property "property" is not a valid property'
+    );
+  });
+
+  xit('should allow access to joined properties before the model is saved',
+    function() {
+    parentModel.set('child', childModel);
+    parentModel.get('child').should.be.instanceOf(this.ChildModel);
+    parentModel.get('child.property').should.be.null;
+    parentModel.get('child.joinedProperty').should.eq('foo');
+  });
+
+  xit('should store joined properties with the parent', function(done) {
+    parentModel.set('child', childModel);
+
+    var model = this.ParentModel.get('id');
+    model.fetch(['child'], function(err) {
+      if (err) {
+        return done(err);
+      }
+      parentModel.get('child').should.be.instanceOf(this.ChildModel);
+      parentModel.get('child.property').should.be.null;
+      parentModel.get('child.joinedProperty').should.eq('foo');
+    });
+  });
+
+  xit('should update joined properties', function(done) {
+    childModel.set('joinedProperty', 'baz').save(function(err) {
+      if (err) {
+        return done(err);
+      }
+      var model = this.ParentModel.get('id');
+      model.fetch(['child'], function(err) {
+        if (err) {
+          return done(err);
+        }
+        parentModel.get('child.joinedProperty').should.eq('baz');
+      });
+    });
+  });
+
+  xit('should allow the relationship to be unassigned', function(done) {
+    parentModel.set('joinedModel', null);
+    done();
+  });
+
+  xit('should allow the child to be replaced', function() {
+
+  });
+
+  xit('should resolve references when the child is destroyed', function(done) {
+    this.childModel.destroy(function(err) {
+      var parentModel = this.ParentModel.get('id');
+      parentModel.fetch(['joinedModel'], function(err) {
+        parentModel.get('joinedModel').should.be.null;
+        done();
+      });
+    });
+  });
+});
+
 /*
 var datastored = require('../..');
 

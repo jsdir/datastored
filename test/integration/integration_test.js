@@ -1,3 +1,4 @@
+var _ = require('lodash');
 var async = require('async');
 var chai = require('chai');
 
@@ -8,10 +9,7 @@ var expect = chai.expect;
 describe('Orm', function() {
 
   before(function() {
-    // Create test orm.
-    this.orm = testUtils.createTestOrm();
-    this.createModel = testUtils.createModel(this.orm, testUtils.baseOptions);
-    this.createNewModel = testUtils.createModel(this.orm);
+    _.bind(testUtils.setupOrm, this)();
   });
 
   before(function() {

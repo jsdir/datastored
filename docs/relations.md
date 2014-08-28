@@ -19,7 +19,7 @@ There are three different relation types that can be used by a model:
 
   - HasOne
   - HasMany
-  - ManyToMany
+  - Tree
 
 
 HasOne
@@ -30,6 +30,7 @@ This is datastored's implementation of a **1:1** relationship between models.
 - **`join`**: (type: boolean, default: false) Embeds the related model within the attributes of the parent model. All of the model's attributes are joined by default.
 - **`joinedAttributes`**: (type: array, default: all) Joins only certain attributes from the related model.
 - **`relation`**: Reverse key
+
 
 HasMany
 -------
@@ -42,13 +43,9 @@ This is the ORM's implementation of a **1:n** relationship between models. The o
 
 - **`relation`**: Reverse key
 
+Datastored does not have an explicit ManyToMany relation, but it can be implemented by using `HasMany` on the two involved models.
 
-ManyToMany
-----------
-This is the ORM's implementation of an **n:n** relationship between models.
-
-#### Options
-- **`join`**: Embed the related model within the attributes of the referencing model.
+If a model needs a ManyToMany relationship with other models of the same type, .
 
 
 Collection

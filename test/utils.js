@@ -31,9 +31,17 @@ function appendValue(data, appendedValue) {
   }));
 }
 
+function setupOrm() {
+  // Create test orm.
+  this.orm = createTestOrm();
+  this.createModel = createModel(this.orm, baseOptions);
+  this.createNewModel = createModel(this.orm);
+}
+
 module.exports = {
   createTestOrm: createTestOrm,
   createModel: createModel,
   baseOptions: baseOptions,
-  appendValue: appendValue
+  appendValue: appendValue,
+  setupOrm: setupOrm
 };
