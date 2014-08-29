@@ -19,9 +19,9 @@ function createTestOrm() {
 }
 
 function createModel(orm, baseOptions) {
-  return function(options, isNew) {
+  return function(options, name, isNew) {
     if (!isNew) {options = _.merge({}, baseOptions, options);}
-    return orm.createModel(_.uniqueId(), options);
+    return orm.createModel(name || _.uniqueId(), options);
   }
 }
 

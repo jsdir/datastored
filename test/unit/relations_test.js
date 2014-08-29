@@ -9,41 +9,71 @@ describe('HasOne relation', function() {
     _.bind(testUtils.setupOrm, this)();
   });
 
+  before(function() {
+    this.ChildModel = this.createModel({}, 'ChildModel');
+
+    this.HasOneModel = this.createModel({
+      relations: {
+        child: {
+          type: datastored.relations.HasOne,
+          relatedModel: 'ChildModel'
+        }
+      }
+    });
+  });
+
   it('should require a "relatedModel" option', function() {
     var self = this;
     (function() {
-      self.createModel({
-        relations: {
-          child: {type: datastored.relations.HasOne}
-        }
-      })
+      self.createModel({relations: {
+        child: {type: datastored.relations.HasOne}
+      }})
     }).should.throw('relation "child" requires a "relatedModel" option');
   });
 
-  xit('should only allow the type of "relatedModel"', function() {
-    var model = Model.create();
+  it('should require the "relatedModel" to exist', function() {
+    var self = this;
     (function() {
-      parentModel.set('child', model);
+      self.createModel({relations: {
+        child: {
+          type: datastored.relations.HasOne,
+          relatedModel: 'UndefinedModel'
+        }
+      }})
+    }).should.throw('model "UndefinedModel" is not defined');
+  });
+
+  it('should only allow the type of "relatedModel"', function() {
+    var model = this.HasOneModel.create();
+    (function() {
+      model.set('child', model);
     }).should.throw(
-      'relation "child" can only contain a model of type "Child"'
+      'relation "child" was set with a model of an invalid type'
     );
   });
 
-  xit('should check that "joinedProperties" are valid properties', function() {
-    (function() {relation}).should.throw(
-      'relation "relation" property "property" is not a valid property'
-    );
-    (function() {id}).should.throw(
-      'relation "relation" property "property" is not a valid property'
+  it('should check that "joinedProperties" are valid properties', function() {
+    var self = this;
+    (function() {
+      self.createModel({relations: {
+        child: {
+          type: datastored.relations.HasOne,
+          relatedModel: 'ChildModel',
+          joinedProperties: ['foo', 'invalid']
+        }
+      }});
+    }).should.throw(
+      'relation "child" property "invalid" is not a valid property'
     );
   });
 
-  xit('should allow access to joined properties before the model is saved',
+  it('should allow access to joined properties before the model is saved',
     function() {
-    parentModel.set('child', childModel);
-    parentModel.get('child').should.be.instanceOf(this.ChildModel);
-    parentModel.get('child.property').should.be.null;
-    parentModel.get('child.joinedProperty').should.eq('foo');
+    var childModel = this.ChildModel.create();
+    var parentModel = this.HasOneModel.create('child', childModel);
+    var child = parentModel.get('child');
+
+    child.model.name.should.eq('ChildModel');
   });
 
   xit('should store joined properties with the parent', function(done) {
@@ -59,6 +89,8 @@ describe('HasOne relation', function() {
       parentModel.get('child.joinedProperty').should.eq('foo');
     });
   });
+
+  // required relations
 
   xit('should update joined properties', function(done) {
     childModel.set('joinedProperty', 'baz').save(function(err) {

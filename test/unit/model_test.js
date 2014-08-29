@@ -56,7 +56,7 @@ describe('Orm', function() {
 
     function assertFailsWith(context, isNew, options, message) {
       (function() {
-        context.createModel(options, isNew);
+        context.createModel(options, null, isNew);
       }).should.throw(message);
     }
 
