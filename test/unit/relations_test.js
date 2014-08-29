@@ -1,7 +1,11 @@
 var _ = require('lodash');
+var async = require('async');
+var chai = require('chai');
 
 var datastored = require('../..');
 var testUtils = require('../utils');
+
+var expect = chai.expect;
 
 describe('HasOne relation', function() {
 
@@ -16,7 +20,8 @@ describe('HasOne relation', function() {
       relations: {
         child: {
           type: datastored.relations.HasOne,
-          relatedModel: 'ChildModel'
+          relatedModel: 'ChildModel',
+          joinedProperties: ['foo']
         }
       }
     });
@@ -76,18 +81,29 @@ describe('HasOne relation', function() {
     child.model.name.should.eq('ChildModel');
   });
 
-  xit('should store joined properties with the parent', function(done) {
-    parentModel.set('child', childModel);
+  it.only('should store joined properties with the parent', function(done) {
+    var self = this;
+    var childModel = this.ChildModel.create({foo: 'bar', bar: 'baz'});
+    var parentModel = this.HasOneModel.create({child: childModel});
 
-    var model = this.ParentModel.get('id');
-    model.fetch(['child'], function(err) {
-      if (err) {
-        return done(err);
+    async.waterfall([
+      function(cb) {
+        parentModel.save(function(err) {
+          if (err) {return cb(err);}
+          cb(null, parentModel.getId())
+        });
+      },
+      function(id, cb) {
+        var model = self.HasOneModel.get(id);
+        model.fetch(['child'], function(err) {
+          if (err) {return cb(err);}
+          var child = model.get('child');
+          child.get('foo').should.eq('bar');
+          expect(child.get('bar')).to.be.null;
+          cb();
+        });
       }
-      parentModel.get('child').should.be.instanceOf(this.ChildModel);
-      parentModel.get('child.property').should.be.null;
-      parentModel.get('child.joinedProperty').should.eq('foo');
-    });
+    ], done);
   });
 
   // required relations
