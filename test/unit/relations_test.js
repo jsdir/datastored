@@ -107,6 +107,7 @@ describe('HasOne relation', function() {
   });
 
   // required relations
+  // caching or not
 
   xit('should update joined properties', function(done) {
     childModel.set('joinedProperty', 'baz').save(function(err) {

@@ -1,18 +1,26 @@
+local rootKey = KEYS[1]
+
 local includeLeaves = KEYS[1]
 local nodePrefix = KEYS[2]
 local nodeSuffix = KEYS[3]
+local attributes = ARGS
 local res
 
-function loadTree (id)
-  local sum = 0
+function loadTree (key,level)
+  -- local sum = 0
+  data = {}
 
-  res = redis.call('get', nodePrefix .. id .. nodeSuffix)
+  res = redis.call('lrange', key, 0, -1)
   for id in res do
     -- save
-    loadTree(id)
+    data[id]
+    if key < maxLevels
+      newKey = childPrefix .. id
+      loadTree(newKey, key + 1)
+    end
   end
+
+  return data
 end
 
-for id in ids do
-  loadTree(id)
-end
+return loadTree(rootKey,1)
