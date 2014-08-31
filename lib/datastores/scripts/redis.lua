@@ -1,3 +1,4 @@
+--[[
 local rootKey = KEYS[1]
 
 local includeLeaves = KEYS[1]
@@ -24,3 +25,4 @@ function loadTree (key,level)
 end
 
 return loadTree(rootKey,1)
+]]--

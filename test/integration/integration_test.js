@@ -1,4 +1,4 @@
-var _ = require('lodash');
+var _ = require('lodash-contrib');
 var async = require('async');
 var chai = require('chai');
 
@@ -9,7 +9,7 @@ var expect = chai.expect;
 describe('Orm', function() {
 
   before(function() {
-    _.bind(testUtils.setupOrm, this)();
+    testUtils.setupOrm.call(this);
   });
 
   before(function() {

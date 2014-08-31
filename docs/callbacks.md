@@ -26,25 +26,25 @@ Model callbacks are defined in model options as the `callbacks` option. Datastor
 
 Return modified `options`.
 
-### create: func() -> values
+### defaults: func(data) -> data
 
-Returns initial values for an `Instance`.
+Returns initial data for an `Instance`.
 
-### beforeOutput: func(values) -> values
+### beforeOutput: func(data) -> data
 
 Methods to perform before internal mutations like unserialization and hidden value filtering. During extension, functions from different option partials are composed in reverse compared to `beforeInput` to preserve the mixin layering.
 
-### afterOutput: func(values) -> values
+### afterOutput: func(data) -> data
 
 Methods to perform after internal mutations like unserialization and hidden value filtering. During extension, functions from different option partials are composed in reverse compared to `afterInput` to preserve the mixin layering.
 
-### beforeInput: func(values, cb)
+### beforeInput: func(data, cb)
 
-Methods to perform before internal mutations like serialization and immutability filtering. Must call `cb(err, values)` synchronously.
+Methods to perform before internal mutations like serialization and immutability filtering. Must call `cb(err, data)` synchronously.
 
-### afterInput: func(values, cb)
+### afterInput: func(data, cb)
 
-Methods to perform after internal mutations like serialization and immutability filtering. Must call `cb(err, values)` synchronously.
+Methods to perform after internal mutations like serialization and immutability filtering. Must call `cb(err, data)` synchronously.
 
 ### beforeFetch: func(options, attributes, cb)
 
@@ -52,7 +52,7 @@ Calls `cb(err, options, attributes)`.
 
 ### afterFetch: func(options, data, cb)
 
-Calls `cb(err, options, values)`.
+Calls `cb(err, options, data)`.
 
 ### beforeSave: func(options, data, cb)
 

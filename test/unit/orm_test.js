@@ -1,4 +1,4 @@
-var _ = require('lodash');
+var _ = require('lodash-contrib');
 var async = require('async');
 var chai = require('chai');
 
@@ -8,7 +8,7 @@ var testUtils = require('../utils');
 chai.should()
 
 var options = {
-  redisClient: true,
+  redisClient: {script: function() {}},
   cassandraClient: true
 };
 

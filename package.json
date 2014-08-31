@@ -27,13 +27,13 @@
   },
   "homepage": "https://github.com/jsdir/datastored",
   "dependencies": {
-    "lodash": "~2.4.1",
     "valids": "~0.2.3",
     "async": "~0.9.0",
     "validator": "~3.17.0",
     "node-cassandra-cql": "~0.4.4",
     "redis": "~0.12.1",
-    "hiredis": "~0.1.17"
+    "hiredis": "~0.1.17",
+    "lodash-contrib": "~241.4.14"
   },
   "devDependencies": {
     "sinon-chai": "~2.5.0",

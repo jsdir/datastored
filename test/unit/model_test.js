@@ -1,4 +1,4 @@
-var _ = require('lodash');
+var _ = require('lodash-contrib');
 var chai = require('chai');
 var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
@@ -14,7 +14,7 @@ var expect = chai.expect;
 describe('Orm', function() {
 
   before(function() {
-    _.bind(testUtils.setupOrm, this)();
+    testUtils.setupOrm.call(this);
   });
 
   before(function() {

@@ -1,4 +1,4 @@
-var _ = require('lodash');
+var _ = require('lodash-contrib');
 var async = require('async');
 var chai = require('chai');
 var redis = require('redis');

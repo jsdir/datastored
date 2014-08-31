@@ -1,4 +1,4 @@
-var _ = require('lodash');
+var _ = require('lodash-contrib');
 var async = require('async');
 var chai = require('chai');
 
@@ -7,16 +7,80 @@ var testUtils = require('../utils');
 
 var expect = chai.expect;
 
+function testRelatedModelOption(relationType) {
+
+  it('should require a "relatedModel" option', function() {
+    var self = this;
+    (function() {
+      self.createModel({relations: {
+        child: {type: relationType}
+      }});
+    }).should.throw('relation "child" requires a "relatedModel" option');
+  });
+}
+
+function testCollection(relationType) {
+
+  describe('Collection', function() {
+
+    describe('#add()', function() {
+
+      it('should add a single model to the collection', function() {
+        // check invalid type
+        // use fetchObjects all to assert
+      });
+
+      it('should add multiple models to the collection', function() {
+        // check invalid type
+        (function() {
+          model.set('child', model);
+        }).should.throw(
+          'relation "child" was set with a model of an invalid type'
+        );
+        // use fetchObjects all to assert
+      });
+    });
+
+    describe('#fetch()', function() {
+
+      it('should fetch all models by default', function() {
+        // only model ids
+      });
+
+      it('should use fetch modifiers correctly', function() {
+
+      });
+
+      it('should fetch with scope', function() {
+
+      });
+    });
+
+    describe('#fetchObjects', function() {
+
+      it('should fetch all models by default', function() {
+        // only model ids
+      });
+
+      it('should use fetch modifiers correctly', function() {
+
+      });
+
+      it('should fetch with scope', function() {
+
+      });
+    });
+  });
+}
+
 describe('HasOne relation', function() {
 
   before(function() {
-    _.bind(testUtils.setupOrm, this)();
+    testUtils.setupOrm.call(this);
   });
 
   before(function() {
-    this.ChildModel = this.createModel({}, 'ChildModel');
-
-    this.HasOneModel = this.createModel({
+    this.ParentModel = this.createModel({
       relations: {
         child: {
           type: datastored.relations.HasOne,
@@ -25,31 +89,133 @@ describe('HasOne relation', function() {
         }
       }
     });
-  });
 
-  it('should require a "relatedModel" option', function() {
-    var self = this;
-    (function() {
-      self.createModel({relations: {
-        child: {type: datastored.relations.HasOne}
-      }})
-    }).should.throw('relation "child" requires a "relatedModel" option');
-  });
-
-  it('should require the "relatedModel" to exist', function() {
-    var self = this;
-    (function() {
-      self.createModel({relations: {
+    this.RequiredModel = this.createModel({
+      relations: {
         child: {
           type: datastored.relations.HasOne,
-          relatedModel: 'UndefinedModel'
+          relatedModel: 'ChildModel',
+          joinedProperties: ['foo'],
+          required: true
         }
-      }})
-    }).should.throw('model "UndefinedModel" is not defined');
+      }
+    });
+
+    this.ChildModel = this.createModel({}, 'ChildModel');
   });
 
+  function testHasOneSave(cached) {
+
+    /*before(function() {
+      this.MultipleParentsModel = this.createModel({
+        relations: {
+          parents: {
+            type: datastored.relations.HasMany,
+            relatedModel: 'ParentModel',
+            joinedProperties: 1
+          }
+        }
+      });
+
+      this.HasParentsModel = this.createModel({
+        relations: {
+          parents: {
+            type: datastored.relations.HasMany,
+            relatedModel: 'ParentModel'
+          }
+        }
+      }, 'HasParentsModel');
+    });*/
+
+    it.only('should update joined properties for a single parent', function(done) {
+      var ParentModel = this.ParentModel;
+      var child = this.ChildModel.create({foo: 'bar'});
+      var parent = ParentModel.create({child: child});
+      parent.save(function(err) {
+        if (err) {return done(err);}
+        var id = parent.getId();
+
+        child.set('foo', 'baz').save(function(err) {
+          if (err) {return done(err);}
+
+          var model = ParentModel.get(id);
+          model.fetch(['child.foo'], function(err) {
+            if (err) {return done(err);}
+            model.get('child').get('foo').should.eq('baz');
+          });
+        });
+      });
+
+      // check backlink functionality
+    });
+
+    it('should update joined properties for multiple parents', function(done) {
+
+    });
+
+    it('should fetch and save the child', function() {
+      // Don't use a link in this test.
+      var child = NoLinkChild.create({foo: 'bar'});
+      var parent = ParentModel.create({child: child});
+      parent.save(function(err) {
+        if (err) {return cb(err);}
+        var id = parent.getId();
+
+        var model = ParentModel.get(id);
+        model.fetch(['child'], function(err) {
+          if (err) {return done(err);}
+          model.get('child').should.exist;
+        })
+      });
+    });
+
+    xit('should allow the child to be unassigned', function(done) {
+      
+      setUpThing();
+
+      parentModel.set('joinedModel', null);
+      done();
+      // check if link also null or undefined?
+    });
+
+    xit('should allow the child to be replaced', function(done) {
+      setUpThing();
+
+      var child = this.ChildModel.create();
+      var parent = this.ParentModel.create({child: child});
+
+      parent.save(function(err) {
+        if (err) {return done(err);}
+
+        var id = parent.getId();
+        var model = this.ParentModel.get(id);
+        model.fetch(['child'], function(err) {
+          if (err) {return done(err);}
+          model.get('child').getId().should.eq
+        });
+      });
+    });
+
+    /*
+    xit('should resolve references when the child is destroyed', function(done) {
+      this.childModel.destroy(function(err) {
+        var parentModel = this.ParentModel.get('id');
+        parentModel.fetch(['joinedModel'], function(err) {
+          parentModel.get('joinedModel').should.be.null;
+          done();
+        });
+      });
+    });
+    */
+
+    // Future: Destroying model updates single parent.
+    // Future: Destroying model updates multiple parents.
+  }
+
+  testRelatedModelOption(datastored.relations.HasOne);
+
   it('should only allow the type of "relatedModel"', function() {
-    var model = this.HasOneModel.create();
+    var model = this.ParentModel.create();
     (function() {
       model.set('child', model);
     }).should.throw(
@@ -72,341 +238,85 @@ describe('HasOne relation', function() {
     );
   });
 
-  it('should allow access to joined properties before the model is saved',
-    function() {
-    var childModel = this.ChildModel.create();
-    var parentModel = this.HasOneModel.create('child', childModel);
-    var child = parentModel.get('child');
-
-    child.model.name.should.eq('ChildModel');
-  });
-
-  it.only('should store joined properties with the parent', function(done) {
-    var self = this;
-    var childModel = this.ChildModel.create({foo: 'bar', bar: 'baz'});
-    var parentModel = this.HasOneModel.create({child: childModel});
-
-    async.waterfall([
-      function(cb) {
-        parentModel.save(function(err) {
-          if (err) {return cb(err);}
-          cb(null, parentModel.getId())
-        });
-      },
-      function(id, cb) {
-        var model = self.HasOneModel.get(id);
-        model.fetch(['child'], function(err) {
-          if (err) {return cb(err);}
-          var child = model.get('child');
-          child.get('foo').should.eq('bar');
-          expect(child.get('bar')).to.be.null;
-          cb();
-        });
-      }
-    ], done);
-  });
-
-  // required relations
-  // caching or not
-
-  xit('should update joined properties', function(done) {
-    childModel.set('joinedProperty', 'baz').save(function(err) {
-      if (err) {
-        return done(err);
-      }
-      var model = this.ParentModel.get('id');
-      model.fetch(['child'], function(err) {
-        if (err) {
-          return done(err);
-        }
-        parentModel.get('child.joinedProperty').should.eq('baz');
-      });
+  it('should allow unset targets', function() {
+    this.ParentModel.create({foo: 'bar'}).save(function(err) {
+      expect(err).not.to.exist;
     });
   });
 
-  xit('should allow the relationship to be unassigned', function(done) {
-    parentModel.set('joinedModel', null);
-    done();
-  });
-
-  xit('should allow the child to be replaced', function() {
-
-  });
-
-  xit('should resolve references when the child is destroyed', function(done) {
-    this.childModel.destroy(function(err) {
-      var parentModel = this.ParentModel.get('id');
-      parentModel.fetch(['joinedModel'], function(err) {
-        parentModel.get('joinedModel').should.be.null;
-        done();
-      });
-    });
-  });
-});
-
-/*
-var datastored = require('../..');
-
-xdescribe('HasOne relation', function() {
-
-  before(function() {
-    this.ParentModel = orm.createModel({
-      relations: {
-        child: {
-          type: datastored.relations.HasOne,
-          relatedModel: 'JoinedModel'
-        }
-      }
-    });
-
-    this.JoinedModel = orm.createModel({
-      properties: {
-        joinedProperty: {
-          type: 'string'
-        },
-        property: {
-          type: 'string'
-        }
-      }
+  it('should validate the required option', function() {
+    this.RequiredModel.create({foo: 'bar'}).save(function(err) {
+      err.should.deep.eq({child: 'attribute "child" is required'});
     });
   });
 
-  it('should require a `relatedModel` option', function() {
-    var _this = this;
-    (function() {
-      _this.orm.createModel({
-        relations: {
-          child: {type: datastored.relations.HasOne}
-        }
-      })
-    }).should.throw('relation "relation" requires a "relatedModel" option');
+  describe('cached', function() {
+    testHasOneSave.call(this, true);
   });
 
-  it('should only allow the type of "relatedModel"', function() {
-    var model = Model.create();
-    (function() {
-      parentModel.set('child', model);
-    }).should.throw(
-      'relation "child" can only contain a model of type "Child"'
-    );
-  });
-
-  it('should check that "joinedProperties" are valid properties', function() {
-    (function() {relation}).should.throw('relation "relation" property "property" is not a valid property');
-
-    (function() {id}).should.throw('relation "relation" property "property" is not a valid property');
-  });
-
-  it('should allow access to joined properties before the model is saved',
-    function() {
-    parentModel.set('child', childModel);
-    parentModel.get('child').should.be.instanceOf(this.ChildModel);
-    parentModel.get('child.property').should.be.null;
-    parentModel.get('child.joinedProperty').should.eq('foo');
-  });
-
-  it('should store joined properties with the parent', function(done) {
-    parentModel.set('child', childModel);
-
-    var model = this.ParentModel.get('id');
-    model.fetch(['child'], function(err) {
-      if (err) {
-        return done(err);
-      }
-      parentModel.get('child').should.be.instanceOf(this.ChildModel);
-      parentModel.get('child.property').should.be.null;
-      parentModel.get('child.joinedProperty').should.eq('foo');
-    });
-  });
-
-  it('should be able to use multiple model types', function() {
-
-  });
-
-  it('should update joined properties', function(done) {
-    childModel.set('joinedProperty', 'baz').save(function(err) {
-      if (err) {
-        return done(err);
-      }
-      var model = this.ParentModel.get('id');
-      model.fetch(['child'], function(err) {
-        if (err) {
-          return done(err);
-        }
-        parentModel.get('child.joinedProperty').should.eq('baz');
-      });
-    });
-  });
-
-  it('should allow the relationship to be unassigned', function(done) {
-    parentModel.set('joinedModel', null);
-    done();
-  });
-
-  it('should allow the child to be replaced', function() {
-
-  });
-
-  it('should resolve references when the child is destroyed', function(done) {
-    this.childModel.destroy(function(err) {
-      var parentModel = this.ParentModel.get('id');
-      parentModel.fetch(['joinedModel'], function(err) {
-        parentModel.get('joinedModel').should.be.null;
-        done();
-      });
-    });
-  });
-
-  it('should handle joined attributes that are undefined', function() {
-    var childModel = this.ChildModel.create({id: 'id'});
-    var parentModel = this.ParentModel.create({child: childModel});
-  });
-
-  it('should save children before the parent', function(done) {
-    var childModel = this.ChildModel.create({id: 'id'});
-    var parentModel = this.ParentModel.create({child: childModel});
-    parentModel.save(function(err) {
-      if (err) {
-        return done(err);
-      }
-      childSave.should.have.been.calledBefore(parentSave);
-      done();
-    });
-  });
-
-  it('should not save the child if it has not changed', function(done) {
-    var childModel = this.ChildModel.create({id: 'id'});
-    childModel.save(function(err) {
-      if (err) {
-        return done(err);
-      }
-      var parentModel = this.ParentModel.create({child: childModel});
-      parentModel.save(function(err) {
-        if (err) {
-          return done(err);
-        }
-        childSave.should.not.have.been.called();
-        done();
-      });
-    });
+  describe('not cached', function() {
+    testHasOneSave.call(this, false);
   });
 });
 
 xdescribe('HasMany relation', function() {
 
-  it('should require a "relatedModel" option', function() {
-
-  });
-
-  // check relatedModel types error
-  // check relatedModel actually can store different types
-
-  it('should require "backrefs" to use "cacheCount"', function() {
-
-  });
-
-  it('should require "relatedName" to use "backrefs"', function() {
-
-  });
-
-  it('should use "relatedName" to use existing relations', function() {
-    // check backreference
-  });
-
-  it('should use the "capacity" option to limit the collection', function() {
-    // check that add before/over the limit deleted the first items
-  });
-
-  it('should change counter if a child is added', function() {
-    // test deleting items with children. the children should be counted
-  });
-
-  it('should change counter if a child is deleted', function() {
-    // test deleting items with children. the children should be counted
-  });
-
-  it('should save children before the parent', function() {
-
-  });
-
-  it('should not save a child if it has not changed', function() {
-
-  });
-
-  // test that each child has an immutable reference to the parent
-  // test Collection.fetch() additional models and the end of the list
-  // test dependency resolution children are deleted. changes count as well.
-});
-
-xdescribe('Collection', function() {
-
-  describe('#has()', function() {
-
-    it('should indicate if a model is a member', function(done) {
-      // functionality and exclusivity only for {Z,SET}
-    });
-  });
-
-  describe('#limit()', function() {
-
-    it('should limit fetched items', function(done) {
-
-    });
-  });
-
-  describe('#reverse()', function() {
-
-    it('should fetch items in reverse', function(done) {
-
-    });
-  });
-
-  describe('#count()', function() {
-
-    it('should get the number of models', function(done) {
-
-    });
-  });
-
-  describe('#add()', function() {
-
-    it('should add a single model', function() {
-
-    });
-
-    it('should add multiple models', function() {
-
-    });
-
-    it('should change the counter', function() {
-
-    });
-  });
-
-  describe('#remove()', function() {
-
-    it('should remove a single model', function() {
-
-    });
-
-    it('should remove multiple models', function() {
-
-    });
-
-    it('should change the counter', function() {
-
-    });
-  });
+  testRelatedModelOption(datastored.relations.HasMany);
+  testCollection(datastored.relations.HasMany);
+  // Disable uncached for now with error.
 });
 
 xdescribe('Tree relation', function() {
-  // test moving?
-  // test maxLevels
-  // test global cache count
-  // test parent's cache count (this is already done by hasmany)
-  //
-  // test with different storage methods
-  //   cachedRefs (linear merkle tree)
-  //   dynamicResolve
+
+  testRelatedModelOption(datastored.relations.Tree);
+
+  it('should require a "parentRelationName" option', function() {
+    assertOptionRequired
+  });
+
+  it('should require a "childrenRelationName" option', function() {
+    assertOptionRequired
+  });
+
+  it('should require a "link" option', function() {
+    assertOptionRequired
+  });
+
+  testCollection(datastored.relations.Tree);
+
+  describe('#fetch()', function() {
+
+    it('should fetch leaves by default', function(done) {
+      var children = this.root.get('children');
+      this.root.get('children').fetch(['foo'], function(err) {
+        if (err) {return done(err);}
+
+      });
+    });
+
+    it('should not fetch leaves if requested', function(done) {
+      var children = this.root.get('children');
+      children.fetch(['foo'], {includeLeaves: false}, function(err, data) {
+        if (err) {return done(err);}
+      });
+    });
+  });
+
+  describe('#fetchObjects()', function() {
+
+    it('should fetch leaves by default', function() {
+
+    });
+
+    it('should not fetch leaves if requested', function() {
+
+    });
+  });
+
+  it('should fail if adding a child at a level greater than the "maxLevels" ' +
+    'option', function() {
+    this.grandchild.get('children').add(model, function(err) {
+      err.should.deep.eq('too many levels');
+    });
+  });
 });
-*/
