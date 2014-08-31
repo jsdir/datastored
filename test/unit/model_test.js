@@ -1,4 +1,4 @@
-var _ = require('lodash-contrib');
+var _ = require('lodash');
 var chai = require('chai');
 var sinon = require('sinon');
 var sinonChai = require('sinon-chai');

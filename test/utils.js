@@ -1,4 +1,4 @@
-var _ = require('lodash-contrib');
+var _ = require('lodash');
 
 var datastored = require('..');
 
@@ -38,10 +38,19 @@ function setupOrm() {
   this.createNewModel = createModel(this.orm);
 }
 
+function reloadInstance(instance, scope, cb) {
+  var model = instance.model.get(instance.getId());
+  model.fetch(scope, function(err) {
+    if (err) {return cb(err);}
+    cb(null, model);
+  });
+}
+
 module.exports = {
   createTestOrm: createTestOrm,
   createModel: createModel,
   baseOptions: baseOptions,
   appendValue: appendValue,
-  setupOrm: setupOrm
+  setupOrm: setupOrm,
+  reloadInstance: reloadInstance
 };
