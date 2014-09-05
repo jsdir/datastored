@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/jsdir/datastored",
   "dependencies": {
-    "valids": "~0.2.3",
+    "valids": "~0.3.0",
     "async": "~0.9.0",
     "validator": "~3.17.0",
     "node-cassandra-cql": "~0.4.4",
