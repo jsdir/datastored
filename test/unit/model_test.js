@@ -4,7 +4,7 @@ var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
 
 var datastored = require('../..');
-var Instance = require('../../lib/model').Instance;
+var Instance = require('../../lib/instance');
 var testUtils = require('../utils');
 
 chai.should();
