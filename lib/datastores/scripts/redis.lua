@@ -1,6 +1,7 @@
+--[[
 local rootKey = KEYS[1]
 local childKeyPrefix = KEYS[2]
-local childRelation = KEYS[3]
+local childrenRelation = KEYS[3]
 local includeLeaves = KEYS[4]
 local maxLevels = KEYS[5]
 
@@ -27,3 +28,4 @@ function loadTree (key,level)
 end
 
 return loadTree(rootKey,1)
+]]--

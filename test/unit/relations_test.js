@@ -12,9 +12,7 @@ function testRelatedModelOption(relationType) {
   it('should require a "relatedModel" option', function() {
     var self = this;
     (function() {
-      self.createModel({relations: {
-        child: {type: relationType}
-      }});
+      self.createModel({relations: {child: {type: relationType}}});
     }).should.throw('relation "child" requires a "relatedModel" option');
   });
 }
@@ -132,7 +130,7 @@ xdescribe('HasOne relation', function() {
       }
     });
 
-    this.ChildModel = this.createModel({}, 'ChildModel');
+    //this.ChildModel = this.createModel({}, 'ChildModel');
   });
 
   function testHasOneSave(cached) {
