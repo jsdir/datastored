@@ -2,7 +2,7 @@ var _ = require('lodash');
 var async = require('async');
 var chai = require('chai');
 
-var testUtils = require('../utils');
+var testUtils = require('../test_utils');
 
 var expect = chai.expect;
 

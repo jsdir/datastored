@@ -38,6 +38,38 @@ function setupOrm() {
   this.createNewModel = createModel(this.orm);
 }
 
+function setupTestModels() {
+  // Define test models.
+  this.BasicModel = this.createModel();
+
+  this.MethodModel = this.createModel({
+    staticMethods: {foo: function() {return this;}},
+    methods: {foo: function() {return this;}}
+  });
+
+  this.ErrorModel = this.createModel({
+    properties: {foo: {type: 'string'}},
+    callbacks: {
+      beforeInput: function(values, cb) {cb({foo: 'message'});}
+    }
+  });
+
+  this.CallbackModel = this.createModel({mixins: [{callbacks: {
+    beforeInput: function(values, cb) {
+      cb(null, testUtils.appendValue(values, 'beforeInput'));
+    },
+    afterInput: function(values, cb) {
+      cb(null, testUtils.appendValue(values, 'afterInput'));
+    },
+    beforeOutput: function(values) {
+      return testUtils.appendValue(values, 'beforeOutput');
+    },
+    afterOutput: function(values) {
+      return testUtils.appendValue(values, 'afterOutput');
+    }}}],
+    callbacks: callbacks});
+}
+
 function reloadInstance(instance, scope, cb) {
   var model = instance.model.get(instance.getId());
   model.fetch(scope, function(err) {
@@ -52,5 +84,6 @@ module.exports = {
   baseOptions: baseOptions,
   appendValue: appendValue,
   setupOrm: setupOrm,
+  setupTestModels: setupTestModels,
   reloadInstance: reloadInstance
 };
