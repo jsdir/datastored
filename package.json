@@ -29,7 +29,7 @@
   "dependencies": {
     "valids": "~0.3.0",
     "async": "~0.9.0",
-    "validator": "~3.17.0",
+    "validator": "~3.19.0",
     "node-cassandra-cql": "~0.4.4",
     "redis": "~0.12.1",
     "hiredis": "~0.1.17",
