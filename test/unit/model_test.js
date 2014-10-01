@@ -80,7 +80,7 @@ describe('Orm', function() {
     it('should not have multiple primary key properties', function() {
       assertFailsWith(this, false, {properties: {
         otherId: {type: 'string', primary: true}
-      }}, 'multiple primary key properties defined: id,otherId');
+      }}, 'multiple primary keys defined');
     });
 
     it('should not allow the primary key property to be hidden', function() {
@@ -115,7 +115,7 @@ describe('Orm', function() {
 
     it('should only allow cached props to have type counter', function() {
       assertFailsWith(this, false, {properties: {
-        foo: {type: 'counter'}
+        foo: {type: 'integer', counter: true}
       }}, 'only cached properties can have type "counter"');
     });
 
