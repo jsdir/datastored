@@ -8,6 +8,15 @@ var expect = chai.expect;
 
 describe('Model (integration)', function() {
 
+  before(function() {
+    testUtils.setupOrm.call(this);
+    testUtils.setupTestModels.call(this);
+  });
+
+  beforeEach(function(cb) {
+    this.orm._resetDatastores(cb);
+  });
+
   describe('#find()', function() {
 
     before(function() {
@@ -139,9 +148,7 @@ describe('Instance (integration)', function() {
 
   before(function() {
     testUtils.setupOrm.call(this);
-  });
 
-  before(function() {
     // Define test models.
     this.BasicModel = this.createModel();
 

@@ -13,8 +13,10 @@ var expect = chai.expect;
 
 describe('Instance (unit)', function() {
 
-  before(function() {testUtils.setupOrm.call(this);});
-  before(function() {testUtils.setupTestModels.call(this);});
+  before(function() {
+    testUtils.setupOrm.call(this);
+    testUtils.setupTestModels.call(this);
+  });
 
   it('should get "methods" from model options', function() {
     var model = this.MethodModel.create({});
@@ -57,7 +59,7 @@ describe('Instance (unit)', function() {
 
     it('should not return hidden attributes by default', function() {
       var model = this.HiddenModel.create({password: 'secret'}, true);
-      expect(model.get('password')).to.be.undefined();
+      expect(model.get('password')).to.be.undefined;
     });
 
     it('should return hidden attributes if requested', function() {
@@ -91,7 +93,7 @@ describe('Instance (unit)', function() {
       var model = this.BasicModel.create();
       model.set({foo: 'bar', baz: 123}, true);
       expect(model.get('foo')).to.eq('bar');
-      expect(model.get('baz')).to.be.undefined();
+      expect(model.get('baz')).to.be.undefined;
     });
 
     it('should store errors on mutation error', function() {
