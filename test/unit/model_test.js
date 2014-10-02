@@ -170,20 +170,25 @@ describe('Model (unit)', function() {
     it('should create a new model', function() {
       var instance = this.BasicModel.create({foo: 'bar'});
       instance.isNew.should.be.true;
+      instance.isChanged().should.be.false;
     });
   });
 
   describe('#get()', function() {
 
     it('should mutate the primary key by default', function() {
-      var model = this.CallbackModel.get('foo');
+      var instance = this.CallbackModel.get('foo');
       var value = 'foo,beforeInput,beforeInput,afterInput,afterInput';
-      model.get('id', true).should.equal(value);
+      instance.get('id', true).should.equal(value);
+      instance.isNew.should.be.false;
+      instance.isChanged().should.be.false;
     });
 
     it('should not mutate the primary key if requested', function() {
-      var model = this.CallbackModel.get('foo', true);
-      model.get('id', true).should.equal('foo');
+      var instance = this.CallbackModel.get('foo', true);
+      instance.get('id', true).should.equal('foo');
+      instance.isNew.should.be.false;
+      instance.isChanged().should.be.false;
     });
   });
 
