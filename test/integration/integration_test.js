@@ -334,7 +334,7 @@ describe('Instance (integration)', function() {
       });
     });
 
-    xit('should change indexes the value changes', function() {
+    xit('should change indexes when the value changes', function() {
 
     });
   });
