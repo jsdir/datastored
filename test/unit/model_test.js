@@ -168,7 +168,7 @@ describe('Model (unit)', function() {
     });
 
     it('should create a new model', function() {
-      var instance = this.BasicModel.create({foo: 'bar'});
+      var instance = this.BasicModel.create();
       instance.isNew.should.be.true;
       instance.isChanged().should.be.false;
     });

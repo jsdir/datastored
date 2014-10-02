@@ -51,6 +51,9 @@ describe('Model (integration)', function() {
         function(id, cb) {
           self.IndexedModel.find('indexed', 'foo', function(err, instance) {
             if (err) {return cb(err);}
+            instance.should.exist;
+            instance.isNew.should.be.false;
+            instance.isChanged().should.be.false;
             instance.getId().should.eq(id);
             cb();
           });
@@ -383,8 +386,9 @@ describe('Instance (integration)', function() {
         },
         function(id, cb) {
           var instance = self.CounterModel.get(id);
-          instance.fetch('all', function(err) {
+          instance.fetch('all', function(err, fetched) {
             if (err) {return cb(err);}
+            fetched.should.be.true;
             instance.get([
               'integer_count', 'rel_count', 'float_count'
             ], true).should.deep.eq({
