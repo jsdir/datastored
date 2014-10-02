@@ -11,12 +11,12 @@ chai.should();
 chai.use(sinonChai);
 var expect = chai.expect;
 
-describe('Instance', function() {
+describe('Instance (unit)', function() {
 
   before(function() {testUtils.setupOrm.call(this);});
   before(function() {testUtils.setupTestModels.call(this);});
 
-  it('should get "methods" from options', function() {
+  it('should get "methods" from model options', function() {
     var model = this.MethodModel.create({});
     model.foo().should.deep.equal(model);
   });

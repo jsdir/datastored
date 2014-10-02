@@ -11,121 +11,165 @@ chai.should();
 chai.use(sinonChai);
 var expect = chai.expect;
 
-describe('Model', function() {
+describe('Model (unit)', function() {
 
-  before(function() {testUtils.setupOrm.call(this);});
-  before(function() {testUtils.setupTestModels.call(this);});
+  before(function() {
+    var self = this;
+    testUtils.setupOrm.call(this);
+    testUtils.setupTestModels.call(this);
 
-  function assertFailsWith(context, isNew, options, message) {
-    (function() {
-      context.createModel(options, null, isNew);
-    }).should.throw(message);
-  }
+    this.assertCreateFails = function(options, message, newModel) {
+      (function() {
+        if (newModel) {
+          self.createNewModel(options);
+        } else {
+          self.createModel(options);
+        }
+      }).should.throw(message);
+    };
+  });
+
+  // Test model options
+
+  it('should require a table name', function() {
+    this.assertCreateFails({
+      properties: {id: {type: 'string', primary: true}}
+    }, '"table" is not defined', true);
+  });
 
   it('should get "staticMethods" from options', function() {
     this.MethodModel.foo().should.deep.equal(this.MethodModel);
   });
 
-  // Validation tests
+  // Property validation tests
 
-  it('should require a table name', function() {
-    assertFailsWith(this, true, {id: {type: 'string', primary: true}},
-      '"table" is not defined');
+  it('should require properties to have types', function() {
+    this.assertCreateFails({properties: {notype: {}}},
+      'property "notype" requires a type');
   });
+
+  //// Primary key validation
 
   it('should require a primary key property', function() {
-    assertFailsWith(this, true, {table: 'models', relations: {
+    this.assertCreateFails({table: 'models', relations: {
       foo: {primary: true}
-    }}, 'no primary key property defined');
+    }}, 'no primary key property defined', true);
   });
 
-  it('should not have multiple primary key properties', function() {
-    assertFailsWith(this, false, {properties: {
+  it('should not allow multiple primary key properties', function() {
+    this.assertCreateFails({properties: {
       otherId: {type: 'string', primary: true}
     }}, 'multiple primary keys defined');
   });
 
   it('should not allow the primary key property to be hidden', function() {
-    assertFailsWith(this, false, {table: 'models', properties: {
+    this.assertCreateFails({table: 'models', properties: {
       id: {type: 'string', primary: true, hidden: true}
-    }}, 'primary key property "id" cannot be hidden');
+    }}, 'primary key property "id" cannot be hidden', true);
   });
 
-  it('should require the primary key property to have string or integer ' +
-    'type', function() {
+  it('should require the primary key property to be a string or integer',
+    function() {
     var self = this;
-    function createModelWithIdType(type) {
-      self.createModel({properties: {id: {type: type}}});
-    }
-    createModelWithIdType('string');
-    createModelWithIdType('integer');
-    (function() {createModelWithIdType('date');}).should
-      .throw('primary key property "id" must have string or integer type');
-  });
 
-  it('should not allow properties without types', function() {
-    assertFailsWith(this, false, {properties: {typeless: {}}},
-      'property "typeless" requires a type');
+    function createOptionsWithIdType(type) {
+      return {table: 'models', properties: {id: {primary: true, type: type}}};
+    }
+
+    // Create valid models.
+    this.createNewModel(createOptionsWithIdType('string'));
+    this.createNewModel(createOptionsWithIdType('integer'));
+
+    // Create an invalid model.
+    this.assertCreateFails(createOptionsWithIdType('date'),
+      'primary key property "id" must have string or integer type', true);
   });
 
   // Temporary
 
   it('should only allow cached properties to be indexed', function() {
-    assertFailsWith(this, false, {properties: {
+    this.assertCreateFails({properties: {
       foo: {type: 'string', index: true}
     }}, 'only cached properties can be indexed');
   });
 
-  it('should only allow cached props to have type counter', function() {
-    assertFailsWith(this, false, {properties: {
+  it('should require counters to be cacheOnly', function() {
+    this.assertCreateFails({properties: {
       foo: {type: 'integer', counter: true}
     }}, 'only cached properties can have type "counter"');
   });
 
-  // Callback test
+  // Test initialize callbacks
 
-  it('should run options through the "initialize" callback', function() {
-    var spy = sinon.spy();
-    var callbacks = {initialize: function(options) {
-      options.modelClass = this;
-      spy();
-      return options;
-    }};
+  it('should run initialization callbacks', function() {
+    var beforeSpy = sinon.spy();
+    var afterSpy = sinon.spy();
+    var callbacks = {
+      beforeInitialize: function(options) {
+        options.before = this;
+        beforeSpy();
+        return options;
+      },
+      afterInitialize: function(options) {
+        options.after = this;
+        afterSpy();
+        return options;
+      }
+    };
     var mixin = {callbacks: callbacks};
     var Model = this.createModel({mixins: [mixin], callbacks: callbacks});
-    Model.options.modelClass.should.eq(Model);
-    spy.should.have.been.calledTwice();
+
+    Model.options.before.should.eq(Model);
+    Model.options.after.should.eq(Model);
+
+    beforeSpy.should.have.been.calledTwice;
+    afterSpy.should.have.been.calledTwice;
+    afterSpy.should.have.been.calledAfter(beforeSpy);
   });
+
+  // Test methods
 
   describe('#create()', function() {
 
-    before(function() {sinon.stub(Instance.prototype, 'set');});
-    after(function() {Instance.prototype.set.restore();});
+    describe('with stub', function() {
 
-    it('should use #set() correctly', function() {
-      var instance = this.BasicModel.create('attributes');
-      instance.set.should.have.been.calledWith('attributes');
-      instance.errors.should.deep.eq({});
+      before(function() {sinon.stub(Instance.prototype, 'set');});
+      after(function() {Instance.prototype.set.restore();});
+
+      it('should use #set() correctly', function() {
+        var instance = this.BasicModel.create('attributes');
+        instance.set.should.have.been.calledWith('attributes');
+        instance.errors.should.deep.eq({});
+      });
+
+      it('should use raw #set() correctly', function() {
+        var instance = this.BasicModel.create('attributes', true);
+        instance.set.should.have.been.calledWith('attributes', true);
+        instance.errors.should.deep.eq({});
+      });
     });
-
-    it('should use raw #set() correctly', function() {
-      var instance = this.BasicModel.create('attributes', true);
-      instance.set.should.have.been.calledWith('attributes', true);
-      instance.errors.should.deep.eq({});
-    });
-  });
-
-  describe('#create()', function() {
 
     it('should set defaults', function() {
+      var callbacks = {
+        defaults: function(values) {
+          values.default_property += ',defaults'
+          return values;
+        }
+      };
+      var mixin = {callbacks: callbacks};
       var instance = this.createModel({properties: {
         default_property: {type: 'string', default: 'value'},
         integer_counter: {type: 'integer', counter: true, cache: true},
         float_counter: {type: 'float', counter: true, cache: true}
-      }}).create();
-      instance.get('default_property').should.eq('value');
+      }, mixins: [mixin], callbacks: callbacks}).create();
+      instance.get('default_property').should.eq('value,defaults,defaults');
       instance.get('integer_counter', true).should.eq(0);
       instance.get('float_counter', true).should.eq(0.0);
+    });
+
+    it('should create a new model', function() {
+      var instance = this.BasicModel.create({foo: 'bar'});
+      instance.isNew.should.be.true;
     });
   });
 
@@ -145,7 +189,7 @@ describe('Model', function() {
 
   describe('#find()', function() {
 
-    it('should require the attribute to be an index', function() {
+    it('should require the property to be indexed', function() {
       var self = this;
       // Test undefined attribute.
       (function() {self.BasicModel.find('bar', 'bar', function() {});})

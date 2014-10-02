@@ -14,21 +14,31 @@ var baseOptions = {
   }
 };
 
+function appendValue(data, appendedValue) {
+  return _.object(_.map(data, function(value, key) {
+    return [key, value + ',' + appendedValue]
+  }));
+}
+
 function createTestOrm() {
   return datastored.createOrm({memory: true});
 }
 
 function createModel(orm, baseOptions) {
-  return function(options, name, isNew) {
-    if (!isNew) {options = _.merge({}, baseOptions, options);}
-    return orm.createModel(name || _.uniqueId(), options);
-  }
-}
+  return function(name, options) {
+    // `name` is optional
+    if (_.isObject(name)) {
+      options = name;
+      // Name defaults to a unique id.
+      name = _.uniqueId();
+    }
 
-function appendValue(data, appendedValue) {
-  return _.object(_.map(data, function(value, key) {
-    return [key, value + ',' + appendedValue]
-  }));
+    if (baseOptions) {
+      options = _.merge({}, baseOptions, options);
+    }
+
+    return orm.createModel(name, options);
+  }
 }
 
 function setupOrm() {
@@ -54,20 +64,25 @@ function setupTestModels() {
     }
   });
 
-  this.CallbackModel = this.createModel({mixins: [{callbacks: {
+  var callbacks = {
     beforeInput: function(values, cb) {
-      cb(null, testUtils.appendValue(values, 'beforeInput'));
+      cb(null, appendValue(values, 'beforeInput'));
     },
     afterInput: function(values, cb) {
-      cb(null, testUtils.appendValue(values, 'afterInput'));
+      cb(null, appendValue(values, 'afterInput'));
     },
     beforeOutput: function(values) {
-      return testUtils.appendValue(values, 'beforeOutput');
+      return appendValue(values, 'beforeOutput');
     },
     afterOutput: function(values) {
-      return testUtils.appendValue(values, 'afterOutput');
-    }}}],
-    callbacks: callbacks});
+      return appendValue(values, 'afterOutput');
+    }
+  };
+  var mixins = [{callbacks: callbacks}];
+
+  this.CallbackModel = this.createModel({
+    callbacks: callbacks, mixins: mixins
+  });
 }
 
 function reloadInstance(instance, scope, cb) {

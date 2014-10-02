@@ -385,3 +385,8 @@ xdescribe('Tree relation', function() {
     });
   });
 });
+
+// TODO:
+// - For HasOne relations, test that objects will be transformed into new objects.
+// - RelationMixin will add a method that accepts a tree object and converts it
+// into saved objects.
