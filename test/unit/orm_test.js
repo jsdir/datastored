@@ -51,7 +51,7 @@ describe('orm', function() {
 
   describe('#createModel()', function() {
 
-    it('should fail if the model name has already been registered',
+    it('should fail if the model type has already been registered',
     function() {
       var orm = testUtils.createTestOrm();
       orm.createModel('Model', testUtils.baseOptions);
