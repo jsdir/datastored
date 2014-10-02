@@ -100,10 +100,14 @@ describe('Model (integration)', function() {
       var self = this;
       async.waterfall([
         function(cb) {
-          var instance = self.IndexedModel.create({indexed_no_replace: 'foo'}, true);
+          var instance = self.IndexedModel.create({
+            indexed_no_replace: 'foo'
+          }, true);
           instance.save(function(err) {
             if (err) {return cb(err);}
-            instance.set({indexed_no_replace: 'bar'}, true).save(function(err) {
+            instance.set({
+              indexed_no_replace: 'bar'
+            }, true).save(function(err) {
               if (err) {return cb(err);}
               cb(null, instance.getId());
             });
