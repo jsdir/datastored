@@ -32,7 +32,10 @@ _.each(datastores, function(datastore, name) {
     var isCassandra = (name === 'CassandraDatastore');
 
     beforeEach(function(cb) {
-      datastore.reset(cb);
+      datastore.reset(function(err) {
+        if (err) {return cb(new Error(err))}
+        cb();
+      });
     });
 
     var baseTypes = {
