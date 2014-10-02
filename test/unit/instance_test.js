@@ -23,16 +23,6 @@ describe('Instance (unit)', function() {
     model.foo().should.deep.equal(model);
   });
 
-  it('should make the primary key property immutable', function() {
-    var model1 = this.BasicModel.create();
-    model1.set('id', 'foo', true);
-    model1.get('id', true).should.eq('foo');
-
-    var model2 = this.BasicModel.get('foo', true);
-    model2.set('id', 'bar', true);
-    model2.get('id', true).should.eq('foo');
-  });
-
   describe('#get()', function() {
 
     before(function() {
@@ -89,14 +79,20 @@ describe('Instance (unit)', function() {
       model.get('foo', true).should.eq('bar');
     });
 
-    it('should not set attributes that are not defined', function() {
+    it('should set a single attribute', function() {
+      var model = this.CallbackModel.create();
+      model.set('foo', 'bar', true);
+      model.get('foo', true).should.eq('bar');
+    });
+
+    it('should only set defined values', function() {
       var model = this.BasicModel.create();
       model.set({foo: 'bar', baz: 123}, true);
       expect(model.get('foo')).to.eq('bar');
       expect(model.get('baz')).to.be.undefined;
     });
 
-    it('should store errors on mutation error', function() {
+    it('should store errors on callback error', function() {
       var model = this.ErrorModel.create();
       model.set({foo: 'bar'});
       model.errors.should.deep.eq({'foo': 'message'});
@@ -113,19 +109,54 @@ describe('Instance (unit)', function() {
       model.set({foo: 'baz'}, true);
       model.get('foo').should.eq('baz');
     });
+
+    it('should not set the primary key property', function() {
+      var model = this.BasicModel.create();
+      model.set('id', 'foo', true);
+      model.get('id', true).should.eq('foo');
+
+      var rawModel = this.BasicModel.get('foo', true);
+      rawModel.set('id', 'bar', true);
+      rawModel.get('id', true).should.eq('foo');
+    });
   });
 
-  describe('#getId()', function() {
+  describe('#save()', function() {
 
-    it('should mutate the result by default', function() {
-      var model = this.CallbackModel.get('foo', true);
-      var value = 'foo,beforeOutput,beforeOutput,afterOutput,afterOutput';
-      model.getId().should.eq(value);
+    it('should fail if model errors exist', function(done) {
+      var model = this.ErrorModel.create({foo: 'foo'});
+      model.save(function(err) {
+        err.should.deep.eq({foo: 'message'});
+        done();
+      });
     });
 
-    it('should not mutate the result if requested', function() {
-      var model = this.CallbackModel.get('foo', true);
-      model.getId(true).should.eq('foo');
+    it('should call back if no attributes were changed', function() {
+      var spy = sinon.spy();
+      var instance = this.BasicModel.get('foo');
+      instance.save(function(err) {
+        if (err) {throw err;}
+        spy();
+      });
+      spy.should.have.been.called;
+    });
+  });
+
+  describe('#incr()', function() {
+
+    it('should only increment counter properties', function() {
+      var instance = this.BasicModel.create();
+      (function() {instance.incr('foo', 1);})
+        .should.throw('only counters can be incremented');
+    });
+  });
+
+  describe('#decr()', function() {
+
+    it('should only decrement counter properties', function() {
+      var instance = this.BasicModel.create();
+      (function() {instance.decr('foo', 1);})
+        .should.throw('only counters can be decremented');
     });
   });
 
@@ -155,14 +186,27 @@ describe('Instance (unit)', function() {
     });
   });
 
-  describe('#save()', function() {
+  describe('#getId()', function() {
 
-    it('should fail if model errors exist', function(done) {
-      var model = this.ErrorModel.create({foo: 'foo'});
-      model.save(function(err) {
-        err.should.deep.eq({foo: 'message'});
-        done();
-      });
+    it('should mutate the result by default', function() {
+      var model = this.CallbackModel.get('foo', true);
+      var value = 'foo,beforeOutput,beforeOutput,afterOutput,afterOutput';
+      model.getId().should.eq(value);
+    });
+
+    it('should not mutate the result if requested', function() {
+      var model = this.CallbackModel.get('foo', true);
+      model.getId(true).should.eq('foo');
+    });
+  });
+
+  describe('#isChanged()', function() {
+
+    it('should return changed attributes', function() {
+      var instance = this.BasicModel.create();
+      instance.isChanged().should.be.false;
+      instance.set('foo', 'bar');
+      instance.isChanged().should.be.true;
     });
   });
 });

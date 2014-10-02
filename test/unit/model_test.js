@@ -172,6 +172,11 @@ describe('Model (unit)', function() {
       instance.isNew.should.be.true;
       instance.isChanged().should.be.false;
     });
+
+    it('should not set the primary key property', function() {
+      var model = this.BasicModel.create({id: 'foo'});
+      model.get('id', true).should.not.eq('foo');
+    });
   });
 
   describe('#get()', function() {

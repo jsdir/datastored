@@ -414,15 +414,6 @@ describe('Instance (integration)', function() {
       });
     });
 
-    it('should fail if model errors exist', function(done) {
-      var instance = this.ErrorModel.get('foo', true);
-      instance.set('foo', 'bar');
-      instance.fetch(['foo'], function(err) {
-        err.should.deep.eq({foo: 'message'});
-        done();
-      });
-    });
-
     it('should fail if the model is not saved', function() {
       var instance = this.BasicModel.create({foo: 'bar'});
       (function() {
