@@ -14,5 +14,4 @@ exit_code=$?
 
 sleep 0.5
 
-echo "Done"
 exit $exit_code

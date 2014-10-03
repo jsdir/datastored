@@ -14,10 +14,10 @@ var expect = chai.expect;
 var datastores = {
   CassandraDatastore: new CassandraDatastore({
     client: new cassandra.Client({
-      contactPoints: ['localhost'],
+      contactPoints: ['127.0.0.1'],
       keyspace: 'datastored_test'
     }),
-    tables: ['table']
+    tables: ['test_table', 'test_table_int']
   }),
   RedisDatastore: new RedisDatastore({
     client: redis.createClient(),
@@ -51,7 +51,7 @@ _.each(datastores, function(datastore, name) {
     var date = 1264982400000;
 
     var baseOptions = {
-      table: 'table',
+      table: 'test_table',
       indexes: [],
       replaceIndexes: [],
       data: {
@@ -85,7 +85,7 @@ _.each(datastores, function(datastore, name) {
 
     function assertNotFound(id, cb) {
       datastore.fetch({
-        table: 'table', ids: [id], attributes: ['bar'], types: baseTypes
+        table: 'test_table', ids: [id], attributes: ['bar'], types: baseTypes
       }, function(err, data) {
         if (err) {return cb(err);}
         var expectedData = {};
@@ -102,7 +102,7 @@ _.each(datastores, function(datastore, name) {
         datastore.save(options, function(err) {
           if (err) {return done(err);}
           datastore.fetch({
-            table: 'table',
+            table: 'test_table',
             ids: ['foo'],
             attributes: [
               'bar',
