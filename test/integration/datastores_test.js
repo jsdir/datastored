@@ -17,7 +17,7 @@ var datastores = {
       hosts: ['localhost:9042'],
       keyspace: 'datastored_test'
     }),
-    columns: ['column']
+    tables: ['table']
   }),
   RedisDatastore: new RedisDatastore({
     client: redis.createClient(),
@@ -51,7 +51,7 @@ _.each(datastores, function(datastore, name) {
     var date = 1264982400000;
 
     var baseOptions = {
-      column: 'column',
+      table: 'table',
       indexes: [],
       replaceIndexes: [],
       data: {
@@ -65,9 +65,9 @@ _.each(datastores, function(datastore, name) {
       types: baseTypes
     };
 
-    function assertFind(column, index, value, id, cb) {
+    function assertFind(table, index, value, id, cb) {
       datastore.find({
-        column: column, index: index, value: value
+        table: table, index: index, value: value
       }, function(err, res) {
         if (err) {return cb(err);}
         expect(res).to.eq(id);
@@ -85,7 +85,7 @@ _.each(datastores, function(datastore, name) {
 
     function assertNotFound(id, cb) {
       datastore.fetch({
-        column: 'column', ids: [id], attributes: ['bar'], types: baseTypes
+        table: 'table', ids: [id], attributes: ['bar'], types: baseTypes
       }, function(err, data) {
         if (err) {return cb(err);}
         var expectedData = {};
@@ -102,7 +102,7 @@ _.each(datastores, function(datastore, name) {
         datastore.save(options, function(err) {
           if (err) {return done(err);}
           datastore.fetch({
-            column: 'column',
+            table: 'table',
             ids: ['foo'],
             attributes: [
               'bar',
@@ -127,11 +127,11 @@ _.each(datastores, function(datastore, name) {
       });
 
       it('should save a row with an id of type integer', function(done) {
-        var options = _.merge({}, baseOptions, {id: 2, column: 'column_int'});
+        var options = _.merge({}, baseOptions, {id: 2, table: 'table_int'});
         datastore.save(options, function(err) {
           if (err) {return done(err);}
           datastore.fetch({
-            column: 'column_int',
+            table: 'table_int',
             ids: [2],
             attributes: ['bar', 'baz'],
             types: baseTypes
@@ -157,7 +157,7 @@ _.each(datastores, function(datastore, name) {
           },
           function(cb) {
             datastore.fetch({
-              column: 'column',
+              table: 'table',
               ids: ['foo'],
               attributes: ['bar', 'baz'],
               types: baseTypes
@@ -186,7 +186,7 @@ _.each(datastores, function(datastore, name) {
           },
           function(cb) {
             datastore.fetch({
-              column: 'column',
+              table: 'table',
               ids: ['foo'],
               attributes: ['bar', 'baz'],
               types: baseTypes
@@ -203,9 +203,9 @@ _.each(datastores, function(datastore, name) {
       // CassandraDatastore should not implement these yet.
       if (!isCassandra) {
 
-        it('should increment columns within a row', function(done) {
+        it('should increment tables within a row', function(done) {
           var options = {
-            id: 'foo', column: 'count',
+            id: 'foo', table: 'count',
             types: {i1: 'integer', i2: 'integer', i3: 'integer'}
           };
 
@@ -231,7 +231,7 @@ _.each(datastores, function(datastore, name) {
         it('should save indexes', function(done) {
           saveIndexedModel(123, {}, function(err) {
             if (err) {done(err);}
-            assertFind('column', 'bar', 123, 'foo', done);
+            assertFind('table', 'bar', 123, 'foo', done);
           });
         });
 
@@ -252,8 +252,8 @@ _.each(datastores, function(datastore, name) {
           ], function(err) {
             if (err) {done(err);}
             async.parallel([
-              function(cb) {assertFind('column', 'bar', 456, 'foo', cb);},
-              function(cb) {assertFind('column', 'bar', 123, 'foo', cb);}
+              function(cb) {assertFind('table', 'bar', 456, 'foo', cb);},
+              function(cb) {assertFind('table', 'bar', 123, 'foo', cb);}
             ], done);
           });
         });
@@ -265,8 +265,8 @@ _.each(datastores, function(datastore, name) {
           ], function(err) {
             if (err) {done(err);}
             async.parallel([
-              function(cb) {assertFind('column', 'bar', 456, 'foo', cb);},
-              function(cb) {assertFind('column', 'bar', 123, null, cb);}
+              function(cb) {assertFind('table', 'bar', 456, 'foo', cb);},
+              function(cb) {assertFind('table', 'bar', 123, null, cb);}
             ], done);
           });
         });
@@ -282,7 +282,7 @@ _.each(datastores, function(datastore, name) {
 
       it('should only fetch the requested attributes', function(done) {
         datastore.fetch({
-          column: 'column', ids: ['foo'], attributes: ['bar'], types: baseTypes
+          table: 'table', ids: ['foo'], attributes: ['bar'], types: baseTypes
         }, function(err, data) {
           if (err) {return cb(err);}
           data.should.deep.eq({
@@ -307,7 +307,7 @@ _.each(datastores, function(datastore, name) {
       });
 
       it('should destroy the row', function(done) {
-        datastore.destroy({column: 'column', ids: ['foo']}, function(err) {
+        datastore.destroy({table: 'table', ids: ['foo']}, function(err) {
           if (err) {return done(err);}
           assertNotFound('foo', done);
         });
@@ -327,7 +327,7 @@ _.each(datastores, function(datastore, name) {
             }
           ], function(err) {
             datastore.destroy({
-              column: 'column', ids: ['foo'], indexValues: {
+              table: 'table', ids: ['foo'], indexValues: {
                 values: {bar: [456], baz: ['baz']}, // current values from orm
                 replaceIndexes: ['bar']
               }
@@ -335,14 +335,28 @@ _.each(datastores, function(datastore, name) {
               if (err) {return done(err);}
               // Ensure indexes are deleted.
               async.parallel([
-                function(cb) {assertFind('column', 'bar', 124, null, cb);},
-                function(cb) {assertFind('column', 'bar', 456, null, cb);},
-                function(cb) {assertFind('column', 'baz', 'baz', null, cb);}
+                function(cb) {assertFind('table', 'bar', 124, null, cb);},
+                function(cb) {assertFind('table', 'bar', 456, null, cb);},
+                function(cb) {assertFind('table', 'baz', 'baz', null, cb);}
               ], done);
             });
           });
         });
       }
     });
+
+    if (!isCassandra) { // Temporary.
+      xdescribe('#addToCollection()', function() {
+
+      });
+
+      xdescribe('#fetchCollection()', function() {
+
+      });
+
+      xdescribe('#fetchTree', function() {
+
+      });
+    }
   });
 });
