@@ -2,7 +2,7 @@ CREATE KEYSPACE datastored_test WITH replication = {'class': 'SimpleStrategy', '
 
 USE datastored_test;
 
-CREATE TABLE column (
+CREATE TABLE table (
   id text PRIMARY KEY,
   bar int,
   baz text,
@@ -12,7 +12,7 @@ CREATE TABLE column (
   date int
 );
 
-CREATE TABLE column_int (
+CREATE TABLE table_int (
   id int PRIMARY KEY,
   bar int,
   baz text,
