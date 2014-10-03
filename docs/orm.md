@@ -8,11 +8,11 @@ The orm is a single unit that manages configuration and model definitions. It is
 var datastored = require('datastored');
 
 var redis = require('redis');
-var cql = require('node-cassandra-cql');
+var cassandra = require('cassandra-driver');
 
 var namespace = 'project';
-var cassandraClient = new cql.Client({
-  hosts: ['localhost:9160'],
+var cassandraClient = new cassandra.Client({
+  contactPoints: ['localhost:9160'],
   keyspace: namespace
 });
 
@@ -33,7 +33,7 @@ A [redis client](https://github.com/mranney/node_redis).
 
 #### cassandraClient
 
-A [cassandra client](https://github.com/jorgebay/node-cassandra-cql).
+A [cassandra client](https://github.com/datastax/nodejs-driver).
 
 #### memory
 
