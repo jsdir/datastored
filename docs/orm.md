@@ -12,7 +12,7 @@ var cassandra = require('cassandra-driver');
 
 var namespace = 'project';
 var cassandraClient = new cassandra.Client({
-  contactPoints: ['localhost:9160'],
+  contactPoints: ['localhost'],
   keyspace: namespace
 });
 
