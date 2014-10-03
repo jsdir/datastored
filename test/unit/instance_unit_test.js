@@ -19,8 +19,8 @@ describe('Instance (unit)', function() {
   });
 
   it('should get "methods" from model options', function() {
-    var model = this.MethodModel.create({});
-    model.foo().should.deep.equal(model);
+    var instance = this.MethodModel.create({});
+    instance.foo().should.deep.equal(instance);
   });
 
   describe('#get()', function() {
@@ -32,29 +32,29 @@ describe('Instance (unit)', function() {
     });
 
     it('should mutate attributes by default', function() {
-      var model = this.CallbackModel.create({foo: 'bar'}, true);
+      var instance = this.CallbackModel.create({foo: 'bar'}, true);
       var value = 'bar,beforeOutput,beforeOutput,afterOutput,afterOutput';
-      model.get('foo').should.deep.eq(value);
+      instance.get('foo').should.deep.eq(value);
     });
 
     it('should not mutate attributes if requested', function() {
-      var model = this.CallbackModel.create({foo: 'bar'}, true);
-      model.get('foo', true).should.eq('bar');
+      var instance = this.CallbackModel.create({foo: 'bar'}, true);
+      instance.get('foo', true).should.eq('bar');
     });
 
     it('should support getting multiple values', function() {
-      var model = this.BasicModel.create({foo: 'foo', bar: 'bar'}, true);
-      model.get(['foo', 'bar']).should.deep.eq({foo: 'foo', bar: 'bar'});
+      var instance = this.BasicModel.create({foo: 'foo', bar: 'bar'}, true);
+      instance.get(['foo', 'bar']).should.deep.eq({foo: 'foo', bar: 'bar'});
     });
 
     it('should not return hidden attributes by default', function() {
-      var model = this.HiddenModel.create({password: 'secret'}, true);
-      expect(model.get('password')).to.be.undefined;
+      var instance = this.HiddenModel.create({password: 'secret'}, true);
+      expect(instance.get('password')).to.be.undefined;
     });
 
     it('should return hidden attributes if requested', function() {
-      var model = this.HiddenModel.create({password: 'secret'}, true);
-      model.get('password', true).should.eq('secret');
+      var instance = this.HiddenModel.create({password: 'secret'}, true);
+      instance.get('password', true).should.eq('secret');
     });
   });
 
@@ -67,65 +67,65 @@ describe('Instance (unit)', function() {
     });
 
     it('should mutate attributes by default', function() {
-      var model = this.CallbackModel.create();
-      model.set({foo: 'bar'});
+      var instance = this.CallbackModel.create();
+      instance.set({foo: 'bar'});
       var value = 'bar,beforeInput,beforeInput,afterInput,afterInput';
-      model.get('foo', true).should.eq(value);
+      instance.get('foo', true).should.eq(value);
     });
 
     it('should not mutate attributes if requested', function() {
-      var model = this.CallbackModel.create();
-      model.set({foo: 'bar'}, true);
-      model.get('foo', true).should.eq('bar');
+      var instance = this.CallbackModel.create();
+      instance.set({foo: 'bar'}, true);
+      instance.get('foo', true).should.eq('bar');
     });
 
     it('should set a single attribute', function() {
-      var model = this.CallbackModel.create();
-      model.set('foo', 'bar', true);
-      model.get('foo', true).should.eq('bar');
+      var instance = this.CallbackModel.create();
+      instance.set('foo', 'bar', true);
+      instance.get('foo', true).should.eq('bar');
     });
 
     it('should only set defined values', function() {
-      var model = this.BasicModel.create();
-      model.set({foo: 'bar', baz: 123}, true);
-      expect(model.get('foo')).to.eq('bar');
-      expect(model.get('baz')).to.be.undefined;
+      var instance = this.BasicModel.create();
+      instance.set({foo: 'bar', baz: 123}, true);
+      expect(instance.get('foo')).to.eq('bar');
+      expect(instance.get('baz')).to.be.undefined;
     });
 
     it('should store errors on callback error', function() {
-      var model = this.ErrorModel.create();
-      model.set({foo: 'bar'});
-      model.errors.should.deep.eq({'foo': 'message'});
+      var instance = this.ErrorModel.create();
+      instance.set({foo: 'bar'});
+      instance.errors.should.deep.eq({'foo': 'message'});
     });
 
     it('should not change immutable attributes by default', function() {
-      var model = this.ImmutableModel.create({foo: 'bar'}, true);
-      model.set({foo: 'baz'});
-      model.get('foo').should.eq('bar');
+      var instance = this.ImmutableModel.create({foo: 'bar'}, true);
+      instance.set({foo: 'baz'});
+      instance.get('foo').should.eq('bar');
     });
 
     it('should change immutable attributes if requested', function() {
-      var model = this.ImmutableModel.create({foo: 'bar'}, true);
-      model.set({foo: 'baz'}, true);
-      model.get('foo').should.eq('baz');
+      var instance = this.ImmutableModel.create({foo: 'bar'}, true);
+      instance.set({foo: 'baz'}, true);
+      instance.get('foo').should.eq('baz');
     });
 
     it('should not set the primary key property', function() {
-      var model = this.BasicModel.create();
-      model.set('id', 'foo', true);
-      model.get('id', true).should.eq('foo');
+      var instance = this.BasicModel.create();
+      instance.set('id', 'foo', true);
+      instance.get('id', true).should.eq('foo');
 
-      var rawModel = this.BasicModel.get('foo', true);
-      rawModel.set('id', 'bar', true);
-      rawModel.get('id', true).should.eq('foo');
+      var rawInstance = this.BasicModel.get('foo', true);
+      rawInstance.set('id', 'bar', true);
+      rawInstance.get('id', true).should.eq('foo');
     });
   });
 
   describe('#save()', function() {
 
-    it('should fail if model errors exist', function(done) {
-      var model = this.ErrorModel.create({foo: 'foo'});
-      model.save(function(err) {
+    it('should fail if instance errors exist', function(done) {
+      var instance = this.ErrorModel.create({foo: 'foo'});
+      instance.save(function(err) {
         err.should.deep.eq({foo: 'message'});
         done();
       });
@@ -189,14 +189,14 @@ describe('Instance (unit)', function() {
   describe('#getId()', function() {
 
     it('should mutate the result by default', function() {
-      var model = this.CallbackModel.get('foo', true);
+      var instance = this.CallbackModel.get('foo', true);
       var value = 'foo,beforeOutput,beforeOutput,afterOutput,afterOutput';
-      model.getId().should.eq(value);
+      instance.getId().should.eq(value);
     });
 
     it('should not mutate the result if requested', function() {
-      var model = this.CallbackModel.get('foo', true);
-      model.getId(true).should.eq('foo');
+      var instance = this.CallbackModel.get('foo', true);
+      instance.getId(true).should.eq('foo');
     });
   });
 

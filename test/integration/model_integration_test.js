@@ -271,18 +271,18 @@ describe('Instance (integration)', function() {
       });
     });
 
-    it('should fail if the model is not saved', function() {
+    it('should fail if the instance is not saved', function() {
       var instance = this.BasicModel.create({foo: 'bar'});
       (function() {
         instance.fetch(['foo'], function(err) {throw err;});
-      }).should.throw('the model must be saved');
+      }).should.throw('the instance must be saved');
     });
 
-    it('should fail when the model is not found', function(done) {
+    it('should fail when the instance is not found', function(done) {
       var instance = this.BasicModel.get('random');
-      instance.fetch(['foo'], function(err, success) {
+      instance.fetch(['foo'], function(err, fetched) {
         if (err) {return done(err);}
-        success.should.be.false;
+        fetched.should.be.false;
         done();
       });
     });
@@ -301,12 +301,13 @@ describe('Instance (integration)', function() {
         }
       }});
 
-      var model = Model.create({foo: 'bar'});
-      model.save(function(err) {
+      var instance = Model.create({foo: 'bar'});
+      instance.save(function(err) {
         if (err) {return done(err);}
 
-        model.fetch('foo', function(err) {
+        instance.fetch('foo', function(err, fetched) {
           if (err) {return done(err);}
+          fetched.should.be.true;
           done();
         });
       });
@@ -326,12 +327,13 @@ describe('Instance (integration)', function() {
         }
       }});
 
-      var model = Model.create({foo: 'bar'});
-      model.save(function(err) {
+      var instance = Model.create({foo: 'bar'});
+      instance.save(function(err) {
         if (err) {return done(err);}
 
-        model.fetch('options', ['foo'], function(err) {
+        instance.fetch('options', ['foo'], function(err, fetched) {
           if (err) {return done(err);}
+          fetched.should.be.true;
           done();
         });
       });
@@ -344,10 +346,10 @@ describe('Instance (integration)', function() {
         }
       }});
 
-      var model = Model.create({foo: 'bar'});
-      model.save(function(err) {
+      var instance = Model.create({foo: 'bar'});
+      instance.save(function(err) {
         if (err) {return done(err);}
-        model.fetch(['foo'], function(err) {
+        instance.fetch(['foo'], function(err) {
           err.should.eq('error');
           done();
         });
@@ -361,10 +363,10 @@ describe('Instance (integration)', function() {
         }
       }});
 
-      var model = Model.create({foo: 'bar'});
-      model.save(function(err) {
+      var instance = Model.create({foo: 'bar'});
+      instance.save(function(err) {
         if (err) {return done(err);}
-        model.fetch(['foo'], function(err) {
+        instance.fetch(['foo'], function(err) {
           err.should.eq('error');
           done();
         });
@@ -379,20 +381,22 @@ describe('Instance (integration)', function() {
         var id = instance.getId();
         async.series([
           function(cb) {
-            var fetched = self.BasicModel.get(id);
-            fetched.fetch(['foo', 'bar'], function(err) {
+            var fetchedInstance = self.BasicModel.get(id);
+            fetchedInstance.fetch(['foo', 'bar'], function(err, fetched) {
               if (err) {return cb(err);}
-              fetched.get('foo').should.eq('foo');
-              fetched.get('bar').should.eq('bar');
+              fetched.should.be.true;
+              fetchedInstance.get('foo').should.eq('foo');
+              fetchedInstance.get('bar').should.eq('bar');
               cb();
             });
           },
           function(cb) {
-            var fetched = self.BasicModel.get(id);
-            fetched.fetch('foo', function(err) {
+            var fetchedInstance = self.BasicModel.get(id);
+            fetchedInstance.fetch('foo', function(err, fetched) {
               if (err) {return cb(err);}
-              fetched.get('foo').should.eq('foo');
-              expect(fetched.get('bar')).to.be.undefined;
+              fetched.should.be.true;
+              fetchedInstance.get('foo').should.eq('foo');
+              expect(fetchedInstance.get('bar')).to.be.undefined;
               cb();
             });
           }
@@ -406,19 +410,17 @@ describe('Instance (integration)', function() {
       instance.save(function(err) {
         if (err) {return done(err);}
         var id = instance.getId();
-        var fetched = self.BasicModel.get(id);
-        fetched.set('foo', 'baz');
-        fetched.get('foo').should.eq('baz');
-        fetched.fetch('foo', function(err) {
-          if (err) {done(err);}
-          fetched.get('foo').should.eq('foo');
+        var fetchedInstance = self.BasicModel.get(id);
+        fetchedInstance.set('foo', 'baz');
+        fetchedInstance.get('foo').should.eq('baz');
+        fetchedInstance.fetch('foo', function(err, fetched) {
+          if (err) {return done(err);}
+          fetched.should.be.true;
+          fetchedInstance.get('foo').should.eq('foo');
           done();
         });
       });
     });
-
-    // TODO: It should return a boolean indicating whether the values were
-    // found or not.
   });
 
   xdescribe('#destroy()', function() {
