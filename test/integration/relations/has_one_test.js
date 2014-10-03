@@ -183,36 +183,28 @@ xdescribe('HasOne relation', function() {
       }
     });
 
-    //this.ChildModel = this.createModel({}, 'ChildModel');
+    this.ChildModel = this.createModel('ChildModel', {});
   });
 
   shared.testRelatedModelRequired(datastored.relations.HasOne);
 
-  it('should only allow the type of "relatedModel"', function() {
+  it('should only allow setting instances of type "relatedModel"', function() {
     var model = this.ParentModel.create();
     (function() {
       model.set('child', model);
     }).should.throw(
-      'relation "child" was set with a model of an invalid type'
+      'relation "child" must be set with "null" or an instance of type "ChildModel"'
     );
-  });
 
-  it('should check that "joinedProperties" are valid properties', function() {
-    var self = this;
+    var model = this.ParentModel.create();
     (function() {
-      self.createModel({relations: {
-        child: {
-          type: datastored.relations.HasOne,
-          relatedModel: 'ChildModel',
-          joinedProperties: ['foo', 'invalid']
-        }
-      }});
+      model.set('child', model);
     }).should.throw(
-      'relation "child" property "invalid" is not a valid property'
+      'relation "child" must be set with "null" or an instance of type "ChildModel1", "ChildModel2", or "ChildModel3"'
     );
   });
 
-  it('should allow unset targets', function() {
+  xit('should allow unset targets', function() {
     this.ParentModel.create({foo: 'bar'}).save(function(err) {
       expect(err).not.to.exist;
     });

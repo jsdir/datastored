@@ -48,6 +48,12 @@ describe('Model (unit)', function() {
       'property "notype" requires a type');
   });
 
+  it('should not allow an attribute to have both cache types', function() {
+    this.assertCreateFails({properties: {attr: {
+      cache: true, cacheOnly: true
+    }}}, 'attribute "attr" cannot have both "cache" and "cacheOnly" defined');
+  });
+
   //// Primary key validation
 
   it('should require a primary key property', function() {
