@@ -14,7 +14,7 @@ var expect = chai.expect;
 var datastores = {
   CassandraDatastore: new CassandraDatastore({
     client: new cassandra.Client({
-      contactPoints: ['127.0.0.1'],
+      contactPoints: ['localhost'],
       keyspace: 'datastored_test'
     }),
     tables: ['test_table', 'test_table_int']
@@ -127,11 +127,11 @@ _.each(datastores, function(datastore, name) {
       });
 
       it('should save a row with an id of type integer', function(done) {
-        var options = _.merge({}, baseOptions, {id: 2, table: 'table_int'});
+        var options = _.merge({}, baseOptions, {id: 2, table: 'test_table_int'});
         datastore.save(options, function(err) {
           if (err) {return done(err);}
           datastore.fetch({
-            table: 'table_int',
+            table: 'test_table_int',
             ids: [2],
             attributes: ['bar', 'baz'],
             types: baseTypes
@@ -157,7 +157,7 @@ _.each(datastores, function(datastore, name) {
           },
           function(cb) {
             datastore.fetch({
-              table: 'table',
+              table: 'test_table',
               ids: ['foo'],
               attributes: ['bar', 'baz'],
               types: baseTypes
@@ -186,7 +186,7 @@ _.each(datastores, function(datastore, name) {
           },
           function(cb) {
             datastore.fetch({
-              table: 'table',
+              table: 'test_table',
               ids: ['foo'],
               attributes: ['bar', 'baz'],
               types: baseTypes
@@ -231,7 +231,7 @@ _.each(datastores, function(datastore, name) {
         it('should save indexes', function(done) {
           saveIndexedModel(123, {}, function(err) {
             if (err) {done(err);}
-            assertFind('table', 'bar', 123, 'foo', done);
+            assertFind('test_table', 'bar', 123, 'foo', done);
           });
         });
 
@@ -252,8 +252,8 @@ _.each(datastores, function(datastore, name) {
           ], function(err) {
             if (err) {done(err);}
             async.parallel([
-              function(cb) {assertFind('table', 'bar', 456, 'foo', cb);},
-              function(cb) {assertFind('table', 'bar', 123, 'foo', cb);}
+              function(cb) {assertFind('test_table', 'bar', 456, 'foo', cb);},
+              function(cb) {assertFind('test_table', 'bar', 123, 'foo', cb);}
             ], done);
           });
         });
@@ -265,8 +265,8 @@ _.each(datastores, function(datastore, name) {
           ], function(err) {
             if (err) {done(err);}
             async.parallel([
-              function(cb) {assertFind('table', 'bar', 456, 'foo', cb);},
-              function(cb) {assertFind('table', 'bar', 123, null, cb);}
+              function(cb) {assertFind('test_table', 'bar', 456, 'foo', cb);},
+              function(cb) {assertFind('test_table', 'bar', 123, null, cb);}
             ], done);
           });
         });
@@ -282,7 +282,10 @@ _.each(datastores, function(datastore, name) {
 
       it('should only fetch the requested attributes', function(done) {
         datastore.fetch({
-          table: 'table', ids: ['foo'], attributes: ['bar'], types: baseTypes
+          table: 'test_table',
+          ids: ['foo'],
+          attributes: ['bar'],
+          types: baseTypes
         }, function(err, data) {
           if (err) {return cb(err);}
           data.should.deep.eq({
@@ -307,7 +310,7 @@ _.each(datastores, function(datastore, name) {
       });
 
       it('should destroy the row', function(done) {
-        datastore.destroy({table: 'table', ids: ['foo']}, function(err) {
+        datastore.destroy({table: 'test_table', ids: ['foo']}, function(err) {
           if (err) {return done(err);}
           assertNotFound('foo', done);
         });
@@ -327,7 +330,7 @@ _.each(datastores, function(datastore, name) {
             }
           ], function(err) {
             datastore.destroy({
-              table: 'table', ids: ['foo'], indexValues: {
+              table: 'test_table', ids: ['foo'], indexValues: {
                 values: {bar: [456], baz: ['baz']}, // current values from orm
                 replaceIndexes: ['bar']
               }
@@ -335,9 +338,9 @@ _.each(datastores, function(datastore, name) {
               if (err) {return done(err);}
               // Ensure indexes are deleted.
               async.parallel([
-                function(cb) {assertFind('table', 'bar', 124, null, cb);},
-                function(cb) {assertFind('table', 'bar', 456, null, cb);},
-                function(cb) {assertFind('table', 'baz', 'baz', null, cb);}
+                function(cb) {assertFind('test_table', 'bar', 124, null, cb);},
+                function(cb) {assertFind('test_table', 'bar', 456, null, cb);},
+                function(cb) {assertFind('test_table', 'baz', 'baz', null, cb);}
               ], done);
             });
           });
