@@ -2,7 +2,7 @@ var _ = require('lodash');
 var async = require('async');
 var chai = require('chai');
 var redis = require('redis');
-var cql = require('node-cassandra-cql');
+var cassandra = require('cassandra-driver');
 
 var CassandraDatastore = require('../../lib/datastores/cassandra');
 var RedisDatastore = require('../../lib/datastores/redis');
@@ -13,8 +13,8 @@ var expect = chai.expect;
 
 var datastores = {
   CassandraDatastore: new CassandraDatastore({
-    client: new cql.Client({
-      hosts: ['localhost:9042'],
+    client: new cassandra.Client({
+      contactPoints: ['localhost'],
       keyspace: 'datastored_test'
     }),
     tables: ['table']
@@ -346,7 +346,7 @@ _.each(datastores, function(datastore, name) {
     });
 
     if (!isCassandra) { // Temporary.
-      xdescribe('#addToCollection()', function() {
+      xdescribe('#addToCollection()', function(done) {
 
       });
 
