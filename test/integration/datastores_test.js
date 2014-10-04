@@ -33,7 +33,7 @@ _.each(datastores, function(datastore, name) {
 
     beforeEach(function(cb) {
       datastore.reset(function(err) {
-        if (err) {return cb(new Error(err))}
+        if (err) {return cb(err);}
         cb();
       });
     });
