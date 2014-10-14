@@ -57,9 +57,8 @@ describe('Model (unit)', function() {
   //// Primary key validation
 
   it('should require a primary key property', function() {
-    this.assertCreateFails({table: 'models', relations: {
-      foo: {primary: true}
-    }}, 'no primary key property defined', true);
+    this.assertCreateFails({table: 'models'},
+      'no primary key property defined', true);
   });
 
   it('should not allow multiple primary key properties', function() {

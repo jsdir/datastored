@@ -265,7 +265,7 @@ describe('HasOne relation', function() {
     });
   });
 
-  describe.only('Instance.toObject()', function() {
+  describe('Instance.toObject()', function() {
 
     beforeEach(function() {
       this.childId = this.instance.get('child', true).getId();
