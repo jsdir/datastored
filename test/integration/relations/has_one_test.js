@@ -61,7 +61,7 @@ function testHasOneSave(cached) {
   beforeEach(function(done) {
     var self = this;
     var child = this.ChildModel.create({foo: 'bar'});
-    var parent = this.ParentModel.create({child: child});
+    parent = this.ParentModel.create({child: child});
     parent.save(function(err) {
       if (err) {return done(err);}
       var id = parent.getId();
@@ -76,7 +76,6 @@ function testHasOneSave(cached) {
   // - Persistence
 
   it('should save the child instance', function(done) {
-    // beforeEach: saveInstance();
     var parent = this.parent;
     parent.fetch(['child'], function(err, fetched) {
       if (err) {return done(err);}
@@ -84,34 +83,61 @@ function testHasOneSave(cached) {
       parent.isNew.should.be.false;
       parent.isChanged().should.be.false;
       parent.get('child').should.exist;
+
+      parent.set('child', null);
+      parent.isChanged().should.be.true;
+
+      done();
     });
   });
 
   // TODO: multitype
 
-  xit('should allow the child to have no link with the parent', function(done) {
-    saveInstance();
-    // Only check the parent-to-child relationship.
-    instance.child.should.be;
+  it('should allow the child to have no link with the parent', function(done) {
+    var ParentModel = this.createModel({
+      relations: {
+        child: {
+          type: datastored.relations.HasOne,
+          relatedModel: prefix + 'NoTypeChildModel',
+          cached: cached
+        }
+      }
+    });
+
+    var ChildModel = this.createModel(prefix + 'NoTypeChildModel');
+
+    var child = ChildModel.create({foo: 'bar'});
+
+    // TODO: move to its own test
+    child.isChanged().should.be.true;
+
+    var parent = ParentModel.create({child: child});
+    parent.save(function(err) {
+      if (err) {return done(err);}
+      var id = parent.getId();
+      var fetchedParent = ParentModel.get(id);
+      fetchedParent.fetch(['child'], function(err, fetched) {
+        if (err) {return done(err);}
+        fetched.should.be.true;
+        fetchedParent.get('child').should.exist;
+        done();
+      });
+    });
+
+    // TODO: replace with general checking method.
   });
 
-  xit('should allow the child to be null', function(done) {
+  it('should allow the child to be null', function(done) {
     var self = this;
-    var reloadInstance = testUtils.reloadInstance;
     this.parent.set('child', null).save(function(err) {
       if (err) {return done(err);}
-      reloadInstance(self.parent, ['child'], function(err, instance) {
+      var scope = ['child'];
+      testUtils.reloadInstance(self.parent, scope, function(err, instance) {
         if (err) {return done(err);}
         expect(instance.get('child')).to.be.undefined;
         done();
       });
     });
-  });
-
-  xit('should set a changed relation as a changed attribute', function(done) {
-    // test .isChanged() true at beginning;
-    // test false after save
-    // test true after another modification
   });
 
   // - Links
@@ -249,7 +275,7 @@ describe('HasOne relation', function() {
       '"child". Try including a valid "type" attribute with the data.');
   });
 
-  xdescribe('when cached', function() {
+  describe('when cached', function() {
     testHasOneSave.call(this, true);
   });
 
