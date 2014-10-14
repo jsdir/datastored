@@ -26,9 +26,9 @@ var datastores = {
   MemoryDatastore: new MemoryDatastore()
 };
 
-//delete datastores.CassandraDatastore;
-//delete datastores.RedisDatastore;
-//delete datastores.MemoryDatastore;
+// delete datastores.CassandraDatastore;
+// delete datastores.RedisDatastore;
+delete datastores.MemoryDatastore;
 
 _.each(datastores, function(datastore, name) {
   describe(name, function() {
@@ -404,7 +404,7 @@ _.each(datastores, function(datastore, name) {
 
     if (!isCassandra) { // Temporary.
 
-      xdescribe('#addToCollection()', function() {
+      describe('#addToCollection()', function() {
 
         it('should add instances to a list', function(done) {
           async.series([
@@ -438,7 +438,9 @@ _.each(datastores, function(datastore, name) {
                 idName: 'id',
                 types: {id: 'string'},
                 relationName: 'children',
-                childIdType: 'integer'
+                childIdType: 'integer',
+                start: 0,
+                end: -1
                 /*,
                 childIdType xor idTypes: {
                   0: 'string',
@@ -461,7 +463,7 @@ _.each(datastores, function(datastore, name) {
       xdescribe('#fetchCollection()', function() {
 
         beforeEach(function(done) {
-          saveCollection('key', [1, 2, 3, 4], done)
+          saveCollection('key', [1, 2, 3, 4], done);
         });
 
         it('should fetch a nonexistent collection', function(done) {
