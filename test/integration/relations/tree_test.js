@@ -10,11 +10,11 @@ xdescribe('Tree relation', function() {
 
   // Option Validation
 
-  it('should require a "parentRelationName" option', function() {
+  it('should require a "parentRelation" option', function() {
     assertOptionRequired
   });
 
-  it('should require a "childrenRelationName" option', function() {
+  it('should require a "childrenRelation" option', function() {
     assertOptionRequired
   });
 

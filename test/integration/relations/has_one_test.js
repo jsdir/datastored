@@ -18,7 +18,7 @@ function testHasOneSave(cached) {
         child: {
           type: datastored.relations.HasOne,
           relatedModel: prefix + 'ChildModel',
-          joinedProperties: ['foo'],
+          joinedProperties: ['foo', 'bar'],
           link: 'parent',
           cached: cached
         }
@@ -60,7 +60,7 @@ function testHasOneSave(cached) {
 
   beforeEach(function(done) {
     var self = this;
-    var child = this.ChildModel.create({foo: 'bar'});
+    var child = this.ChildModel.create({foo: 'bar', bar: 'baz'});
     parent = this.ParentModel.create({child: child});
     parent.save(function(err) {
       if (err) {return done(err);}
@@ -75,7 +75,7 @@ function testHasOneSave(cached) {
 
   // - Persistence
 
-  it('should save the child instance', function(done) {
+  it.only('should save the child instance', function(done) {
     var parent = this.parent;
     parent.fetch(['child'], function(err, fetched) {
       if (err) {return done(err);}
@@ -155,12 +155,18 @@ function testHasOneSave(cached) {
 
   // - Joined Properties
 
-  it('should save joined properties', function() {
+  it('should save joined properties', function(done) {
+    var parent = this.parent;
+    parent.fetch(['child'], function(err, fetched) {
+      if (err) {return done(err);}
+      fetched.should.be.true;
+      console.log(parent.get('child', true));
+      done();
+    });
     // save joined props
     // fetch "child" (get all should only return the specified properties)
     // fetch "child.foo" (get all should only return the specified properties)
     // fetch "child.foo", "child.bar", "child.id" (get all should only return the specified properties)
-    // fetch "child.*" (get all should only return the specified properties)
   });
 
   it('should update instance if a joined property is changed', function() {
@@ -279,9 +285,9 @@ describe('HasOne relation', function() {
     testHasOneSave.call(this, true);
   });
 
-  xdescribe('when not cached', function() {
+  /*xdescribe('when not cached', function() {
     testHasOneSave.call(this, false);
-  });
+  });*/
 
   describe('Model.create()', function() {
 
