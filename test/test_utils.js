@@ -3,9 +3,9 @@ var _ = require('lodash');
 var datastored = require('..');
 
 var baseOptions = {
-  table: 'models',
-  properties: {
-    id: {type: 'string', primary: true},
+  keyspace: 'keyspace',
+  id: 1,
+  attributes: {
     foo: {type: 'string'},
     bar: {type: 'string'}
   },
@@ -13,16 +13,6 @@ var baseOptions = {
     foo: ['foo']
   }
 };
-
-function appendValue(data, appendedValue) {
-  return _.object(_.map(data, function(value, key) {
-    return [key, value + ',' + appendedValue]
-  }));
-}
-
-function createTestOrm() {
-  return datastored.createOrm({memory: true});
-}
 
 function createModel(orm, baseOptions) {
   return function(name, options) {
@@ -43,7 +33,7 @@ function createModel(orm, baseOptions) {
 
 function setupOrm() {
   // Create test orm.
-  this.orm = createTestOrm();
+  this.orm = datastored.createOrm();
   this.createModel = createModel(this.orm, baseOptions);
   this.createNewModel = createModel(this.orm);
 }
@@ -52,6 +42,7 @@ function setupTestModels() {
   // Define test models.
   this.BasicModel = this.createModel();
 
+  /*
   this.MethodModel = this.createModel({
     staticMethods: {foo: function() {return this;}},
     methods: {foo: function() {return this;}}
@@ -83,6 +74,7 @@ function setupTestModels() {
   this.CallbackModel = this.createModel({
     callbacks: callbacks, mixins: mixins
   });
+  */
 }
 
 function reloadInstance(instance, scope, cb) {
@@ -94,10 +86,8 @@ function reloadInstance(instance, scope, cb) {
 }
 
 module.exports = {
-  createTestOrm: createTestOrm,
   createModel: createModel,
   baseOptions: baseOptions,
-  appendValue: appendValue,
   setupOrm: setupOrm,
   setupTestModels: setupTestModels,
   reloadInstance: reloadInstance

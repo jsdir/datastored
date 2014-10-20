@@ -1,7 +1,9 @@
+var _ = require('lodash');
+
 var createOrm = require('./lib/orm');
 var relations = require('./lib/relations');
+var attributes = require('./lib/attributes');
 
-module.exports = {
+module.exports = _.extend({
   createOrm: createOrm,
-  relations: relations
-}
+}, relations, attributes);
