@@ -4,10 +4,14 @@ var datastored = require('..');
 
 var baseOptions = {
   keyspace: 'keyspace',
-  id: 1,
+  id: datastored.Integer,
   attributes: {
-    foo: {type: 'string'},
-    bar: {type: 'string'}
+    foo: datastored.String({
+      datastores: [1, 2]
+    }),
+    bar: datastored.String({
+      datastores: [1, 2]
+    })
   },
   scopes: {
     foo: ['foo']

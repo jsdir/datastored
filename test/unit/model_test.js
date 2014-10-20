@@ -3,6 +3,7 @@ var chai = require('chai');
 var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
 
+var datastored = require('../..')
 var testUtils = require('../test_utils');
 
 chai.should();
@@ -45,5 +46,26 @@ describe('Model', function() {
 
   it('should have "staticMethods" from options', function() {
     this.BasicModel.func().should.deep.eq(this.BasicModel);
+  });
+
+  it('should require the id to be an integer', function() {
+    this.assertCreateFails({
+      id: datastored.Boolean
+    }, 'id can only be string or integer');
+  });
+
+  describe('#find()', function() {
+
+    it('should ensure that the query attribute is an index', function() {
+      var BasicModel = this.BasicModel;
+      function noop() {}
+
+      // Test undefined attribute.
+      (function() {BasicModel.find('undefined', 'bar', noop);})
+        .should.throw('"undefined" is not defined');
+      // Test attribute that is not an index.
+      (function() {BasicModel.find('foo', 'bar', noop);})
+        .should.throw('attribute "foo" is not an index');
+    });
   });
 });
