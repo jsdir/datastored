@@ -40,7 +40,10 @@ function setupOrm() {
 
 function setupTestModels() {
   // Define test models.
-  this.BasicModel = this.createModel();
+  this.BasicModel = this.createModel({
+    staticMethods: {func: function() {return this;}},
+    methods: {func: function() {return this;}}
+  });
 
   /*
   this.MethodModel = this.createModel({

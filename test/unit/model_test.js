@@ -26,6 +26,8 @@ describe('Model', function() {
     };
   });
 
+  // Test model options.
+
   it('should require attributes', function() {
     var options = _.omit(testUtils.baseOptions, 'attributes');
     this.assertCreateFails(options, '"attributes" is not defined', true);
@@ -39,5 +41,9 @@ describe('Model', function() {
   it('should require a keyspace', function() {
     var options = _.omit(testUtils.baseOptions, 'keyspace');
     this.assertCreateFails(options, '"keyspace" is not defined', true);
+  });
+
+  it('should have "staticMethods" from options', function() {
+    this.BasicModel.func().should.deep.eq(this.BasicModel);
   });
 });
