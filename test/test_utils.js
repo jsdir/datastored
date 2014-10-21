@@ -11,12 +11,34 @@ var baseOptions = {
     }),
     bar: datastored.String({
       datastores: [1, 2]
+    }),
+    guarded: datastored.String({
+      datastores: [1, 2],
+      guarded: true
+    }),
+    index: datastored.String({
+      datastores: [1, 2],
+      indexed: true
     })
   },
   scopes: {
     foo: ['foo']
+  },
+  transform: {
+    input: function(data) {
+      return replaceValues(data, 'input');
+    },
+    output: function(data) {
+      return replaceValues(data, 'output');
+    }
   }
 };
+
+function replaceValues(data, value) {
+  return _.object(_.map(data, function(dataValue, key) {
+    return [key, value];
+  }));
+}
 
 function createModel(orm, baseOptions) {
   return function(name, options) {

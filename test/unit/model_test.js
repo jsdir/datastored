@@ -54,9 +54,41 @@ describe('Model', function() {
     }, 'id can only be string or integer');
   });
 
+  describe('#create()', function() {
+
+    it('should transform data by default', function() {
+      var instance = this.BasicModel.create({foo: 'bar'});
+      instance.get('foo', true).should.eq('input');
+    });
+
+    it('should not transform data if requested', function() {
+      var instance = this.BasicModel.create({foo: 'bar'}, true);
+      instance.get('foo', true).should.eq('bar');
+    });
+  });
+
+  describe('#get()', function() {
+
+    it('should transform the id by default', function() {
+      var instance = this.BasicModel.get('idValue');
+      instance.get('id', false).should.eq('input');
+    });
+
+    it('should not transform the id if requested', function() {
+      var instance = this.BasicModel.get('idValue', true);
+      instance.get('id', false).should.eq('idValue');
+    });
+
+    it('should set instance status', function() {
+      var instance = this.BasicModel.get('idValue', false);
+      instance.isNew.should.be.false;
+      instance.isChanged().should.be.false;
+    });
+  });
+
   describe('#find()', function() {
 
-    it('should ensure that the query attribute is an index', function() {
+    it('should ensure that the query attribute is indexed', function() {
       var BasicModel = this.BasicModel;
       function noop() {}
 
