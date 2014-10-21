@@ -29,11 +29,11 @@
   "dependencies": {
     "valids": "~0.3.0",
     "async": "~0.9.0",
-    "validator": "~3.19.0",
+    "validator": "~3.22.0",
     "redis": "~0.12.1",
     "hiredis": "~0.1.17",
     "lodash": "~2.4.1",
-    "cassandra-driver": "git+https://git@github.com/datastax/nodejs-driver.git#76d519e",
+    "cassandra-driver": "~1.0.0",
     "underscore.string": "~2.3.3"
   },
   "devDependencies": {
