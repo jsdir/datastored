@@ -1,7 +1,8 @@
+var datastored = require('../..');
 var chai = require('chai');
 var expect = chai.expect;
 
-var testUtils = require('../test_utils')
+var testUtils = require('../test_utils');
 
 describe('Instance', function() {
 
@@ -98,9 +99,19 @@ describe('Instance', function() {
     });
   });
 
-  xdescribe('#save()', function() {
+  describe('#save()', function() {
 
-    it('should fail if instance errors exist', function(done) {
+    before(function() {
+      this.RequiredModel = this.createModel({
+        attributes: {
+          required: datastored.String({
+            required: true, datastores: [1, 2]
+          })
+        }
+      });
+    });
+
+    xit('should fail if instance errors exist', function(done) {
       // TODO: like generating a password or performing sync validation
       // also check for errors thrown by any callback invocations...
       var instance = this.ErrorModel.create({foo: 'foo'});
@@ -110,15 +121,19 @@ describe('Instance', function() {
       });
     });
 
-    it('should validate attributes', function() {
+    xit('should validate attributes', function() {
       // Check for thrown errors for attribute rules.
     });
 
-    it('should handle required attribute errors', function() {
-      // Check for thrown errors. options.required
+    it('should validate required attributes', function(done) {
+      var instance = this.RequiredModel.create({foo: 'bar'});
+      instance.save(function(err) {
+        err.should.deep.eq({required: 'attribute "required" is not defined'});
+        done();
+      });
     });
 
-    it('should callback immediately if no attributes were changed', function() {
+    xit('should callback immediately if no attributes were changed', function() {
       var spy = sinon.spy();
       var instance = this.BasicModel.get('foo');
       instance.save(function(err) {
@@ -137,9 +152,6 @@ describe('Instance', function() {
 
       instance.toObject('foo').should.deep.eq({foo: 'output(foo)'});
       instance.toObject(['bar']).should.deep.eq({bar: 'output(bar)'});
-
-      instance.toObject('foo', true).should.deep.eq({foo: 'foo'});
-      instance.toObject(['bar'], true).should.deep.eq({bar: 'bar'});
     });
   });
 

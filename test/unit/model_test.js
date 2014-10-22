@@ -90,13 +90,12 @@ describe('Model', function() {
 
     it('should ensure that the query attribute is indexed', function() {
       var BasicModel = this.BasicModel;
-      function noop() {}
 
       // Test undefined attribute.
-      (function() {BasicModel.find('undefined', 'bar', noop);})
+      (function() {BasicModel.find('undefined', 'bar', testUtils.noop);})
         .should.throw('"undefined" is not defined');
       // Test attribute that is not an index.
-      (function() {BasicModel.find('foo', 'bar', noop);})
+      (function() {BasicModel.find('foo', 'bar', testUtils.noop);})
         .should.throw('attribute "foo" is not an index');
     });
   });
