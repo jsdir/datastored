@@ -1,5 +1,6 @@
 var datastored = require('../..');
 var chai = require('chai');
+var sinon = require('sinon');
 var expect = chai.expect;
 
 var testUtils = require('../test_utils');
@@ -105,10 +106,23 @@ describe('Instance', function() {
       this.RequiredModel = this.createModel({
         attributes: {
           required: datastored.String({
-            required: true, datastores: [1, 2]
+            required: true, datastores: [true]
           })
         }
       });
+
+      this.ValidationModel = this.createModel({
+        attributes: {
+          bar: datastored.String({
+            datastores: [true],
+            rules: {max: 2}
+          }),
+          baz: datastored.String({
+            datastores: [true],
+            rules: {min: 4}
+          })
+        }
+      })
     });
 
     xit('should fail if instance errors exist', function(done) {
@@ -121,8 +135,21 @@ describe('Instance', function() {
       });
     });
 
-    xit('should validate attributes', function() {
-      // Check for thrown errors for attribute rules.
+    xit('should require at least one datastore', function() {
+      (function() {
+        datastored.String({datastores: []});
+      }).should.throw('no datastores have been defined for the attribute');
+    });
+
+    it('should validate attributes', function(done) {
+      var instance = this.ValidationModel.create({bar: 'abc', baz: 'abc'});
+      instance.save(function(err) {
+        err.should.deep.eq({
+          bar: '',
+          baz: ''
+        });
+        done();
+      });
     });
 
     it('should validate required attributes', function(done) {
@@ -133,7 +160,7 @@ describe('Instance', function() {
       });
     });
 
-    xit('should callback immediately if no attributes were changed', function() {
+    it('should callback immediately if no attributes were changed', function() {
       var spy = sinon.spy();
       var instance = this.BasicModel.get('foo');
       instance.save(function(err) {
