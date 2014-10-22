@@ -2,7 +2,23 @@ var _ = require('lodash');
 
 var datastored = require('..');
 
+function createTransformMixin(text) {
+  return {
+    transform: {
+      input: function(data) {
+        return wrapValues(data, 'input' + text);
+      },
+      output: function(data) {
+        return wrapValues(data, 'output' + text);
+      }
+    }
+  };
+}
+
+var TransformMixin = createTransformMixin('');
+
 var baseOptions = {
+  mixins: [TransformMixin],
   keyspace: 'keyspace',
   id: datastored.Integer,
   attributes: {
@@ -16,27 +32,23 @@ var baseOptions = {
       datastores: [1, 2],
       guarded: true
     }),
-    index: datastored.String({
+    hidden: datastored.String({
       datastores: [1, 2],
+      hidden: true
+    }),
+    indexed: datastored.String({
+      datastores: [{indexStore: true}, {indexStore: true}],
       indexed: true
     })
   },
   scopes: {
     foo: ['foo']
-  },
-  transform: {
-    input: function(data) {
-      return replaceValues(data, 'input');
-    },
-    output: function(data) {
-      return replaceValues(data, 'output');
-    }
   }
 };
 
-function replaceValues(data, value) {
+function wrapValues(data, value) {
   return _.object(_.map(data, function(dataValue, key) {
-    return [key, value];
+    return [key, value + '(' + dataValue + ')'];
   }));
 }
 
@@ -65,45 +77,15 @@ function setupOrm() {
 }
 
 function setupTestModels() {
-  // Define test models.
   this.BasicModel = this.createModel({
     staticMethods: {func: function() {return this;}},
     methods: {func: function() {return this;}}
   });
 
-  /*
-  this.MethodModel = this.createModel({
-    staticMethods: {foo: function() {return this;}},
-    methods: {foo: function() {return this;}}
+  var options = _.extend({}, createTransformMixin(0), {
+    mixins: [createTransformMixin(1), createTransformMixin(2)]
   });
-
-  this.ErrorModel = this.createModel({
-    properties: {foo: {type: 'string'}},
-    callbacks: {
-      beforeInput: function(values, cb) {cb({foo: 'message'});}
-    }
-  });
-
-  var callbacks = {
-    beforeInput: function(values, cb) {
-      cb(null, appendValue(values, 'beforeInput'));
-    },
-    afterInput: function(values, cb) {
-      cb(null, appendValue(values, 'afterInput'));
-    },
-    beforeOutput: function(values) {
-      return appendValue(values, 'beforeOutput');
-    },
-    afterOutput: function(values) {
-      return appendValue(values, 'afterOutput');
-    }
-  };
-  var mixins = [{callbacks: callbacks}];
-
-  this.CallbackModel = this.createModel({
-    callbacks: callbacks, mixins: mixins
-  });
-  */
+  this.TransformModel = this.createModel(options);
 }
 
 function reloadInstance(instance, scope, cb) {

@@ -58,7 +58,7 @@ describe('Model', function() {
 
     it('should transform data by default', function() {
       var instance = this.BasicModel.create({foo: 'bar'});
-      instance.get('foo', true).should.eq('input');
+      instance.get('foo', true).should.eq('input(bar)');
     });
 
     it('should not transform data if requested', function() {
@@ -71,12 +71,12 @@ describe('Model', function() {
 
     it('should transform the id by default', function() {
       var instance = this.BasicModel.get('idValue');
-      instance.get('id', false).should.eq('input');
+      instance.get('id', true).should.eq('input(idValue)');
     });
 
     it('should not transform the id if requested', function() {
       var instance = this.BasicModel.get('idValue', true);
-      instance.get('id', false).should.eq('idValue');
+      instance.get('id', true).should.eq('idValue');
     });
 
     it('should set instance status', function() {
