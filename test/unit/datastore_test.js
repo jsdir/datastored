@@ -1,4 +1,0 @@
-/*
-test indexStores
-test hashStores
- */
