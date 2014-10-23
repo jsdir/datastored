@@ -8,7 +8,7 @@ describe('utils', function() {
 
   describe('#groupByDatastore()', function() {
 
-    it.only('should group attributes by datastore', function() {
+    it('should group attributes by datastore', function() {
       utils.groupByDatastore(['foo', 'bar'], [
         {datastore: '1', attributes: ['foo', 'bar']},
         {datastore: '2', attributes: ['foo', 'bar']}

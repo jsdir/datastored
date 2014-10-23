@@ -2,6 +2,8 @@ xdescribe('Model (integration)', function() {
 
   describe('#find()', function() {
 
+    // test for compatible datastore
+
     it('should transform the index value by default', function(done) {
 
     });
