@@ -8,12 +8,103 @@ var expect = chai.expect;
 
 function testHashStore(hashStore) {
 
+  beforeEach(function(done) {
+    hashStore.reset(done);
+  });
+
+  var date = 1264982400000;
+  var datetime = 1264982400000;
+
+  var options = {
+    keyspace: 'keyspace',
+    id: 1,
+    data: {
+      number: 123,
+      string: 'foo',
+      booleanTrue: true,
+      booleanFalse: false,
+      date: new Date(date),
+      datetime: new Date(datetime)
+    },
+    types: {
+      id: 'number',
+      number: 'number',
+      string: 'string',
+      booleanTrue: 'boolean',
+      booleanFalse: 'boolean',
+      date: 'date',
+      datetime: 'datetime'
+    }
+  };
+
+  var fetchOptions = _.omit(options, 'data');
+  var fetchAllOptions = _.extend({attributes: [
+    'number', 'string', 'booleanTrue', 'booleanFalse', 'date', 'datetime'
+  ]}, fetchOptions);
+
+  beforeEach(function(done) {
+    hashStore.save(options, done);
+  });
+
   describe('#save()', function() {
 
+    it('should persist values of all types', function(done) {
+      hashStore.fetch(fetchAllOptions, function(err, data) {
+        if (err) {return done(err);}
+        data.number.should.eq(123);
+        data.string.should.eq('foo');
+        data.booleanTrue.should.eq(true);
+        data.booleanFalse.should.eq(false);
+        data.date.getTime().should.eq(date);
+        data.datetime.getTime().should.eq(datetime);
+        done();
+      });
+    });
+
+    it('should remove attributes with "null"', function(done) {
+      var saveOptions = _.clone(options);
+      saveOptions.data = {
+        number: 123,
+        string: 'foo',
+        booleanTrue: null,
+        booleanFalse: null,
+        date: null,
+        datetime: null
+      };
+
+      hashStore.save(saveOptions, function(err) {
+        if (err) {return done(err);}
+        hashStore.fetch(fetchAllOptions, function(err, data) {
+          if (err) {return done(err);}
+          data.should.deep.eq({number: 123, string: 'foo'});
+          done();
+        });
+      });
+    });
   });
 
   describe('#fetch()', function() {
 
+    it('should only fetch the requested attributes', function(done) {
+      var options = _.extend({attributes: ['number', 'string']}, fetchOptions);
+
+      hashStore.fetch(options, function(err, data) {
+        if (err) {return done(err);}
+        data.should.deep.eq({number: 123, string: 'foo'});
+        done();
+      });
+    });
+
+    it('should callback "null" if the hash was not found', function(done) {
+      var options = _.extend({
+        attributes: ['number', 'string']
+      }, fetchOptions, {id: 2});
+      hashStore.fetch(options, function(err, data) {
+        if (err) {return done(err);}
+        expect(data).to.be.null;
+        done();
+      });
+    });
   });
 }
 
@@ -92,7 +183,7 @@ function testIndexStore(indexStore) {
 
 // Memory datastores
 
-xdescribe('MemoryHashStore', function() {
+describe('MemoryHashStore', function() {
   var memoryHashStore = new memoryDatastores.MemoryHashStore();
   testHashStore(memoryHashStore);
 });
