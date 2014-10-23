@@ -122,31 +122,31 @@ describe('Instance', function() {
             rules: {min: 4}
           })
         }
-      })
-    });
+      });
 
-    xit('should fail if instance errors exist', function(done) {
-      // TODO: like generating a password or performing sync validation
-      // also check for errors thrown by any callback invocations...
-      var instance = this.ErrorModel.create({foo: 'foo'});
-      instance.save(function(err) {
-        err.should.deep.eq({foo: 'message'});
-        done();
+      this.ErrorModel = this.createModel({
+        asyncTransform: {
+          save: function(options, data, cb) {
+            cb('message');
+          }
+        }
       });
     });
 
-    xit('should require at least one datastore', function() {
-      (function() {
-        datastored.String({datastores: []});
-      }).should.throw('no datastores have been defined for the attribute');
+    it('should fail if instance errors exist', function(done) {
+      var instance = this.ErrorModel.create({foo: 'bar'});
+      instance.save(function(err) {
+        err.should.eq('message');
+        done();
+      });
     });
 
     it('should validate attributes', function(done) {
       var instance = this.ValidationModel.create({bar: 'abc', baz: 'abc'});
       instance.save(function(err) {
         err.should.deep.eq({
-          bar: '',
-          baz: ''
+          bar: 'attribute "bar" must have a maximum of 2 characters',
+          baz: 'attribute "baz" must have a minimum of 4 characters'
         });
         done();
       });

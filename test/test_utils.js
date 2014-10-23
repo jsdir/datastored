@@ -21,7 +21,7 @@ var TransformMixin = createTransformMixin('');
 
 var baseOptions = {
   keyspace: 'keyspace',
-  id: datastored.Integer,
+  idType: 'string',
   attributes: {
     foo: datastored.String({
       datastores: [1, 2]

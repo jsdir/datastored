@@ -34,9 +34,9 @@ describe('Model', function() {
     this.assertCreateFails(options, '"attributes" is not defined', true);
   });
 
-  it('should require an id attribute', function() {
-    var options = _.omit(testUtils.baseOptions, 'id');
-    this.assertCreateFails(options, '"id" is not defined', true);
+  it('should require an id type', function() {
+    var options = _.omit(testUtils.baseOptions, 'idType');
+    this.assertCreateFails(options, '"idType" is not defined', true);
   });
 
   it('should require a keyspace', function() {
@@ -50,8 +50,8 @@ describe('Model', function() {
 
   it('should require the id to be an integer', function() {
     this.assertCreateFails({
-      id: datastored.Boolean
-    }, 'id can only be string or integer');
+      idType: 'boolean'
+    }, 'id type can only be "string" or "integer"');
   });
 
   describe('#create()', function() {
