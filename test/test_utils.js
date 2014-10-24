@@ -64,14 +64,14 @@ function setupTestModels() {
     mixins: [TransformMixin],
     attributes: {
       bar: datastored.String({
-        hashStores: [1, 2]
+        hashStores: [true]
       }),
       guarded: datastored.String({
-        hashStores: [1, 2],
+        hashStores: [true],
         guarded: true
       }),
       hidden: datastored.String({
-        hashStores: [1, 2],
+        hashStores: [true],
         hidden: true
       }),
       indexed: datastored.String({

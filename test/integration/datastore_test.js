@@ -19,7 +19,7 @@ function testHashStore(hashStore) {
     keyspace: 'keyspace',
     id: 1,
     data: {
-      number: 123,
+      integer: 123,
       string: 'foo',
       booleanTrue: true,
       booleanFalse: false,
@@ -27,8 +27,8 @@ function testHashStore(hashStore) {
       datetime: new Date(datetime)
     },
     types: {
-      id: 'number',
-      number: 'number',
+      id: 'integer',
+      integer: 'integer',
       string: 'string',
       booleanTrue: 'boolean',
       booleanFalse: 'boolean',
@@ -39,7 +39,7 @@ function testHashStore(hashStore) {
 
   var fetchOptions = _.omit(options, 'data');
   var fetchAllOptions = _.extend({attributes: [
-    'number', 'string', 'booleanTrue', 'booleanFalse', 'date', 'datetime'
+    'integer', 'string', 'booleanTrue', 'booleanFalse', 'date', 'datetime'
   ]}, fetchOptions);
 
   beforeEach(function(done) {
@@ -51,7 +51,7 @@ function testHashStore(hashStore) {
     it('should persist values of all types', function(done) {
       hashStore.fetch(fetchAllOptions, function(err, data) {
         if (err) {return done(err);}
-        data.number.should.eq(123);
+        data.integer.should.eq(123);
         data.string.should.eq('foo');
         data.booleanTrue.should.eq(true);
         data.booleanFalse.should.eq(false);
@@ -64,7 +64,7 @@ function testHashStore(hashStore) {
     it('should remove attributes with "null"', function(done) {
       var saveOptions = _.clone(options);
       saveOptions.data = {
-        number: 123,
+        integer: 123,
         string: 'foo',
         booleanTrue: null,
         booleanFalse: null,
@@ -76,7 +76,7 @@ function testHashStore(hashStore) {
         if (err) {return done(err);}
         hashStore.fetch(fetchAllOptions, function(err, data) {
           if (err) {return done(err);}
-          data.should.deep.eq({number: 123, string: 'foo'});
+          data.should.deep.eq({integer: 123, string: 'foo'});
           done();
         });
       });
@@ -86,18 +86,18 @@ function testHashStore(hashStore) {
   describe('#fetch()', function() {
 
     it('should only fetch the requested attributes', function(done) {
-      var options = _.extend({attributes: ['number', 'string']}, fetchOptions);
+      var options = _.extend({attributes: ['integer', 'string']}, fetchOptions);
 
       hashStore.fetch(options, function(err, data) {
         if (err) {return done(err);}
-        data.should.deep.eq({number: 123, string: 'foo'});
+        data.should.deep.eq({integer: 123, string: 'foo'});
         done();
       });
     });
 
     it('should callback "null" if the hash was not found', function(done) {
       var options = _.extend({
-        attributes: ['number', 'string']
+        attributes: ['integer', 'string']
       }, fetchOptions, {id: 2});
       hashStore.fetch(options, function(err, data) {
         if (err) {return done(err);}
