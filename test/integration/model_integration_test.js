@@ -56,7 +56,9 @@ describe('Model (integration)', function() {
     });
 
     beforeEach(function(done) {
-      this.instance = this.IndexedModel.create({index: 'foo', replaceIndex: 'foo1'}, true);
+      this.instance = this.IndexedModel.create({
+        index: 'foo', replaceIndex: 'foo1'
+      }, true);
       this.instance.save(done);
     });
 
@@ -112,6 +114,13 @@ describe('Model (integration)', function() {
         function(cb) {assertFind(model, 'replaceIndex', 'foo1', false, cb);},
         function(cb) {assertFind(model, 'replaceIndex', 'bar1', true, cb);}
       ], done);
+    });
+
+    it('should should fail if saving a duplicate index', function() {
+      var instance = this.IndexedModel.create({index: 'foo'}, true);
+      instance.save(function(err) {
+        err.should.eq('instance with index already exists');
+      });
     });
   });
 });
