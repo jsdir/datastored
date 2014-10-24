@@ -105,6 +105,7 @@ function saveAndReload(instance, scope, cb) {
 
 module.exports = {
   noop: noop,
+  TransformMixin: TransformMixin,
   createModel: createModel,
   baseOptions: baseOptions,
   setupOrm: setupOrm,

@@ -101,6 +101,10 @@ describe('Instance (integration)', function() {
       this.instance.isChanged().should.be.false;
       done();
     });
+
+    xit('should should fail if saving a duplicate index', function() {
+      // instance with index already exists
+    });
   });
 
   describe('#fetch()', function() {
