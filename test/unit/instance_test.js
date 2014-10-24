@@ -106,7 +106,7 @@ describe('Instance', function() {
       this.RequiredModel = this.createModel({
         attributes: {
           required: datastored.String({
-            required: true, datastores: [true]
+            required: true, hashStores: [true]
           })
         }
       });
@@ -114,11 +114,11 @@ describe('Instance', function() {
       this.ValidationModel = this.createModel({
         attributes: {
           bar: datastored.String({
-            datastores: [true],
+            hashStores: [true],
             rules: {max: 2}
           }),
           baz: datastored.String({
-            datastores: [true],
+            hashStores: [true],
             rules: {min: 4}
           })
         }

@@ -24,7 +24,7 @@ var baseOptions = {
   idType: 'string',
   attributes: {
     foo: datastored.String({
-      datastores: [1, 2]
+      hashStores: [true]
     })
   }
 };
@@ -64,18 +64,18 @@ function setupTestModels() {
     mixins: [TransformMixin],
     attributes: {
       bar: datastored.String({
-        datastores: [1, 2]
+        hashStores: [1, 2]
       }),
       guarded: datastored.String({
-        datastores: [1, 2],
+        hashStores: [1, 2],
         guarded: true
       }),
       hidden: datastored.String({
-        datastores: [1, 2],
+        hashStores: [1, 2],
         hidden: true
       }),
       indexed: datastored.String({
-        datastores: [{indexStore: true}, {indexStore: true}],
+        hashStores: [{indexStore: true}, {indexStore: true}],
         indexed: true
       })
     },
@@ -92,7 +92,7 @@ function setupTestModels() {
   this.TransformModel = this.createModel(options);
 }
 
-function saveAndReloadInstance(instance, scope, cb) {
+function saveAndReload(instance, scope, cb) {
   instance.save(function(err) {
     if (err) {return cb(err);}
     var newInstance = instance.model.get(instance.getId());
@@ -109,5 +109,5 @@ module.exports = {
   baseOptions: baseOptions,
   setupOrm: setupOrm,
   setupTestModels: setupTestModels,
-  saveAndReloadInstance: saveAndReloadInstance
+  saveAndReload: saveAndReload
 };

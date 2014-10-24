@@ -6,29 +6,38 @@ chai.should();
 
 describe('utils', function() {
 
-  describe('#groupByDatastore()', function() {
+  describe('#groupByHashStore()', function() {
 
-    it('should group attributes by datastore', function() {
-      utils.groupByDatastore(['foo', 'bar'], [
-        {datastore: '1', attributes: ['foo', 'bar']},
-        {datastore: '2', attributes: ['foo', 'bar']}
-      ]).should.deep.eq({'1': ['foo', 'bar']});
+    it('should group attributes by hashStore', function() {
+      utils.groupByHashStore(['foo', 'bar'], [
+        {hashStore: '1', attributes: ['foo', 'bar']},
+        {hashStore: '2', attributes: ['foo', 'bar']}
+      ]).should.deep.eq([
+        {hashStore: '1', attributes: ['foo', 'bar']}
+      ]);
 
-      utils.groupByDatastore(['foo', 'bar'], [
-        {datastore: '1', attributes: ['baz']},
-        {datastore: '2', attributes: ['foo', 'bar']}
-      ]).should.deep.eq({'2': ['foo', 'bar']});
+      utils.groupByHashStore(['foo', 'bar'], [
+        {hashStore: '1', attributes: ['baz']},
+        {hashStore: '2', attributes: ['foo', 'bar']}
+      ]).should.deep.eq([
+        {hashStore: '2', attributes: ['foo', 'bar']}
+      ]);
 
-      utils.groupByDatastore(['foo', 'bar'], [
-        {datastore: '1', attributes: ['foo']},
-        {datastore: '2', attributes: ['bar']}
-      ]).should.deep.eq({'1': ['foo'], '2': ['bar']});
+      utils.groupByHashStore(['foo', 'bar'], [
+        {hashStore: '1', attributes: ['foo']},
+        {hashStore: '2', attributes: ['bar']}
+      ]).should.deep.eq([
+        {hashStore: '1', attributes: ['foo']},
+        {hashStore: '2', attributes: ['bar']}
+      ]);
 
-      utils.groupByDatastore(['foo', 'bar'], [
-        {datastore: '1', attributes: ['foo']},
-        {datastore: '2', attributes: ['bar']},
-        {datastore: '3', attributes: ['foo', 'bar']}
-      ]).should.deep.eq({'3': ['foo', 'bar']});
+      utils.groupByHashStore(['foo', 'bar'], [
+        {hashStore: '1', attributes: ['foo']},
+        {hashStore: '2', attributes: ['bar']},
+        {hashStore: '3', attributes: ['foo', 'bar']}
+      ]).should.deep.eq([
+        {hashStore: '3', attributes: ['foo', 'bar']}
+      ]);
     });
   });
 });
