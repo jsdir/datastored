@@ -36,9 +36,10 @@ function wrapValues(data, value) {
 }
 
 function createModel(orm, baseOptions) {
-  return function(name, options) {
+  return function(name, options, cb) {
     // `name` is optional
     if (_.isObject(name)) {
+      cb = options;
       options = name;
       // Name defaults to a unique id.
       name = _.uniqueId();
@@ -48,7 +49,7 @@ function createModel(orm, baseOptions) {
       options = _.merge({}, baseOptions, options);
     }
 
-    return orm.createModel(name, options);
+    return orm.createModel(name, options, cb);
   }
 }
 
