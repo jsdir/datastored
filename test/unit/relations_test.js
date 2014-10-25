@@ -1,3 +1,5 @@
+var domain = require('domain');
+
 var _ = require('lodash');
 var datastored = require('../..');
 var chai = require('chai');
@@ -27,9 +29,10 @@ describe('HasOne relation', function() {
     });
 
     this.ChildModel = this.createModel('ChildModel');
+    this.OtherModel = this.createModel('OtherModel');
   });
 
-  it('should check instance type', function() {
+  xit('should check instance type', function() {
     var instance = this.ParentModel.create();
     var child = this.BasicModel.create();
     (function() {
@@ -37,7 +40,7 @@ describe('HasOne relation', function() {
     }).should.throw('expected instance with type "ChildModel"');
   });
 
-  it('should check instance type with multiple types', function() {
+  xit('should check instance type with multiple types', function() {
     var instance = this.MultiTypeParentModel.create();
     var child = this.BasicModel.create();
     var message = 'expected instance with type "ChildModel" or "OtherModel"';
@@ -46,36 +49,33 @@ describe('HasOne relation', function() {
     }).should.throw(message);
   });
 
-  it('should check that related models have the same id type', function() {
+  it('should check that related models have the same id type', function(done) {
     var self = this;
+    var errDomain = domain.create();
     this.createModel('IntegerIdModel', {idType: 'integer'});
     this.createModel('StringIdModel', {idType: 'string'});
 
-    self.createModel({
-      attributes: {
-        child: datastored.HasOne(['IntegerIdModel', 'StringIdModel'], {})
-      }
+    errDomain.on('error', function(err) {
+      err.message.should.eq('related models must have the same id type');
+      done();
     });
 
-    var listeners = process.listeners('uncaughtException');
-    process.removeAllListeners('uncaughtException');
-    process.on('uncaughtException', function(err) {
-      err.should.eq('related models must have the same id type');
-      process.removeAllListeners('uncaughtException');
-      _.each(listeners, function(listener) {
-        process.on('uncaughtException', listener);
+    errDomain.run(function() {
+      self.createModel({
+        attributes: {
+          child: datastored.HasOne(['IntegerIdModel', 'StringIdModel'], {})
+        }
       });
-      done();
     });
   });
 
-  it('should set the child', function() {
+  xit('should set the child', function() {
     var child = this.ChildModel.create();
     var parent = this.ParentModel.create({child: child}, true);
     parent.get('child', true).should.eq(child);
   });
 
-  it('should guard the relational attribute', function(done) {
+  xit('should guard the relational attribute', function(done) {
     var child = this.ChildModel.create();
     var parent = this.ParentModel.create();
     parent.set({child: child});
