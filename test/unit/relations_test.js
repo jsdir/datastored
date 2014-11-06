@@ -7,6 +7,7 @@ var chai = require('chai');
 var testUtils = require('../test_utils');
 
 chai.should();
+var expect = chai.expect;
 
 describe('HasOne relation', function() {
 
@@ -23,6 +24,12 @@ describe('HasOne relation', function() {
     this.ParentRequireModel = this.createModel({
       attributes: {
         child: datastored.HasOne('ChildModel', {required: true})
+      }
+    });
+
+    this.ParentGuardedModel = this.createModel({
+      attributes: {
+        child: datastored.HasOne('ChildModel', {guarded: true})
       }
     });
 
@@ -99,14 +106,12 @@ describe('HasOne relation', function() {
     });
   });
 
-  xit('should guard the relational attribute', function(done) {
+  it('should guard the relational attribute', function(done) {
     var child = this.ChildModel.create();
-    var parent = this.ParentModel.create();
+    var parent = this.ParentGuardedModel.create();
     parent.set({foo: 'bar', child: child});
-    parent.save(function(err) {
-      err.should.eq('guarded');
-      done();
-    });
+    expect(parent.get('child')).to.be.undefined;
+    done();
   });
 
   /*
