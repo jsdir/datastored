@@ -21,20 +21,20 @@ There are three different relation types that can be used by a model:
   - HasMany
   - Tree
 
-
 HasOne
 ------
-This is datastored's implementation of a **1:1** relationship between models.
+`HasOne` is datastored's implementation of a **1:1** relationship between models.
 
 #### Options
 - **`join`**: (type: boolean, default: false) Embeds the related model within the attributes of the parent model. All of the model's attributes are joined by default.
 - **`joinedAttributes`**: (type: array, default: all) Joins only certain attributes from the related model.
 - **`relation`**: Reverse key
 
-
 HasMany
 -------
-This is the ORM's implementation of a **1:n** relationship between models. The options for this relationship essentially define a Collection.
+`HasMany` is datastored's implementation of a **1:n** relationship between models.
+
+save: $push: [ids] 
 
 #### Options
 - **`audit`**: (type: boolean, default: false) Includes the time when the relationship was made.
@@ -44,67 +44,3 @@ This is the ORM's implementation of a **1:n** relationship between models. The o
 - **`relation`**: Reverse key
 
 Datastored does not have an explicit ManyToMany relation, but it can be implemented by using `HasMany` on the two involved models.
-
-If a model needs a ManyToMany relationship with other models of the same type, .
-
-
-Collection
-==========
-
-Collection is sometimes seeded with data when the parent model joins the attribute. Pagination is also supported.
-
-#### limit offset
-
-#### count
-
-#### show
-_.map show on all contained models.
-
-The `HasMany` and `HasAndBelongsToMany` relational attributes have collections as values.
-Collections are the result of relations.
-
-temp
-- returning items in an owned collection collection.get('images')
-- feeds
-- user.collections
-
-HasOne
-------
-Establish reverse relations with `BelongsTo`.
-
-- join: (joins all by default if enabled)
-- joinedAttributes
-
-HasMany
--------
-Establish reverse relations with `BelongsTo`. Makes the relational attribute value a `Collection`.
-
-BelongsTo
----------
-TODO: How does `BelongsTo` know what relation it is paired with?
-
-- join: (joins all by default if enabled)
-- joinedAttributes (should also make it possible to include permission details somehow)
-
-HasAndBelongsToMany
--------------------
-Text.
-
-Tree
-----
-
-maxDepth: int
-
-
-Relation Options
-================
-
-- cache: true
-- audit: Includes the time when the (or each) relationship was made.
-- model: (optional) restrict to a model
-
-Any relation that returns a `Collection` has the following options:
-
-- sort: popularity, name[a-z]
-  - redis creates zsets for each sort option. Cassandra has this built in.
-- cassandra join table (alternative to storing in a column)

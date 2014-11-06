@@ -11,7 +11,10 @@ var Model = orm.createModel('Model', {
 })
 ```
 
-### Attribute Options
+Attribute Options
+-----------------
+
+### Values
 
 #### `required`
 
@@ -51,7 +54,17 @@ The valids-compatible rules to use when validating the attribute.
 
 #### `hasMutableValue`
 
-Boolean value. Default `true`. Set to `false` to make the attribute completely immutable and representational. 
+Boolean value. Default `true`. Set to `false` to make the attribute completely immutable and representational.
+
+### Functions
+
+#### `onInput`
+
+`onInput(value, fromUser)`
+
+#### `onOutput`
+
+`onInput(value, fromUser)`
 
 ### Waiting for the loaded ORM
 
