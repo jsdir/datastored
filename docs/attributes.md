@@ -25,6 +25,10 @@ An array of `HashStores` to save the attribute to.
 
 An `IndexStore` to index the instance.
 
+#### `replaceIndex`
+
+Boolean value. Default `false`. Set to `true` to overwrite old indexes when the value changes.
+
 #### `guarded`
 
 Boolean value. Default `false`. Set to `true` to prevent the user from setting this attribute.
@@ -44,6 +48,10 @@ The valids-compatible type for use in the datastore marshallers.
 #### `rules`
 
 The valids-compatible rules to use when validating the attribute.
+
+#### `hasMutableValue`
+
+Boolean value. Default `true`. Set to `false` to make the attribute completely immutable and representational. 
 
 ### Waiting for the loaded ORM
 
