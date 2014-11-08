@@ -1,7 +1,7 @@
 Asynchronous Chaining
 ---------------------
 
-Instance methods are called through asynchronous chaining. This makes it easier to call more functions while handling errors in one place.
+Instance methods are called through asynchronous chaining.
 
 ```js
 Model
@@ -40,9 +40,7 @@ var instance = Model.find('attribute_name', 'attribute_value');
 var instance = Model.userMode().find('serialized_id_value');
 ```
 
-If an error occurs when finding the instance, the error will be propagated through the chain and `cb` will not be called. If no error happened, `cb` will be called with the instance if it was found, or `null` if no instance was found.
-
-Returns deferred `Instance`. Throws chain error on find error.
+Errors are propagated through the chain. Calls back with the instance or `null`.
 
 ### withId
 
@@ -140,7 +138,7 @@ These functions return a value.
 ### get
 
 `get('attribute_name', cb)`, `get(['attribute1_name', 'attribute2_name'], cb)`, or `get({attribute_name: null, attribute2_name: { options }}, cb)`
-Transforms output if in user mode. Calls back with result.
+Transforms output if in user mode. The results are returned synchronously by default, but if any of the attributes have asynchronous getters, the results will be returned asynchronously.
 
 ### getId
 
