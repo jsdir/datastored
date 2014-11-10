@@ -28,34 +28,6 @@ For data output methods:
 
 These functions return an initialized model.
 
-### find
-
-`Model.find(attribute_name, attribute_value, cb)`
-
-Transforms input if in user mode.
-
-```js
-var instance = Model.find('attribute_name', 'attribute_value');
-// User mode.
-var instance = Model.userMode().find('serialized_id_value');
-```
-
-Errors are propagated through the chain. Calls back with the instance or `null`.
-
-### withId
-
-`Model.withId(id)`
-
-Transforms input if in user mode.
-
-```js
-var instance = Model.withId('id_value');
-// User mode.
-var instance = Model.userMode().withId('serialized_id_value');
-```
-
-Returns `Model.build({id: value})` with `isNew` set to `false`.
-
 ### build
 
 `Model.build(data)`
@@ -83,6 +55,34 @@ var instance = Model.userMode().create({foo: 'bar'});
 ```
 
 Returns `Instance`. Errors are propagated through the chain.
+
+### find
+
+`Model.find(attribute_name, attribute_value, cb)`
+
+Transforms input if in user mode.
+
+```js
+var instance = Model.find('attribute_name', 'attribute_value');
+// User mode.
+var instance = Model.userMode().find('serialized_id_value');
+```
+
+Errors are propagated through the chain. Calls back with the instance or `null`.
+
+### withId
+
+`Model.withId(id)`
+
+Transforms input if in user mode.
+
+```js
+var instance = Model.withId('id_value');
+// User mode.
+var instance = Model.userMode().withId('serialized_id_value');
+```
+
+Returns `Model.build({id: value})` with `isNew` set to `false`.
 
 ## Helpers
 
