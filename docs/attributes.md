@@ -44,6 +44,10 @@ Boolean value. Default `false`. Set to `true` to prevent the user from viewing t
 
 The default value to set when the instance is created.
 
+#### `virtual`
+
+Boolean value. Default `false`. Set to `true` to prevent the user from setting this attribute, to prevent the attribute from being joined in a `HasOne` association, and to prevent the attribute from being saved to a HashStore.
+
 #### `type`
 
 The valids-compatible type for use in the datastore marshallers.
@@ -52,19 +56,25 @@ The valids-compatible type for use in the datastore marshallers.
 
 The valids-compatible rules to use when validating the attribute.
 
-#### `hasMutableValue`
-
-Boolean value. Default `true`. Set to `false` to make the attribute completely immutable and representational.
-
 ### Functions
 
-#### `onInput`
+#### `input`
 
-`onInput(value, fromUser)`
+`input(value, userMode)`
 
-#### `onOutput`
+#### `output`
 
-`onInput(value, fromUser)`
+`output(value, userMode)`
+
+#### `get`
+
+Called per-attribute on `instance.get()`. This function can be sync/async.
+
+#### `save`
+
+Called instead of saving the attribute to a HashStore.
+
+#### `fetch`
 
 ### Waiting for the loaded ORM
 
@@ -73,7 +83,7 @@ If the orm needs to be accessed when all of its models are loaded to performs th
 ```js
 function Attribute(options) {
   // This function will be called by the orm when all of the models are loaded.
-  return function(orm) {
+  return function(orm, model) {
     // Use `orm` to check `options`.
     return {
       type: 'string'
@@ -81,4 +91,3 @@ function Attribute(options) {
   }
 }
 ```
-
