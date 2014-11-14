@@ -38,7 +38,7 @@ describe('Model', function() {
     });
   });
 
-  describe.only('#build()', function() {
+  describe('#build()', function() {
 
     it('should build an instance', function() {
       var instance = this.Model.build({guarded: 'a', text: 'b'});
@@ -53,6 +53,14 @@ describe('Model', function() {
       }).userMode(false);
       expect(instance.get('guarded')).to.be.undefined
       instance.get('text').should.eq('unser(input(b))');
+    });
+
+    it.only('should set default attributes', function() {
+      var instance = this.Model.build({text: 'a', default1: 'b'});
+      instance.get('text').should.eq('a');
+      instance.get('default1').should.eq('b');
+      instance.get('default2').should.eq('default2');
+      instance.get('defaultFunc').should.eq('defaultFunc');
     });
   });
 
