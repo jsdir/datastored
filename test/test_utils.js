@@ -2,114 +2,48 @@ var _ = require('lodash');
 
 var datastored = require('..');
 
-function noop() {}
-
-function createTransformMixin(text) {
-  return {
-    transform: {
-      input: function(data) {
-        return wrapValues(data, 'input' + text);
-      },
-      output: function(data) {
-        return wrapValues(data, 'output' + text);
-      }
-    }
-  };
-}
-
-var TransformMixin = createTransformMixin('');
-
-var baseOptions = {
-  keyspace: 'keyspace',
-  idType: 'string',
-  attributes: {
-    foo: datastored.String({
-      hashStores: [true]
-    })
-  }
-};
-
 function wrapValues(data, value) {
   return _.object(_.map(data, function(dataValue, key) {
     return [key, value + '(' + dataValue + ')'];
   }));
 }
 
-function createModel(orm, baseOptions) {
-  return function(name, options, cb) {
-    // `name` is optional
-    if (_.isObject(name)) {
-      cb = options;
-      options = name;
-      // Name defaults to a unique id.
-      name = _.uniqueId();
-    }
+var modelOptions = {
+  BasicUnitModel: {
+    keyspace: 'BasicUnitModel',
+    id: datastored.Id({type: 'string'}),
+    attributes: {
+      text: datastored.String({hashStores: [true]}),
+      guarded: datastored.String({hashStores: [true], guarded: true})
+    },
+    statics: {
+      func: function() {return this;},
+      property: 'text'
+    },
+    methods: {func: function() {return this;}}
+  }
+};
 
-    if (baseOptions) {
-      options = _.merge({}, baseOptions, options);
-    }
-
-    return orm.createModel(name, options, cb);
+function createTestModels(orm) {
+  return {
+    BasicUnitModel: orm.createModel(
+      'BasicUnitModel', modelOptions.BasicUnitModel
+    )
   }
 }
 
-function setupOrm() {
-  // Create test orm.
-  this.orm = datastored.createOrm();
-  this.createModel = createModel(this.orm, baseOptions);
-  this.createNewModel = createModel(this.orm);
-}
+function createTestEnv(ctx) {
+  ctx.orm = datastored.createOrm();
+  ctx.options = modelOptions;
+  ctx.models = createTestModels(ctx.orm);
 
-function setupTestModels() {
-  this.BasicModel = this.createModel({
-    mixins: [TransformMixin],
-    attributes: {
-      bar: datastored.String({
-        hashStores: [true]
-      }),
-      guarded: datastored.String({
-        hashStores: [true],
-        guarded: true
-      }),
-      hidden: datastored.String({
-        hashStores: [true],
-        hidden: true
-      }),
-      indexed: datastored.String({
-        hashStores: [{indexStore: true}, {indexStore: true}],
-        indexed: true
-      })
-    },
-    staticMethods: {func: function() {return this;}},
-    methods: {func: function() {return this;}},
-    scopes: {
-      foo: ['foo']
-    }
-  });
-
-  var options = _.extend({}, createTransformMixin(0), {
-    mixins: [createTransformMixin(1), createTransformMixin(2)]
-  });
-  this.TransformModel = this.createModel(options);
-}
-
-function saveAndReload(instance, scope, cb) {
-  instance.save(function(err) {
-    if (err) {return cb(err);}
-    var newInstance = instance.model.get(instance.getId());
-    newInstance.fetch(scope, function(err) {
-      if (err) {return cb(err);}
-      cb(null, newInstance);
-    });
-  });
+  ctx.assertCreateFails = function(options, message) {
+    (function() {
+      ctx.orm.createModel(_.uniqueId(), options);
+    }).should.throw(message);
+  }
 }
 
 module.exports = {
-  noop: noop,
-  TransformMixin: TransformMixin,
-  createModel: createModel,
-  baseOptions: baseOptions,
-  setupOrm: setupOrm,
-  setupTestModels: setupTestModels,
-  saveAndReload: saveAndReload
+  createTestEnv: createTestEnv
 };
