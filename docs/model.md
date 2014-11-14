@@ -5,32 +5,29 @@
 A model can be defined with `orm.createModel`. `orm.createModel` is called with the model name and options.
 
 ```js
+var datastored = require('datastored');
+
 var orm = require('./orm');
+var db = require('./db');
 
 var Book = orm.createModel('Book', {
-  table: 'books',
-  properties: {
-    id: {
-      type: 'number',
-      primary: true
-    },
-    title: {
-      type: 'string',
-      cached: true
-    },
-    description: {
-      type: 'string',
+  keyspace: 'books',
+  id: datastored.Id({type: 'string'}),
+  attributes: {
+    title: datastored.String({
+      datastores: [db.MYSQL, db.REDIS]
+    }),
+    description: datastored.String({
+      datastores: [db.MYSQL],
+      required: true,
       rules: {
-        required: true,
         max: 10000
       }
-    },
-    isbn: {
-      type: 'integer',
-      rules: {
-        required: true
-      }
-    }
+    }),
+    isbn: datastored.Integer({
+      datastores: [db.MYSQL],
+      required: true
+    })
   }
 });
 ```
@@ -39,95 +36,48 @@ The model name is case-insensitive and must be unique to the orm.
 
 ### Options
 
-#### table
+- `keyspace` (required, string)
 
-Is the redis key fragment and the cassandra column family name. This defaults to the model's name in lowercase.
+  The redis key fragment and the cassandra column family name. This defaults to the model's name in lowercase.
 
-#### properties
+- `id` (required, `datastored.Id`)
 
-**(required)** Defines the model's properties.
+  The model's id attribute.
 
-#### extends
+- `mixins` (optional, array)
 
-Allows the model to extend the definition of another model. If a model is extended with options and an overlapping callback is found, the callbacks will be chained with the existing callback running before the extension's callback.
+  Used to extend the model with common functionality.
 
-#### mixins
+- `statics` (optional, object)
 
-Can be used to extend a model's options. Options are extended differently by type:
+  Defines methods for the model constructor. This option will overwrite any existing static properties on conflict.
 
-- option properties (attributes)
-  - If the option property is not an object (`table`, `softDelete`) are overwritten by the mixin on conflict.
-  - If the option property is an object, the objects keys are overwritten on naming conflict.
-- option functions
-  - `callbacks` are composed synchronously or asynchronously based on the function name. More details about how different callbacks are composed can be found in the [documentation for callbacks](callbacks.md).
+- `methods` (optional, object)
 
-#### relations
+  Defines methods for the model instance. This option will overwrite any existing instance methods on conflict.
 
-Defines the model's relations. Relations are described [here](relations.md) in further detail.
+- `attributes` (required, object)
 
-#### scopes
+  Describes model attributes and their potential values. Attributes are defined with the names as keys and the options as values:
 
-Defines the model's scopes.
-
-#### callbacks
-
-Defines actions to perform at different times in the model's lifecycle. More documentation about callbacks can be found [here](callbacks.md).
-
-#### methods
-
-Defines methods for the model instance. This option will overwrite any existing instance methods on conflict.
-
-#### staticMethods
-
-Defines methods for the model constructor. This option will overwrite any existing static methods on conflict.
-
-## Properties
-
-The `properties` option describes model properties and their values. Every model has a default primary `id` property that uses the orm's `generateId` to set the value. This property can be overridden.
-
-Because they have their own options, properties are defined with the names as keys and the options as values:
-
-```js
-properties: {
-  title: {
-    type: 'string',
-    cached: true
-  },
-  description: {
-    type: 'string',
-    rules: {
-      required: true,
-      max: 10000
+  ```js
+  {
+    attributes: {
+      title: datastored.String({
+        datastores: [db.MYSQL, db.REDIS]
+      }),
+      description: datastored.String({
+        datastores: [db.MYSQL],
+        required: true,
+        rules: {
+          max: 10000
+        }
+      })
     }
   }
-}
-```
+  ```
 
-### Property options
-
-#### type
-
-**(required)** Defines the property type. This is used by marshallers to serialized the value to the correct formats.
-
-#### primary
-
-When set to `true`, the property will be used as the model's primary key. Since a model can have only one primary key, only one property can be `primary`. Defaults to `false`.
-
-#### index
-
-Unlike the `primary` option, any property can become indexed if `index` is set to `true`. Using indexes is the only way to ensure uniqueness in datastored. Defaults to `false`.
-
-#### cached
-
-When set to `true`, the property will be cached. Defaults to `false`.
-
-#### immutable
-
-When set to `true`, datastored will only be able to set this attribute on a new, unsaved model. In all other occurrences, setting the variable will be ignored. Defaults to `false`.
-
-#### rules
-
-Defines the property's rules. Rules are described [here](rules.md) in further detail.
+  Attribute options are described [here](attributes.md) with further detail.
 
 ## Extending a model
 

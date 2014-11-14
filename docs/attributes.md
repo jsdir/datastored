@@ -42,7 +42,7 @@ Boolean value. Default `false`. Set to `true` to prevent the user from viewing t
 
 #### `defaultValue`
 
-The default value to set when the instance is created.
+The default value to set when the instance is created. This can be the value or a function that returns the value.
 
 #### `virtual`
 
@@ -52,29 +52,30 @@ Boolean value. Default `false`. Set to `true` to prevent the user from setting t
 
 The valids-compatible type for use in the datastore marshallers.
 
-#### `rules`
-
-The valids-compatible rules to use when validating the attribute.
-
 ### Functions
 
 #### `input`
 
 `input(value, userMode)`
+Called per-attribute on `instance.get()`. This function can be sync/async.
 
 #### `output`
 
 `output(value, userMode)`
 
-#### `get`
+#### `outputAsync`
 
-Called per-attribute on `instance.get()`. This function can be sync/async.
+`outputAsync(value, userMode, cb)`
 
 #### `save`
 
-Called instead of saving the attribute to a HashStore.
+`save(value, cb)`
+
+Called instead of saving the attribute to a `HashStore`.
 
 #### `fetch`
+
+`fetch(value)`
 
 ### Waiting for the loaded ORM
 
