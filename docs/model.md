@@ -2,11 +2,7 @@
 
 ## Methods
 
-### Initialization
-
-These methods return an `Instance`.
-
-#### `Model.build(data, applyUserTransforms)`
+### `Model.build(data, applyUserTransforms)`
 
 Builds a new `Instance` with `data`.
 
@@ -24,7 +20,7 @@ var emptyBook = Book.build();
 var ourBook = Book.build({title: 'A Book'}};
 ```
 
-#### `Model.withId(id, applyUserTransforms)`
+### `Model.withId(id, applyUserTransforms)`
 
 Returns an instance set to the given id.
 
@@ -38,7 +34,7 @@ Returns an instance set to the given id.
 var book = Book.withId(123);
 ```
 
-#### `Model.find(name, value, applyUserTransforms)`
+### `Model.find(name, value, applyUserTransforms)`
 
 Finds a single `Instance` with the value of index attribute `name` equal to `value`. If the instance is found, the returned promise is fulfilled with the instance. If no such instance is found, the returned promise is fulfilled with `null`.
 
@@ -63,7 +59,7 @@ Book
   });
 ```
 
-#### `Model.create(data, applyUserTransforms)`
+### `Model.create(data, applyUserTransforms)`
 
 Builds a new instance with `data` and saves it. Since `Model.create(data, raw)` is only a shortcut for `Model.build(data, raw).save()`, it shares the same parameters as `Model.build`.
 
