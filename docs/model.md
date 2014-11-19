@@ -1,4 +1,4 @@
-# Models
+# Model
 
 ## Methods
 
@@ -11,7 +11,7 @@ Builds a new `Instance` with `data`.
 
     Data to initialize the new `Instance` with. If `data` is not given, the `Instance` is initialized with no data.
 
-  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to apply user transforms to `data`.
+  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to `data`.
 
 - Returns: `Instance` ... A new instance initialized with `data`.
 
@@ -26,7 +26,7 @@ Returns an instance set to the given id.
 
 - Parameters
   + id (required, {string, integer}) ... The id of the `Instance` to return.
-  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to apply user transforms to `id`.
+  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to `id`.
 
 - Returns: `Instance` ... An instance set to the given id.
 
@@ -41,7 +41,7 @@ Finds a single `Instance` with the value of index attribute `name` equal to `val
 - Parameters
   + name (required, string) ... The indexed attribute's name.
   + value (required, *) ... The indexed attribute's value.
-  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to apply user transforms to `value`.
+  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to `value`.
 
 - Returns: `Promise`
 
@@ -65,7 +65,7 @@ Builds a new instance with `data` and saves it. Since `Model.create(data, raw)` 
 
 - Parameters
   + data (required, object) ... Data to initialize the new `Instance` with.
-  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to apply user transforms to `data`.
+  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to `data`.
 
 - Returns: `Promise`
 
