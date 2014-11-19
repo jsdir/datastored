@@ -1,5 +1,88 @@
 # Models
 
+## Methods
+
+### Initialization
+
+These methods return an `Instance`.
+
+#### `Model.build(data, applyUserTransforms)`
+
+Builds a new `Instance` with `data`.
+
+- Parameters
+  + data (optional, object)
+
+    Data to initialize the new `Instance` with. If `data` is not given, the `Instance` is initialized with no data.
+
+  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to apply user transforms to `data`.
+
+- Returns: `Instance` ... A new instance initialized with `data`.
+
+```js
+var emptyBook = Book.build();
+var ourBook = Book.build({title: 'A Book'}};
+```
+
+#### `Model.withId(id, applyUserTransforms)`
+
+Returns an instance set to the given id.
+
+- Parameters
+  + id (required, {string, integer}) ... The id of the `Instance` to return.
+  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to apply user transforms to `id`.
+
+- Returns: `Instance` ... An instance set to the given id.
+
+```js
+var book = Book.withId(123);
+```
+
+#### `Model.find(name, value, applyUserTransforms)`
+
+Finds a single `Instance` with the value of index attribute `name` equal to `value`. If the instance is found, the returned promise is fulfilled with the instance. If no such instance is found, the returned promise is fulfilled with `null`.
+
+- Parameters
+  + name (required, string) ... The indexed attribute's name.
+  + value (required, *) ... The indexed attribute's value.
+  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to apply user transforms to `value`.
+
+- Returns: `Promise`
+
+```js
+Book
+  .find({isbn: 1234567890})
+  .done(function(instance) {
+    if (instance) {
+      console.log('Found instance: ', instance);
+    } else {
+      console.log('Failed to find instance.');
+    }
+  }, function(err) {
+    throw err;
+  });
+```
+
+#### `Model.create(data, applyUserTransforms)`
+
+Builds a new instance with `data` and saves it. Since `Model.create(data, raw)` is only a shortcut for `Model.build(data, raw).save()`, it shares the same parameters as `Model.build`.
+
+- Parameters
+  + data (required, object) ... Data to initialize the new `Instance` with.
+  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to apply user transforms to `data`.
+
+- Returns: `Promise`
+
+```js
+Book
+  .create({title: 'A Book', isbn: 1234567890})
+  .done(function(instance) {
+    console.log('Built and saved:', instance);
+  }, function(err) {
+    throw err;
+  });
+```
+
 ## Defining a model
 
 A model can be defined with `orm.createModel`. `orm.createModel` is called with the model name and options.
@@ -50,15 +133,15 @@ The model name is case-insensitive and must be unique to the orm.
 
 - `statics` (optional, object)
 
-  Defines methods for the model constructor. This option will overwrite any existing static properties on conflict.
+  Defines static properties for the model constructor. This option will overwrite any existing static properties on conflict. Static functions are auotmatically bound to the model.
 
 - `methods` (optional, object)
 
-  Defines methods for the model instance. This option will overwrite any existing instance methods on conflict.
+  Defines methods for the model instance. This option will overwrite any existing instance methods on conflict. Instance methods are automatically bound to the instance.
 
 - `attributes` (required, object)
 
-  Describes model attributes and their potential values. Attributes are defined with the names as keys and the options as values:
+  Describes model attributes and their values. Attributes are defined with the names as keys and the options as values. Multiple builtin attrobite options are exported from the `datastored` module:
 
   ```js
   {
@@ -77,254 +160,8 @@ The model name is case-insensitive and must be unique to the orm.
   }
   ```
 
-  Attribute options are described [here](attributes.md) with further detail.
+  Attribute options and built-in attribute options are described [here](attributes.md) with further detail.
 
 ## Extending a model
 
-Multiple model types can be classified under a parent model. The model types will be stored in the parent model's table.
-
-## Static Methods
-
-Static methods are called on the model class.
-
-For most of these methods, the callback is optional. If a callback is not specified, the method will return a chainable object. Also, many of these methods have a `raw` parameter. Set `raw` to `true` when you know the values that you are putting into the model and to `false` when using values from user input. `raw` will always default to false.
-
-#### model.create(`attributes`[, `raw`]) -> `Instance`
-
-Will construct a new instance of the model with `attributes`. If `raw` is set to `true`, `attributes` will not be passed through `input` mutation. If the input is invalid, errors will be merged into `model.errors` and the model will be marked as invalid.
-
-| Description         | Type       | Required | Default |
-|:--------------------|:-----------|:---------|:--------|
-| Model attributes    | `{}`       | Yes      |         |
-| Use raw attributes? | `boolean`  | No       | `false` |
-
-```js
-var book = Book.create({isbn: 123});
-```
-
-#### model.get(`pk`[, `raw`]) -> `Instance`
-
-Gets a model from a primary key. This method does not fetch from any datastores, it is just a convenience method that creates a new model and assigns the primary key to `pk`. If `raw` is set to `true`, `pk` will not be passed through `input` mutation. If `pk` is an invalid value, the error will be merged into `model.errors` and the model will be marked as invalid.
-
-| Description         | Type      | Required | Default |
-|:--------------------|:----------|:---------|:--------|
-| Primary key         | `*`       | Yes      |         |
-| Use raw attributes? | `boolean` | No       | `false` |
-
-```js
-var book = Book.get(2);
-```
-
-#### model.find(`attribute`, `value`, [, `raw`], `callback`)
-
-Finds any model that has index `attribute` that matches `value`. If `raw` is set to `true`, `value` will not be passed through `input` mutation. If any of the query values are invalid, errors will be merged into `model.errors` and the model will be marked as invalid.
-
-| Description         | Type       | Required | Default |
-|:--------------------|:-----------|:---------|:--------|
-| Attribute           | `string`   | Yes      |         |
-| Value               | `*`        | Yes      |         |
-| Use raw attributes? | `boolean`  | No       | `false` |
-| Callback            | `function` | True     |         |
-
-```js
-Book.find('isbn', 123, function(err, book) {
-  if (err) {
-    console.error('Error:', err);
-  } else {
-    console.log('Found:', book);
-  }
-});
-```
-
-#### model.fetchMany(`ids`[, `raw`], `cb`)
-
-`cb` returns a hash of id to fetched model.
-
-## Instance Methods
-
-Instance methods can be called on model instances.
-
-### Access requests
-
-Some of these methods have a `req` parameter. This is an optional access request, an `object` that can be used to implement ACLs and authorization subsystems with mixins.
-
-#### instance.set(`attributes`[, `raw`]) -> `Instance`
-
-Set `attributes` and overwrites existing ones on conflict. If `raw` is set to `true`, `attributes` will not be passed through `input` mutation. If the input is invalid, errors will be merged into `model.errors` and the model will be marked as invalid. `set` will delete errors from `errors` if the value is valid. If the new value is invalid, the error message will overwrite any existing messages in `errors`.
-
-| Description         | Type       | Required | Default |
-|:--------------------|:-----------|:---------|:--------|
-| Model attributes    | `{}`       | Yes      |         |
-| Use raw attributes? | `boolean`  | No       | `false` |
-
-```js
-book.set({name: 'foo', isbn: 123});
-```
-
-##### Alternative usage: instance.set(`name`, `value`[, `raw`]) -> Instance
-
-The alternative usage can be used to set a single attribute.
-
-| Description         | Type      | Required | Default |
-|:--------------------|:----------|:---------|:--------|
-| Attribute name      | `string`  | Yes      |         |
-| Attribute value     | `*`       | Yes      |         |
-| Use raw attributes? | `boolean` | No       | `false` |
-
-```js
-book.set('isbn', 123);
-```
-
-#### instance.get(`attribute`[, `raw`]) -> `*`
-
-Gets the value of `attribute`. If `raw` is set to `true`, the result value will not be passed through `output` mutation.
-
-| Description       | Type      | Required | Default |
-|:------------------|:----------|:---------|:--------|
-| Attribute name    | `string`  | Yes      |         |
-| Return raw value? | `boolean` | No       | `false` |
-
-```js
-var name = book.get('name');
-console.log(name); // -> "foo"
-```
-
-##### Alternative usage: instance.get(`attributes`[, `raw`]) -> `*`
-
-The alternative usage can be used to get multiple `attributes`.
-
-| Description       | Type      | Required | Default |
-|:------------------|:----------|:---------|:--------|
-| Attribute names   | `array`   | Yes      |         |
-| Return raw value? | `boolean` | No       | `false` |
-
-```js
-var data = book.get(['isbn', 'name']);
-console.log(data); // -> {"isbn": 123, "name": "foo"}
-```
-
-#### instance.toObject([`scope`[, `raw`]]) -> `{}`
-
-Returns a hash of the model's transformed attributes that are included by `scope`. If `scope` is not defined, all attributes will be included. If `raw` is set to `true`, the result object will not be passed through `output` mutation.
-
-| Description       | Type       | Required | Default |
-|:------------------|:-----------|:---------|:--------|
-| Scope name        | `string`   | No       |         |
-| Return raw value? | `boolean`  | No       | `false` |
-
-```js
-var Book = orm.createClass('Book', {
-  properties: {
-    id: {
-      primary: true,
-      type: 'number'
-    },
-    name: {
-      type: 'string'
-    },
-    isbn: {
-      type: 'number'
-    }
-  },
-  scopes: {
-    onlyName: ['id', 'name']
-  }
-});
-
-var book = Book.create({name: 'foo', isbn: 123});
-var data = book.toObject();
-var nameData = book.toObject('onlyName');
-
-console.log(data); // -> {"id": 2, "name": "foo", "isbn": 123}
-console.log(nameData); // -> {"id": 2, "name": "foo"}
-```
-
-#### instance.save([`req`,]`cb`) -> `Instance`
-
-Save can be called on any model instance. If the model instance does not have a set primary key, the orm will automatically generate and assign one to the model instance using `generateId`. `cb` will immediately return an error if the model is invalid.
-
-| Description    | Type       | Required |
-|:---------------|:-----------|:---------|
-| Access request | `{}`       | No       |
-| Callback       | `function` | Yes      |
-
-```js
-// Saving without a primary key:
-var book1 = Book.create({isbn: 123, name: 'foo'});
-book1.save(function(err) {
-  if (err) {
-    console.error('Failed to save the model:', err);
-  } else {
-    console.log('Successfully saved the model.');
-    console.log(book1.get('id')); // An id is automatically generated.
-  }
-});
-
-// Saving with a primary key:
-var book2 = Book.create({id: 3, isbn: 456, name: 'bar'});
-book2.save(function(err, model) {
-  if (err) {
-    console.error('Failed to save the model:', err);
-  } else {
-    console.log('Successfully saved the model.');
-    console.log(book2.get('id')); // Prints the manually assigned id.
-  }
-});
-```
-
-#### instance.fetch([`req`, [`scope`,]] `cb`) :: (err, model)
-
-Fetches a model with the given scope. If `scope` is not defined, all attributes will be included. This method can only be called on model instances that have a set primary key. `cb` will immediately return an error if the model is invalid or if the model has no primary attribute value.
-
-| Description    | Type       | Required |
-|:---------------|:-----------|:---------|
-| Access request | `{}`       | No       |
-| Scope name     | `string`   | No       |
-| Callback       | `function` | Yes      |
-
-```js
-var book = Book.get(2);
-book.fetch('onlyName', function(err) {
-  if (err) {
-    console.error('Failed to fetch the model:', err);
-  } else {
-    console.log('Fetched book:', book.get('name')); // -> "foo"
-  }
-});
-```
-
-#### instance.destroy([`req`,] `cb`)
-
-Removes all model references. If model's `options.softDelete` is not set to `true`, the model is permanently deleted from the datastores. This method can only be called on model instances that have a set primary key. `cb` will immediately return an error if the model is invalid or if the model has no primary attribute value.
-
-| Description    | Type       | Required |
-|:---------------|:-----------|:---------|
-| Access request | `{}`       | No       |
-| Callback       | `function` | Yes      |
-
-```js
-var book = Book.get(2);
-book.destroy(function(err) {
-  if (err) {
-    console.error('Failed to destroy the model:', err);
-  } else {
-    console.log('Successfully destroyed the model.');
-  }
-});
-```
-
-#### instance.incr(`attribute`, `amount`)
-
-Atomically increments `attribute` by `amount`.
-
-#### instance.decr(`attribute`, `amount`)
-
-Atomically decrements `attribute` by `amount`.
-
-#### instance.getId -> `*`
-
-Returns the instance id.
-
-#### instance.errors -> `{}`
-
-Contains all input errors.
+To have several model types share common functionality, use mixins.
