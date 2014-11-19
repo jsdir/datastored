@@ -129,7 +129,7 @@ The model name is case-insensitive and must be unique to the orm.
 
 - `statics` (optional, object)
 
-  Defines static properties for the model constructor. This option will overwrite any existing static properties on conflict. Static functions are auotmatically bound to the model.
+  Defines static properties for the model constructor. This option will overwrite any existing static properties on conflict. Static functions are automatically bound to the model.
 
 - `methods` (optional, object)
 
@@ -137,7 +137,7 @@ The model name is case-insensitive and must be unique to the orm.
 
 - `attributes` (required, object)
 
-  Describes model attributes and their values. Attributes are defined with the names as keys and the options as values. Multiple builtin attrobite options are exported from the `datastored` module:
+  Describes model attributes and their values. Attributes are defined with the names as keys and the options as values. Multiple built-in attribute options are exported from the `datastored` module:
 
   ```js
   {
