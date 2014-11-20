@@ -92,3 +92,15 @@ function Attribute(options) {
   }
 }
 ```
+
+Built-in Attributes
+-------------------
+
+- `datastored.String`
+- `datastored.Boolean`
+- `datastored.Integer`
+- `datastored.Float`
+- `datastored.Date`
+- `datastored.Datetime`
+- `datastored.Enum`
+- `datastored.Id`
