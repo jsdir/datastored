@@ -1,112 +1,15 @@
-Asynchronous Chaining
----------------------
+# Instance
 
-Instance methods are called through asynchronous chaining.
+## Methods
 
-```js
-Model
-  .userMode()
-  .find('name', 'foo')
-  .fetch(['bar'])
-  .incr({bar: 3})
-  .save(['bar']);
-```
+### `instance.fetch(attributes)`
 
-## User mode
+Fetches attribute values from defined hash stores.
 
-User mode changes input and output methods.
+- Parameters
+  + attributes (required, {string, array, object})
 
-For data input methods:
-  - removes guarded attribute values
-  - deserializes from JSON
-
-For data output methods:
-  - removes hidden attribute values
-  - serializes to JSON
-
-## Initializers
-
-These functions return an initialized model.
-
-### build
-
-`Model.build(data)`
-
-Builds a new instance with `data` as attribute values. Transforms input if in user mode.
-
-```js
-var instance = Model.build({foo: 'bar'});
-// User mode.
-var instance = Model.userMode().build({foo: 'bar'});
-```
-
-Returns `Instance`.
-
-### create
-
-`Model.create(data)`
-
-Builds a new instance with `data` as attribute values and saves the instance. Transforms input if in user mode.
-
-```js
-var instance = Model.create({foo: 'bar'});
-// User mode.
-var instance = Model.userMode().create({foo: 'bar'});
-```
-
-Returns `Instance`. Errors are propagated through the chain.
-
-### find
-
-`Model.find(attribute_name, attribute_value, cb)`
-
-Transforms input if in user mode.
-
-```js
-var instance = Model.find('attribute_name', 'attribute_value');
-// User mode.
-var instance = Model.userMode().find('serialized_id_value');
-```
-
-Errors are propagated through the chain. Calls back with the instance or `null`.
-
-### withId
-
-`Model.withId(id)`
-
-Transforms input if in user mode.
-
-```js
-var instance = Model.withId('id_value');
-// User mode.
-var instance = Model.userMode().withId('serialized_id_value');
-```
-
-Returns `Model.build({id: value})` with `isNew` set to `false`.
-
-## Helpers
-
-### end
-
-`instance.end(cb)`
-
-`cb` is called with the instance when operations are finished.
-
-### require
-
-`instance.require()`
-
-Throws an error if the instance is `null`. This can be used after `find`.
-
-## Transforms
-
-These functions return the instance with new state.
-
-### fetch
-
-`instance.fetch(attributes)`
-
-`attributes` can either be a string, an array, or an object of attribute names. If `attributes` is a string, the orm with fetch one attribute as that name. If `attributes` is an object, the keys are the attribute names and the values are the attribute fetch options. If the attribute object has an attribute without options, the options can be set to `true`.
+    If `attributes` is a string, the orm with fetch one attribute as that name. If `attributes` is an object, the keys are the attribute names and the values are the attribute fetch options. If the attribute object has an attribute without options, the options can be set to `true`.
 
 ```js
 // Fetch attributes.
@@ -115,37 +18,40 @@ instance.fetch(['foo', 'bar']);
 instance.fetch({foo: {option: 'value'}, bar: true});
 ```
 
-Returns `Instance`. Errors are propagated through the chain.
+- Returns: `Promise`
 
-### userMode
+### `instance.save(attributes)`
 
-`instance.userMode()`
+Validates attribute `rules` and `required`. Persists the instance to the data stores.
 
-Sets the instance to user mode. Disable user mode with `instance.userMode(false)`. Returns `Instance`.
+- Parameters:
+  + attributes (required, object) ... Attribute values.
 
-### save
+- Returns: `Promise` 
 
-`instance.save()` or `instance.save({attribute_name: options})`
+### `instance.get(attributes, applyUserTransforms)`
 
-Sets `isNew` to `false`. Validates attribute `rules` and `required`. Attribute save options can also be passed.
+Returns attribute values.
 
-Returns `Instance`. Errors are propagated through the chain.
+- Parameters:
+  + attributes (required, {string, array, object})
 
-## Value
+    - `'attributeName'`
+    - `['attribute1Name', 'attribute2Name']`
+    - `{attribute1Name: null, attribute2Name: attribute2Options}`
 
-These functions return a value.
+  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to the returned id value.
 
-### get
+- Returns:
+  + Promise when any of the requested attributes are asynchonous. The promise is fulfilled with the attribute data.
+  + Object when requesting multiple, synchronous attributes.
+  + Value when requesting a single, synchronous attribute.
 
-`get('attribute_name', cb)`, `get(['attribute1_name', 'attribute2_name'], cb)`, or `get({attribute_name: null, attribute2_name: { options }}, cb)`
-Transforms output if in user mode. The results are returned synchronously by default, but if any of the attributes have asynchronous getters, the results will be returned asynchronously.
+### `instance.getId(applyUserTransforms)` 
 
-### getId
+Returns the instance id. If the instance is not saved, `null` is returned.
 
-`instance.getId()`
+- Parameters:
+  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to the returned id value.
 
-Returns the instance id. Transforms output if in user mode. If the instance is not saved, `null` is returned.
-
-## Asynchronicity
-
-Asynchonous mode is triggered on `save`, `fetch`, and `find` methods and their derivatives.
+- Returns: {string, integer}
