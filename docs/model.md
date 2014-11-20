@@ -17,7 +17,7 @@ Builds a new `Instance` with `data`.
 
 ```js
 var emptyBook = Book.build();
-var ourBook = Book.build({title: 'A Book'}};
+var book = Book.build({title: 'A Book'}};
 ```
 
 ### `Model.withId(id, applyUserTransforms)`
