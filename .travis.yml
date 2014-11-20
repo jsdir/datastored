@@ -11,4 +11,5 @@ services:
   - cassandra
 
 notifications:
-  flowdock: 27e56ca105e90e3787e74dbe9470a066
+  flowdock:
+    secure: "ZxHS9m239A9qtqmEJI/nlb7epAlLOtlSbLoKtLiOE9BScKkoe+MFKrvvFGInli8UjuvgguYkldq9Y7/A5hS7Ty7m7SewkNWz9y0mXwR8NQG3zGVFNk3+8hN2ipfi9FZdAEKtm5cwNNw0y7mBWeibOPOQLkSpTlYtx0H91PoSikQ="
