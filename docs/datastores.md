@@ -17,5 +17,5 @@ Datastores are abstractions over the databases that datastored uses.
 
 ## `RedisCollectionStore`
 
-`RedisCollectionStore` is an abstraction over the `SET`, `LIST`, and `ZSET` data structures in redis.
+`RedisCollectionStore` is an abstraction over the `SET`, `LIST`, and `ZSET` data structures in redis. It can also create, read, and manipulate nested relationships.
 
