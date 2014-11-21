@@ -56,26 +56,26 @@ The valids-compatible type for use in the datastore marshallers.
 
 #### `input`
 
-`input(value, userMode)`
+`input(value, userMode)` or `array` for auto-composition
 Called per-attribute on `instance.get()`. This function can be sync/async.
 
 #### `output`
 
-`output(value, userMode)`
+`output(value, userMode)` or `array` for auto-composition
 
 #### `outputAsync`
 
-`outputAsync(value, userMode, cb)`
+`outputAsync(value, userMode, cb)` or `array` for auto-composition
 
 #### `save`
 
-`save(value, cb)`
+`save(value, cb)` or `array` for auto-composition
 
 Called instead of saving the attribute to a `HashStore`.
 
 #### `fetch`
 
-`fetch(value)`
+`fetch(value)` or `array` for auto composition
 
 ### Waiting for the loaded ORM
 
