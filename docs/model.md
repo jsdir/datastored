@@ -158,6 +158,16 @@ The model name is case-insensitive and must be unique to the orm.
 
   Attribute options and built-in attribute options are described [here](attributes.md) with further detail.
 
+- `input` (optional, function)
+
+- `output` (optional, function)
+
+- `outputAsync` (optional, function)
+
+- `save` (optional, function)
+
+- `fetch` (optional, function)
+
 ## Extending a model
 
 To have several model types share common functionality, use mixins.

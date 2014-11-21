@@ -75,7 +75,7 @@ Called instead of saving the attribute to a `HashStore`.
 
 #### `fetch`
 
-`fetch(value)` or `array` for auto composition
+`fetch(value)` or `array` for auto-composition
 
 ### Waiting for the loaded ORM
 
