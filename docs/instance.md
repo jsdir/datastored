@@ -36,9 +36,9 @@ Returns attribute values.
 - Parameters:
   + attributes (required, {string, array, object})
 
-    - `'attributeName'`
-    - `['attribute1Name', 'attribute2Name']`
-    - `{attribute1Name: null, attribute2Name: attribute2Options}`
+    - `'attributeName'` => `'attributeValue'`
+    - `['attribute1Name', 'attribute2Name']` => `{attribute1Name: attribute1Value, attribute2Name: attribute2Value}`
+    - `{attribute1Name: true, attribute2Name: attribute2Options}` => `{attribute1Name: attribute1Value, attribute2Name: attribute2Value}`
 
   + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to the returned id value.
 

@@ -9,7 +9,7 @@ Builds a new `Instance` with `data`.
 - Parameters
   + data (optional, object)
 
-    Data to initialize the new `Instance` with. If `data` is not given, the `Instance` is initialized with no data.
+    Data to initialize the new `Instance` with.
 
   + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to `data`.
 
@@ -22,7 +22,7 @@ var book = Book.build({title: 'A Book'}};
 
 ### `Model.withId(id, applyUserTransforms)`
 
-Returns an instance set to the given id.
+Returns an instance with the given id.
 
 - Parameters
   + id (required, {string, integer}) ... The id of the `Instance` to return.
