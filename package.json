@@ -31,7 +31,9 @@
     "cassandra-driver": "~1.0.0",
     "hiredis": "~0.1.17",
     "lodash": "~2.4.1",
+    "pg": "^4.0.0",
     "redis": "~0.12.1",
+    "rsvp": "^3.0.14",
     "underscore.string": "~2.3.3",
     "validator": "^3.22.1",
     "valids": "~0.3.1"
