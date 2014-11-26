@@ -14,13 +14,29 @@ var modelOptions = {
     id: datastored.Id({type: 'string'}),
     attributes: {
       text: datastored.String({hashStores: [true]}),
+      default1: datastored.String({
+        hashStores: [true],
+        defaultValue: 'default1'
+      }),
+      default2: datastored.String({
+        hashStores: [true],
+        defaultValue: 'default2'
+      }),
+      defaultFunc: datastored.String({
+        hashStores: [true],
+        defaultValue: function() {
+          return 'defaultFunc';
+        }
+      }),
       guarded: datastored.String({hashStores: [true], guarded: true})
     },
     statics: {
-      func: function() {return this;},
+      staticFunc: function() {return this;},
       property: 'text'
     },
-    methods: {func: function() {return this;}}
+    methods: {
+      methodFunc: function() {return this;}
+    }
   }
 };
 

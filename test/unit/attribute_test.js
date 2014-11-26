@@ -15,3 +15,18 @@ describe('Attribute', function() {
       .should.throw('no datastores have been defined for the attribute');
   });
 });
+
+describe('Id', function() {
+
+  it('should require a valid type', function() {
+    // Check id type exists.
+    (function() {
+      datastored.Id();
+    }).should.throw('"type" is not defined');
+
+    // Check if type is valid.
+    (function() {
+      datastored.Id({type: 'boolean'});
+    }).should.throw('"id" must have type "string" or "integer"');
+  });
+});
