@@ -15,9 +15,14 @@ Below is a list of the different pipelines where data may flow. The data transfo
   + attribute output (loop)
   + model output (loop)
   + [user output transforms](security.md) (if applyUserTransforms is `true`)
+
+`input` and `output` are inverses. Their transforms should cancel out each other.
+
 - fetch (options)
   + attribute fetch
+  + model fetch
 - save
   + check for required attributes
   + validation according to attribute rules
+  + model save
   + attribute save
