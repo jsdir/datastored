@@ -53,10 +53,24 @@ function createTestEnv(ctx) {
   ctx.options = modelOptions;
   ctx.models = createTestModels(ctx.orm);
 
-  ctx.assertCreateFails = function(options, message) {
-    (function() {
+  ctx.assertCreateFails = function(options, message, cb) {
+    if (cb) {
+      listeners = process.listeners('uncaughtException');
+      process.removeAllListeners('uncaughtException');
+
+      process.once('uncaughtException', function(err) {
+        err.message.should.eq(message);
+        _.each(listeners, function(listener) {
+          process.on('uncaughtException', listener);
+        });
+        cb();
+      });
       ctx.orm.createModel(_.uniqueId(), options);
-    }).should.throw(message);
+    } else {
+      (function() {
+        ctx.orm.createModel(_.uniqueId(), options);
+      }).should.throw(message);
+    }
   }
 }
 

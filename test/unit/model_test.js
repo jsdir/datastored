@@ -48,9 +48,9 @@ describe('Model', function() {
 
   describe.only('options', function() {
 
-    it('should require attributes', function() {
+    it('should require attributes', function(done) {
       var options = _.omit(this.modelOptions, 'attributes');
-      this.assertCreateFails(options, '"attributes" is not defined');
+      this.assertCreateFails(options, 'no attributes have been defined', done);
     });
 
     it('should require an id attribute', function() {
@@ -63,9 +63,9 @@ describe('Model', function() {
       this.assertCreateFails(options, '"keyspace" is not defined');
     });
 
-    it('should fail if an attribute is named "id"', function() {
+    it('should fail if an attribute is named "id"', function(done) {
       var options = _.merge({}, this.modelOptions, {attributes: {id: {}}});
-      this.assertCreateFails(options, 'attribute name cannot be "id"');
+      this.assertCreateFails(options, 'attribute name cannot be "id"', done);
     });
 
     it('should assign "statics"', function() {
