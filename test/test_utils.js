@@ -37,6 +37,27 @@ var modelOptions = {
     methods: {
       methodFunc: function() {return this;}
     }
+  },
+  TypeModel: {
+    keyspace: 'TypeModel',
+    id: datastored.Id({type: 'string'}),
+    attributes: {
+      string: datastored.String({hashStores: [true]}),
+      integer: datastored.Integer({hashStores: [true]}),
+      boolean: datastored.Boolean({hashStores: [true]}),
+      date: datastored.Date({hashStores: [true]}),
+      datetime: datastored.Datetime({hashStores: [true]})
+    }
+  },
+  MixinModel: {
+    keyspace: 'MixinModel',
+    id: datastored.Id({type: 'string'}),
+    attributes: {
+      text: datastored.String({hashStores: [true]}),
+      input: function(value, applyUserTransforms) {
+        return 'attribute.input:' + value;
+      }
+    },
   }
 };
 
@@ -44,6 +65,12 @@ function createTestModels(orm) {
   return {
     BasicUnitModel: orm.createModel(
       'BasicUnitModel', modelOptions.BasicUnitModel
+    ),
+    TypeModel: orm.createModel(
+      'TypeModel', modelOptions.TypeModel
+    ),
+    MixinModel: orm.createModel(
+      'MixinModel', modelOptions.MixinModel
     )
   }
 }

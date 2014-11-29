@@ -10,7 +10,9 @@ var expect = chai.expect;
 chai.should();
 chai.use(sinonChai);
 
-describe('Model', function() {
+describe.only('Model', function() {
+
+  var data = {text: 'a'};
 
   before(function() {
     testUtils.createTestEnv(this);
@@ -18,33 +20,20 @@ describe('Model', function() {
     this.modelOptions = this.options.BasicUnitModel;
   });
 
-  function assertFind(model, name, value, exists, cb) {
-    model.find(name, value, true, function(err, instance) {
-      if (err) {return cb(err);}
-      if (exists) {
-        instance.should.exist;
-      } else {
-        expect(instance).to.be.null;
-      }
-      cb();
+  beforeEach(function() {
+    sinon.stub(this.Model._transforms, 'input', function(data, transform) {
+      return data;
     });
-  }
-
-  /*
-  before(function() {
-    this.memoryHashStore = new memoryDatastores.MemoryHashStore();
-    this.memoryIndexStore = new memoryDatastores.MemoryIndexStore();
-    testUtils.setupOrm.call(this);
+    sinon.stub(this.Model._transforms, 'save', function(data, cb) {
+      cb(null, data);
+    });
+    this.transforms = this.Model._transforms;
   });
 
-  beforeEach(function(done) {
-    this.memoryHashStore.reset(done);
+  afterEach(function() {
+    this.transforms.input.restore();
+    this.transforms.save.restore();
   });
-
-  beforeEach(function(done) {
-    this.memoryIndexStore.reset(done);
-  });
-  */
 
   describe('options', function() {
 
@@ -74,90 +63,124 @@ describe('Model', function() {
     });
   });
 
-  describe('#build', function() {
-
-    var data = {text: 'a'};
-
-    beforeEach(function() {
-      sinon.stub(this.Model._transforms, 'input', function(data, transform) {
-        return data;
-      });
-      this.input = this.Model._transforms.input;
-    });
-
-    afterEach(function() {
-      this.input.restore();
-    });
+  /*
+  describe.only('#build', function() {
 
     it('should build an instance', function() {
       var instance = this.Model.build(data);
       instance.isNew().should.be.true;
-      this.input.lastCall.thisValue.should.eq(instance);
-      this.input.should.have.been.calledWith(data);
+      this.transforms.input.lastCall.thisValue.should.eq(instance);
+      this.transforms.input.should.have.been.calledWith(data);
       instance.get('text').should.eq('a');
     });
 
     it('should apply user transforms if requested', function() {
       var instance = this.Model.build(data, true);
       instance.isNew().should.be.true;
-      this.input.lastCall.thisValue.should.eq(instance);
-      this.input.should.have.been.calledWith(data, true);
+      this.transforms.input.lastCall.thisValue.should.eq(instance);
+      this.transforms.input.should.have.been.calledWith(data, true);
       instance.get('text').should.eq('a');
     });
 
-    xit('should set default values', function() {
+    it('should set default values', function() {
       var data = {text: 'a', default1: 'b'};
       var instance = this.Model.build(data);
-      this.input.lastCall.thisValue.should.eq(instance);
-      this.input.should.have.been.calledWith(data);
+      this.transforms.input.lastCall.thisValue.should.eq(instance);
+      this.transforms.input.should.have.been.calledWith(data);
       instance.get('text').should.eq('a');
       instance.get('default1').should.eq('b');
       instance.get('default2').should.eq('default2');
       instance.get('defaultFunc').should.eq('defaultFunc');
     });
   });
+  */
 
-  xdescribe('#create', function() {
+  describe('#create', function() {
 
-    it('should create and save an instance', function() {
-      this.BasicModel
+    it('should create and save an instance', function(done) {
+      var transforms = this.transforms;
+      this.Model
         .create({text: 'a'})
         .then(function(instance) {
           instance.get('text').should.eq('a');
-        });
-      // set echo stub for _input
-      // _input should have been called with {text: 'a'}
-      // _save should have been called with
+          transforms.input.lastCall.thisValue.should.eq(instance);
+          transforms.input.should.have.been.calledWith({text: 'a'});
+          transforms.save.lastCall.thisValue.should.eq(instance);
+          transforms.save.should.have.been.calledWith({text: 'a'});
+        }).then(done, done);
     });
 
-    it('should apply user transforms if requested', function() {
-      this.BasicModel
+    it('should apply user transforms if requested', function(done) {
+      var transforms = this.transforms;
+      this.Model
         .create({text: 'a'}, true)
         .then(function(instance) {
           instance.get('text').should.eq('a');
-        });
-      // set echo stub for _input
-      // _input should have been called with {text: 'a'}
-      // _save should have been called with
+          transforms.input.lastCall.thisValue.should.eq(instance);
+          transforms.input.should.have.been.calledWith({text: 'a'}, true);
+          transforms.save.lastCall.thisValue.should.eq(instance);
+          transforms.save.should.have.been.calledWith({text: 'a'});
+        }).then(done, done);
+    });
+
+    it('should set default values', function(done) {
+      this.Model
+        .create({text: 'a', default1: 'b'})
+        .then(function(instance) {
+          instance.get('text').should.eq('a');
+          instance.get('default1').should.eq('b');
+          instance.get('default2').should.eq('default2');
+          instance.get('defaultFunc').should.eq('defaultFunc');
+        }).then(done, done);
     });
   });
 
-  xdescribe('#withId', function() {
+  describe('#withId', function() {
 
     it('should return an instance with the given id', function() {
-      // stub _input with echo
-      this.Model.withId('a').getId().should.eq('a');
-      this.Instance._input.should.have.been.calledWith({id: 'a'});
+      var instance = this.Model.withId('a');
+      instance.getId().should.eq('a');
+      this.transforms.input.lastCall.thisValue.should.eq(instance);
+      this.transforms.input.should.have.been.calledWith({id: 'a'});
     });
 
     it('should apply user transforms if requested', function() {
-      // stub _input with echo
-      this.Model.withId('a', true).getId().should.eq('a');
-      this.Instance._input.should.have.been.calledWith({id: 'a'}, true);
+      var instance = this.Model.withId('a', true);
+      instance.getId().should.eq('a');
+      this.transforms.input.lastCall.thisValue.should.eq(instance);
+      this.transforms.input.should.have.been.calledWith({id: 'a'}, true);
     });
   });
 
   xdescribe('#find', function() {
+
+    /*
+    before(function() {
+      this.memoryHashStore = new memoryDatastores.MemoryHashStore();
+      this.memoryIndexStore = new memoryDatastores.MemoryIndexStore();
+      testUtils.setupOrm.call(this);
+    });
+
+    beforeEach(function(done) {
+      this.memoryHashStore.reset(done);
+    });
+
+    beforeEach(function(done) {
+      this.memoryIndexStore.reset(done);
+    });
+    */
+
+    function assertFind(model, name, value, exists, cb) {
+      model.find(name, value, true, function(err, instance) {
+        if (err) {return cb(err);}
+        if (exists) {
+          instance.should.exist;
+        } else {
+          expect(instance).to.be.null;
+        }
+        cb();
+      });
+    }
 
     before(function() {
       this.IndexedModel = this.createModel({
@@ -262,34 +285,46 @@ describe('Model', function() {
   });
 });
 
-xdescribe('#_set', function() {
+describe('input transform', function() {
 
   before(function() {
-    this.instance = new Instance();
-    this.transformed = new Instance();
+    testUtils.createTestEnv(this);
   });
 
-  it('should unserialize data', function() {
-    this.instance._set({
-      text: 'a',
-      number: 123,
-      booleanTrue: true,
-      booleanFalse: false
-    }).should.deep.eq({
-      text: 'a',
-      number: 123,
-      booleanTrue: true
-    });
+  it('should unserialize data', function(done) {
+    var TypeModel = this.models.TypeModel;
+    TypeModel.create().then(function(instance) {
+      var data = TypeModel._transforms.input.call(instance, {
+        string: 'a',
+        integer: 123,
+        boolean: true,
+        date: '2000-01-01',
+        datetime: '2000-01-01T00:00:00.000Z'
+      }, true);
+
+      data.string.should.eq('a');
+      data.integer.should.eq(123);
+      data.boolean.should.eq(true);
+      data.date.getTime().should.eq(946684800000);
+      data.datetime.getTime().should.eq(946684800000);
+    }).then(done, done);
   });
 
-  it('should remove guarded values', function() {
-    this.instance._set({
-      guarded: 'guarded',
-      text: 'a'
-    }).should.deep.eq({text: 'a'});
+  it('should remove guarded values', function(done) {
+    var Model = this.models.BasicUnitModel;
+    Model.create().then(function(instance) {
+      Model._transforms.input.call(instance, {
+        guarded: 'guarded',
+        text: 'a'
+      }).should.deep.eq({text: 'a'});
+    }).then(done, done);
   });
 
-  it('should apply mixin transforms in the correct order', function() {
-    this.transformed._set({text: 'a'}).should.eq({a: '1(2(3(4(a))))'});
+  it('should apply mixin transforms in the correct order', function(done) {
+    var MixinModel = this.models.MixinModel;
+    MixinModel.create().then(function(instance) {
+      MixinModel._transforms.input.call(instance, {text: 'a'})
+        .should.deep.eq({text: '1(2(3(4(a))))'})
+    }).then(done, done);
   });
 });
