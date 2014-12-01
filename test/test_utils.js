@@ -51,6 +51,11 @@ var modelOptions = {
   },
   MixinModel: {
     keyspace: 'MixinModel',
+    mixins: [{
+      input: function(data, applyUserTransforms) {
+
+      }
+    }],
     id: datastored.Id({type: 'string'}),
     attributes: {
       text: datastored.String({hashStores: [true]}),

@@ -3,14 +3,15 @@ var chai = require('chai');
 var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
 
-var datastored = require('../..')
+var datastored = require('../..');
+var memoryDatastores = require('../../lib/datastores/memory');
 var testUtils = require('../test_utils');
 
 var expect = chai.expect;
 chai.should();
 chai.use(sinonChai);
 
-describe.only('Model', function() {
+describe('Model', function() {
 
   var data = {text: 'a'};
 
@@ -62,38 +63,6 @@ describe.only('Model', function() {
       this.Model.staticFunc().should.deep.eq(this.Model);
     });
   });
-
-  /*
-  describe.only('#build', function() {
-
-    it('should build an instance', function() {
-      var instance = this.Model.build(data);
-      instance.isNew().should.be.true;
-      this.transforms.input.lastCall.thisValue.should.eq(instance);
-      this.transforms.input.should.have.been.calledWith(data);
-      instance.get('text').should.eq('a');
-    });
-
-    it('should apply user transforms if requested', function() {
-      var instance = this.Model.build(data, true);
-      instance.isNew().should.be.true;
-      this.transforms.input.lastCall.thisValue.should.eq(instance);
-      this.transforms.input.should.have.been.calledWith(data, true);
-      instance.get('text').should.eq('a');
-    });
-
-    it('should set default values', function() {
-      var data = {text: 'a', default1: 'b'};
-      var instance = this.Model.build(data);
-      this.transforms.input.lastCall.thisValue.should.eq(instance);
-      this.transforms.input.should.have.been.calledWith(data);
-      instance.get('text').should.eq('a');
-      instance.get('default1').should.eq('b');
-      instance.get('default2').should.eq('default2');
-      instance.get('defaultFunc').should.eq('defaultFunc');
-    });
-  });
-  */
 
   describe('#create', function() {
 
@@ -152,62 +121,39 @@ describe.only('Model', function() {
     });
   });
 
-  xdescribe('#find', function() {
+  describe('#find', function() {
 
-    /*
-    before(function() {
-      this.memoryHashStore = new memoryDatastores.MemoryHashStore();
+    before(function(done) {
+      var self = this;
       this.memoryIndexStore = new memoryDatastores.MemoryIndexStore();
-      testUtils.setupOrm.call(this);
-    });
-
-    beforeEach(function(done) {
-      this.memoryHashStore.reset(done);
-    });
-
-    beforeEach(function(done) {
-      this.memoryIndexStore.reset(done);
-    });
-    */
-
-    function assertFind(model, name, value, exists, cb) {
-      model.find(name, value, true, function(err, instance) {
-        if (err) {return cb(err);}
-        if (exists) {
-          instance.should.exist;
-        } else {
-          expect(instance).to.be.null;
-        }
-        cb();
-      });
-    }
-
-    before(function() {
-      this.IndexedModel = this.createModel({
-        mixins: [testUtils.TransformMixin],
+      testUtils.createTestEnv(this);
+      this.IndexedModel = this.orm.createModel('IndexedModel', {
+        keyspace: 'IndexedModel',
+        id: datastored.Id({type: 'string'}),
         attributes: {
-          index: attributes.String({
-            indexStore: this.memoryIndexStore,
-            hashStores: [this.memoryHashStore]
+          index: datastored.String({
+            hashStores: [true], indexStore: self.memoryIndexStore
           }),
-          replaceIndex: attributes.String({
-            indexStore: this.memoryIndexStore,
-            hashStores: [this.memoryHashStore],
+          transformIndex: datastored.String({
+            hashStores: [true], indexStore: self.memoryIndexStore
+          }),
+          replaceIndex: datastored.String({
+            hashStores: [true],
+            indexStore: self.memoryIndexStore,
             replaceIndex: true
           })
         }
       });
-    });
 
-    beforeEach(function(done) {
-      this.instance = this.IndexedModel.create({
-        index: 'foo', replaceIndex: 'foo1'
-      }, true);
-      this.instance.save(done);
-    });
-
-    beforeEach(function(done) {
-      this.IndexedModel.create({index: 'transformed'}).save(done);
+      process.nextTick(function() {
+        self.IndexedModel.create({
+          index: 'value1',
+          transformIndex: 'value2',
+          replaceIndex: 'value3'
+        }).then(function(instance) {
+          self.instance = instance;
+        }).then(done, done);
+      });
     });
 
     it('should fail if the query attribute is undefined', function() {
@@ -224,31 +170,25 @@ describe.only('Model', function() {
       }).should.throw('attribute "text" is not an index');
     });
 
-    //
-
-    it('should transform the index value by default', function(done) {
-      this.IndexedModel.find('index', 'transformed', function(err, instance) {
-        if (err) {return done(err);}
-        instance.getId(true).should.exist;
-        instance.get('index', true).should.eq('input(transformed)');
-        instance.isNew.should.be.false;
-        instance.isChanged().should.be.false;
-        done();
-      });
+    it('should find the an instance with the indexed value', function(done) {
+      this.IndexedModel.find('index', 'value1')
+        .then(function(instance) {
+          instance.getId().should.exist;
+          instance.get('index').should.eq('value1');
+          instance.saved.should.be.true;
+        }).then(done, done);
     });
 
-    it('should not transform the index value if requested', function(done) {
-      this.IndexedModel.find('index', 'foo', true, function(err, instance) {
-        if (err) {return done(err);}
-        instance.getId(true).should.exist;
-        instance.get('index', true).should.eq('foo');
-        instance.isNew.should.be.false;
-        instance.isChanged().should.be.false;
-        done();
-      });
+    it('should apply user transforms if requested', function(done) {
+      this.IndexedModel.find('transformIndex', 'transformed', true)
+        .then(function(instance) {
+          instance.getId().should.exist;
+          instance.get('index').should.eq('value2');
+          instance.saved.should.be.true;
+        }).then(done, done);
     });
 
-    it('should callback with `null` if nothing was found', function(done) {
+    it('should resolve with `null` if nothing was found', function(done) {
       this.IndexedModel.find('index', 'undefined', function(err, instance) {
         if (err) {return done(err);}
         expect(instance).to.be.null;
@@ -257,6 +197,8 @@ describe.only('Model', function() {
     });
 
     it('should use old indexes that have not been replaced', function(done) {
+      // use untransformed
+
       var model = this.IndexedModel;
       var instance = this.instance;
       async.series([
@@ -290,6 +232,8 @@ describe('input transform', function() {
   before(function() {
     testUtils.createTestEnv(this);
   });
+
+  // TODO: handle errors in serialization. return errors directly?
 
   it('should unserialize data', function(done) {
     var TypeModel = this.models.TypeModel;
