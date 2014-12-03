@@ -68,7 +68,7 @@ describe('Model', function() {
 
   describe('#create', function() {
 
-    it('should create and save an instance', function(done) {
+    it('should create and save an instance', function() {
       var transforms = this.transforms;
       return this.Model
         .create({text: 'a'})
@@ -112,7 +112,7 @@ describe('Model', function() {
       var instance = this.Model.withId('a');
       instance.getId().should.eq('a');
       this.transforms.input.lastCall.thisValue.should.eq(instance);
-      this.transforms.input.should.have.been.calledWithExactly({id: 'a'});
+      this.transforms.input.should.have.been.calledWithExactly({id: 'a'}, undefined);
     });
 
     it('should apply user transforms if requested', function() {
@@ -123,7 +123,7 @@ describe('Model', function() {
     });
   });
 
-  describe('#find', function() {
+  describe.only('#find', function() {
 
     before(function(done) {
       var self = this;
@@ -174,6 +174,17 @@ describe('Model', function() {
       this.transforms.input.restore();
     });
 
+    function assertExists(model, name, value, exists) {
+      return function() {
+        var promise = model.find(name, value);
+        if (exists === false) {
+          return promise.should.eventually.be.null;
+        } else {
+          return promise.should.eventually.exist;
+        }
+      }
+    }
+
     it('should fail if the query attribute is undefined', function() {
       var Model = this.Model;
       (function() {
@@ -223,17 +234,6 @@ describe('Model', function() {
         });
     });
 
-    function assertExists(model, name, value, exists) {
-      return function() {
-        var promise = model.find(name, value);
-        if (exists === false) {
-          return promise.should.eventually.be.null;
-        } else {
-          return promise.should.eventually.exist;
-        }
-      }
-    }
-
     it('should use old indexes that have not been replaced', function() {
       return this.instance.save({index: 'value2'})
         .then(assertExists(this.IndexedModel, 'index', 'value1'))
@@ -253,13 +253,11 @@ describe('Model', function() {
   });
 });
 
-describe('input transform', function() {
+describe.only('input transform', function() {
 
   before(function() {
     testUtils.createTestEnv(this);
   });
-
-  // TODO: handle errors in serialization. return errors directly?
 
   it('should unserialize data', function() {
     var TypeModel = this.models.TypeModel;
@@ -294,7 +292,7 @@ describe('input transform', function() {
     var MixinModel = this.models.MixinModel;
     return MixinModel.create().then(function(instance) {
       MixinModel._transforms.input.call(instance, {text: 'a'})
-        .should.deep.eq({text: '1(2(3(4(a))))'})
+        .should.deep.eq({text: 'attribute.1;mixin.2;mixin.1;a'})
     });
   });
 });

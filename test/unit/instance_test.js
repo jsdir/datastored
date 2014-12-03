@@ -28,6 +28,9 @@ describe('Instance', function() {
 
   describe('#save()', function() {
 
+    it('should fail with serializtion erros if they exist', function() {
+      return instance.save();
+    });
   });
 
   describe('#get()', function() {

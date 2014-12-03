@@ -1,10 +1,13 @@
 var _ = require('lodash');
 
 var datastored = require('..');
+var memoryDatastores = require('../lib/datastores/memory');
+
+var hashStore = new memoryDatastores.MemoryHashStore();
 
 function wrapValues(data, value) {
   return _.object(_.map(data, function(dataValue, key) {
-    return [key, value + '(' + dataValue + ')'];
+    return [key, value + ';' + dataValue];
   }));
 }
 
@@ -13,22 +16,22 @@ var modelOptions = {
     keyspace: 'BasicUnitModel',
     id: datastored.Id({type: 'string'}),
     attributes: {
-      text: datastored.String({hashStores: [true]}),
+      text: datastored.String({hashStores: [hashStore]}),
       default1: datastored.String({
-        hashStores: [true],
+        hashStores: [hashStore],
         defaultValue: 'default1'
       }),
       default2: datastored.String({
-        hashStores: [true],
+        hashStores: [hashStore],
         defaultValue: 'default2'
       }),
       defaultFunc: datastored.String({
-        hashStores: [true],
+        hashStores: [hashStore],
         defaultValue: function() {
           return 'defaultFunc';
         }
       }),
-      guarded: datastored.String({hashStores: [true], guarded: true})
+      guarded: datastored.String({hashStores: [hashStore], guarded: true})
     },
     statics: {
       staticFunc: function() {return this;},
@@ -42,25 +45,29 @@ var modelOptions = {
     keyspace: 'TypeModel',
     id: datastored.Id({type: 'string'}),
     attributes: {
-      string: datastored.String({hashStores: [true]}),
-      integer: datastored.Integer({hashStores: [true]}),
-      boolean: datastored.Boolean({hashStores: [true]}),
-      date: datastored.Date({hashStores: [true]}),
-      datetime: datastored.Datetime({hashStores: [true]})
+      string: datastored.String({hashStores: [hashStore]}),
+      integer: datastored.Integer({hashStores: [hashStore]}),
+      boolean: datastored.Boolean({hashStores: [hashStore]}),
+      date: datastored.Date({hashStores: [hashStore]}),
+      datetime: datastored.Datetime({hashStores: [hashStore]})
     }
   },
   MixinModel: {
     keyspace: 'MixinModel',
     mixins: [{
       input: function(data, applyUserTransforms) {
-
+        return wrapValues(data, 'mixin.1');
+      }
+    }, {
+      input: function(data, applyUserTransforms) {
+        return wrapValues(data, 'mixin.2');
       }
     }],
     id: datastored.Id({type: 'string'}),
     attributes: {
-      text: datastored.String({hashStores: [true]}),
+      text: datastored.String({hashStores: [hashStore]}),
       input: function(value, applyUserTransforms) {
-        return 'attribute.input:' + value;
+        return 'attribute.1;' + value;
       }
     },
   }
