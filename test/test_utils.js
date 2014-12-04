@@ -65,10 +65,12 @@ var modelOptions = {
     }],
     id: datastored.Id({type: 'string'}),
     attributes: {
-      text: datastored.String({hashStores: [hashStore]}),
-      input: function(value, applyUserTransforms) {
-        return 'attribute.1;' + value;
-      }
+      text: datastored.String({
+        hashStores: [hashStore],
+        input: function(value, applyUserTransforms) {
+          return 'attribute.1;' + value;
+        }
+      })
     },
   }
 };

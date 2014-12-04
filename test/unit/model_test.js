@@ -75,9 +75,14 @@ describe('Model', function() {
         .then(function(instance) {
           instance.get('text').should.eq('a');
           transforms.input.lastCall.thisValue.should.eq(instance);
-          transforms.input.should.have.been.calledWithExactly({text: 'a'});
+          transforms.input.should.have.been.calledWithExactly({text: 'a'}, undefined);
           transforms.save.lastCall.thisValue.should.eq(instance);
-          transforms.save.should.have.been.calledWithExactly({text: 'a'});
+          transforms.save.should.have.been.calledWith({
+            default1: "default1",
+            default2: "default2",
+            defaultFunc: "defaultFunc",
+            text: 'a'
+          });
         });
     });
 
@@ -90,7 +95,12 @@ describe('Model', function() {
           transforms.input.lastCall.thisValue.should.eq(instance);
           transforms.input.should.have.been.calledWithExactly({text: 'a'}, true);
           transforms.save.lastCall.thisValue.should.eq(instance);
-          transforms.save.should.have.been.calledWithExactly({text: 'a'});
+          transforms.save.should.have.been.calledWith({
+            default1: "default1",
+            default2: "default2",
+            defaultFunc: "defaultFunc",
+            text: 'a'
+          });
         });
     });
 
@@ -123,7 +133,7 @@ describe('Model', function() {
     });
   });
 
-  describe.only('#find', function() {
+  describe('#find', function() {
 
     before(function(done) {
       var self = this;
@@ -253,7 +263,7 @@ describe('Model', function() {
   });
 });
 
-describe.only('input transform', function() {
+describe('input transform', function() {
 
   before(function() {
     testUtils.createTestEnv(this);
