@@ -194,7 +194,7 @@ describe('Memory datastores', function() {
   });
 });
 
-describe('Redis datastores', function() {
+xdescribe('Redis datastores', function() {
 
   before(function() {
     this.client = new redis.Client({});
@@ -217,7 +217,7 @@ describe('Redis datastores', function() {
   });
 });
 
-describe('Cassandra datastores', function() {
+xdescribe('Cassandra datastores', function() {
 
 });
 

@@ -23,7 +23,7 @@ describe('datastored', function() {
   describe('#createOrm()', function() {
 
     before(function() {
-      testUtils.setupOrm.call(this);
+      testUtils.createTestEnv(this);
     });
 
     it('should use a stub id generator if `generateId` is not defined',

@@ -9,7 +9,7 @@ var testUtils = require('../test_utils');
 chai.should();
 var expect = chai.expect;
 
-describe('HasOne relation', function() {
+xdescribe('HasOne relation', function() {
 
   before(function() {
     testUtils.setupOrm.call(this);
