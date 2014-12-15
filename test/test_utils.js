@@ -5,10 +5,10 @@ var memoryDatastores = require('../lib/datastores/memory');
 
 var hashStore = new memoryDatastores.MemoryHashStore();
 
-function wrapValues(data, value) {
-  return _.object(_.map(data, function(dataValue, key) {
-    return [key, value + ';' + dataValue];
-  }));
+function wrapValues(data, wrapValue) {
+  return _.mapValues(data, function(value) {
+    return wrapValue + '(' + value + ')';
+  });
 }
 
 var modelOptions = {
@@ -68,7 +68,7 @@ var modelOptions = {
       text: datastored.String({
         hashStores: [hashStore],
         input: function(value, applyUserTransforms) {
-          return 'attribute.1;' + value;
+          return 'attribute.1(' + value + ')';
         }
       })
     },
@@ -116,5 +116,6 @@ function createTestEnv(ctx) {
 }
 
 module.exports = {
-  createTestEnv: createTestEnv
+  createTestEnv: createTestEnv,
+  wrapValues: wrapValues
 };

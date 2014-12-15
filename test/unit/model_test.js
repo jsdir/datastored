@@ -15,8 +15,6 @@ chai.use(chaiAsPromised);
 
 describe('Model', function() {
 
-  var data = {text: 'a'};
-
   before(function() {
     testUtils.createTestEnv(this);
     this.Model = this.models.BasicUnitModel;
@@ -25,10 +23,10 @@ describe('Model', function() {
 
   beforeEach(function() {
     sinon.stub(this.Model._transforms, 'input', function(data, transform) {
-      return data;
+      return testUtils.wrapValues(data, 'input');
     });
     sinon.stub(this.Model._transforms, 'save', function(data, cb) {
-      cb(null, data);
+      cb(null, testUtils.wrapValues(data, 'save'));
     });
     this.transforms = this.Model._transforms;
   });
@@ -73,7 +71,7 @@ describe('Model', function() {
       return this.Model
         .create({text: 'a'})
         .then(function(instance) {
-          instance.get('text').should.eq('a');
+          instance.get('text').should.eq('input(a)');
           transforms.input.lastCall.thisValue.should.eq(instance);
           transforms.input.should.have.been.calledWithExactly({text: 'a'}, undefined);
           transforms.save.lastCall.thisValue.should.eq(instance);
@@ -81,7 +79,7 @@ describe('Model', function() {
             default1: "default1",
             default2: "default2",
             defaultFunc: "defaultFunc",
-            text: 'a'
+            text: 'input(a)'
           });
         });
     });
@@ -91,7 +89,7 @@ describe('Model', function() {
       return this.Model
         .create({text: 'a'}, true)
         .then(function(instance) {
-          instance.get('text').should.eq('a');
+          instance.get('text').should.eq('input(a)');
           transforms.input.lastCall.thisValue.should.eq(instance);
           transforms.input.should.have.been.calledWithExactly({text: 'a'}, true);
           transforms.save.lastCall.thisValue.should.eq(instance);
@@ -99,7 +97,7 @@ describe('Model', function() {
             default1: "default1",
             default2: "default2",
             defaultFunc: "defaultFunc",
-            text: 'a'
+            text: 'input(a)'
           });
         });
     });
@@ -108,8 +106,8 @@ describe('Model', function() {
       return this.Model
         .create({text: 'a', default1: 'b'})
         .then(function(instance) {
-          instance.get('text').should.eq('a');
-          instance.get('default1').should.eq('b');
+          instance.get('text').should.eq('input(a)');
+          instance.get('default1').should.eq('input(b)');
           instance.get('default2').should.eq('default2');
           instance.get('defaultFunc').should.eq('defaultFunc');
         });
@@ -120,14 +118,14 @@ describe('Model', function() {
 
     it('should return an instance with the given id', function() {
       var instance = this.Model.withId('a');
-      instance.getId().should.eq('a');
+      instance.getId().should.eq('input(a)');
       this.transforms.input.lastCall.thisValue.should.eq(instance);
       this.transforms.input.should.have.been.calledWithExactly({id: 'a'}, undefined);
     });
 
     it('should apply user transforms if requested', function() {
       var instance = this.Model.withId('a', true);
-      instance.getId().should.eq('a');
+      instance.getId().should.eq('input(a)');
       this.transforms.input.lastCall.thisValue.should.eq(instance);
       this.transforms.input.should.have.been.calledWithExactly({id: 'a'}, true);
     });
@@ -302,7 +300,7 @@ describe('input transform', function() {
     var MixinModel = this.models.MixinModel;
     return MixinModel.create().then(function(instance) {
       MixinModel._transforms.input.call(instance, {text: 'a'})
-        .should.deep.eq({text: 'attribute.1;mixin.2;mixin.1;a'})
+        .should.deep.eq({text: 'attribute.1(mixin.2(mixin.1(a)))'})
     });
   });
 });
