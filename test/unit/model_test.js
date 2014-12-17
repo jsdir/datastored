@@ -116,6 +116,16 @@ describe('Model', function() {
           instance.get('defaultFunc').should.eq('defaultFunc');
         });
     });
+
+    it('should only set defined attributes', function() {
+      return this.Model
+        .create({id: 'foo', text: 'a', foobar: 123})
+        .then(function(instance) {
+          expect(instance.get('text')).to.eq('input(a)');
+          expect(instance.get('foobar')).to.be.undefined;
+          instance.getId().should.not.eq('foo');
+        });
+    });
   });
 
   describe('#withId', function() {
