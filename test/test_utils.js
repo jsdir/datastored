@@ -31,7 +31,8 @@ var modelOptions = {
           return 'defaultFunc';
         }
       }),
-      guarded: datastored.String({hashStores: [hashStore], guarded: true})
+      guarded: datastored.String({hashStores: [hashStore], guarded: true}),
+      hidden: datastored.String({hashStores: [hashStore], hidden: true})
     },
     statics: {
       staticFunc: function() {return this;},
@@ -57,9 +58,15 @@ var modelOptions = {
     mixins: [{
       input: function(data, applyUserTransforms) {
         return wrapValues(data, 'mixin.1');
+      },
+      output: function(data, applyUserTransforms) {
+        return wrapValues(data, 'mixin.1');
       }
     }, {
       input: function(data, applyUserTransforms) {
+        return wrapValues(data, 'mixin.2');
+      },
+      output: function(data, applyUserTransforms) {
         return wrapValues(data, 'mixin.2');
       }
     }],
@@ -68,6 +75,9 @@ var modelOptions = {
       text: datastored.String({
         hashStores: [hashStore],
         input: function(value, applyUserTransforms) {
+          return 'attribute.1(' + value + ')';
+        },
+        output: function(value, applyUserTransforms) {
           return 'attribute.1(' + value + ')';
         }
       })

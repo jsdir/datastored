@@ -2,7 +2,7 @@ var _ = require('lodash');
 var chai = require('chai');
 var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
-var chaiAsPromised = require("chai-as-promised");
+var chaiAsPromised = require('chai-as-promised');
 
 var datastored = require('../..');
 var memoryDatastores = require('../../lib/datastores/memory');
@@ -73,7 +73,9 @@ describe('Model', function() {
         .then(function(instance) {
           instance.get('text').should.eq('input(a)');
           transforms.input.lastCall.thisValue.should.eq(instance);
-          transforms.input.should.have.been.calledWithExactly({text: 'a'}, undefined);
+          transforms.input.should.have.been.calledWithExactly({
+            text: 'a'
+          }, undefined);
           transforms.save.lastCall.thisValue.should.eq(instance);
           transforms.save.should.have.been.calledWith({
             default1: "default1",
@@ -91,7 +93,9 @@ describe('Model', function() {
         .then(function(instance) {
           instance.get('text').should.eq('input(a)');
           transforms.input.lastCall.thisValue.should.eq(instance);
-          transforms.input.should.have.been.calledWithExactly({text: 'a'}, true);
+          transforms.input.should.have.been.calledWithExactly({
+            text: 'a'
+          }, true);
           transforms.save.lastCall.thisValue.should.eq(instance);
           transforms.save.should.have.been.calledWith({
             default1: "default1",
@@ -120,14 +124,18 @@ describe('Model', function() {
       var instance = this.Model.withId('a');
       instance.getId().should.eq('input(a)');
       this.transforms.input.lastCall.thisValue.should.eq(instance);
-      this.transforms.input.should.have.been.calledWithExactly({id: 'a'}, undefined);
+      this.transforms.input.should.have.been.calledWithExactly({
+        id: 'a'
+      }, undefined);
     });
 
     it('should apply user transforms if requested', function() {
       var instance = this.Model.withId('a', true);
       instance.getId().should.eq('input(a)');
       this.transforms.input.lastCall.thisValue.should.eq(instance);
-      this.transforms.input.should.have.been.calledWithExactly({id: 'a'}, true);
+      this.transforms.input.should.have.been.calledWithExactly({
+        id: 'a'
+      }, true);
     });
   });
 
@@ -257,50 +265,6 @@ describe('Model', function() {
     it('should should fail if saving a duplicate index', function() {
       return this.IndexedModel.create({index: 'value1'})
         .should.be.rejectedWith('instance with index already exists');
-    });
-  });
-});
-
-describe('input transform', function() {
-
-  before(function() {
-    testUtils.createTestEnv(this);
-  });
-
-  it('should unserialize data', function() {
-    var TypeModel = this.models.TypeModel;
-    return TypeModel.create().then(function(instance) {
-      var data = TypeModel._transforms.input.call(instance, {
-        string: 'a',
-        integer: 123,
-        boolean: true,
-        date: '2000-01-01',
-        datetime: '2000-01-01T00:00:00.000Z'
-      }, true);
-
-      data.string.should.eq('a');
-      data.integer.should.eq(123);
-      data.boolean.should.eq(true);
-      data.date.getTime().should.eq(946684800000);
-      data.datetime.getTime().should.eq(946684800000);
-    });
-  });
-
-  it('should remove guarded values', function() {
-    var Model = this.models.BasicUnitModel;
-    return Model.create().then(function(instance) {
-      Model._transforms.input.call(instance, {
-        guarded: 'guarded',
-        text: 'a'
-      }).should.deep.eq({text: 'a'});
-    });
-  });
-
-  it('should apply mixin transforms in the correct order', function() {
-    var MixinModel = this.models.MixinModel;
-    return MixinModel.create().then(function(instance) {
-      MixinModel._transforms.input.call(instance, {text: 'a'})
-        .should.deep.eq({text: 'attribute.1(mixin.2(mixin.1(a)))'})
     });
   });
 });

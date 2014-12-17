@@ -1,10 +1,12 @@
 var chai = require('chai');
 var sinon = require('sinon');
+var chaiAsPromised = require('chai-as-promised');
 
 var datastored = require('../..');
 var testUtils = require('../test_utils');
 
 var expect = chai.expect;
+chai.use(chaiAsPromised);
 
 xdescribe('Instance', function() {
 
@@ -17,27 +19,28 @@ xdescribe('Instance', function() {
   describe('model options', function() {
 
     it('should assign "methods"', function() {
-      var instance = this.Model.build();
-      instance.methodFunc().should.deep.eq(instance);
+      return this.Model.create().then(function(instance) {
+        instance.methodFunc().should.deep.eq(instance);
+      });
     });
   });
 
-  describe('#fetch()', function() {
+  xdescribe('#fetch()', function() {
 
   });
 
-  describe('#save()', function() {
+  xdescribe('#save()', function() {
 
-    it('should fail with serializtion erros if they exist', function() {
+    it('should fail with serialization erros if they exist', function() {
       return instance.save();
     });
   });
 
-  describe('#get()', function() {
+  xdescribe('#get()', function() {
 
   });
 
-  describe('#getId()', function() {
+  xdescribe('#getId()', function() {
 
     beforeEach(function() {
       this.instance = this.Model.withId('value');
@@ -54,7 +57,7 @@ xdescribe('Instance', function() {
     });
   });
 
-  describe('#get()', function() {
+  xdescribe('#get()', function() {
 
     it('should transform data by default', function() {
       var instance = this.BasicModel.create({foo: 'bar'}, true);
@@ -88,7 +91,7 @@ xdescribe('Instance', function() {
     });
   });
 
-  describe('#set()', function() {
+  xdescribe('#set()', function() {
 
     it('should transform data by default', function() {
       var instance = this.BasicModel.create({foo: 'bar'});
@@ -137,7 +140,7 @@ xdescribe('Instance', function() {
     });
   });
 
-  describe('#save()', function() {
+  xdescribe('#save()', function() {
 
     before(function() {
       this.RequiredModel = this.createModel({
