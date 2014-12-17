@@ -17,6 +17,7 @@ var modelOptions = {
     id: datastored.Id({type: 'string'}),
     attributes: {
       text: datastored.String({hashStores: [hashStore]}),
+      text2: datastored.String({hashStores: [hashStore]}),
       default1: datastored.String({
         hashStores: [hashStore],
         defaultValue: 'default1'

@@ -22,7 +22,7 @@ describe('Model', function() {
   });
 
   beforeEach(function() {
-    sinon.stub(this.Model._transforms, 'input', function(data, transform) {
+    sinon.stub(this.Model._transforms, 'input', function(data) {
       return testUtils.wrapValues(data, 'input');
     });
     sinon.stub(this.Model._transforms, 'save', function(data, cb) {

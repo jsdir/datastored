@@ -36,27 +36,54 @@ describe('Instance', function() {
     });
   });
 
-  xdescribe('#get()', function() {
+  describe('#get()', function() {
 
-    it('should transform data by default', function() {
-      var instance = this.BasicModel.create({foo: 'bar'}, true);
-      instance.get('foo').should.eq('output(bar)');
+    it('should get a single attribute', function() {
+      var output = this.transforms.output;
+      return this.Model.create({text: 'a'}).then(function(instance) {
+        instance.get('text').should.eq('output(a)');
+        output.lastCall.thisValue.should.eq(instance);
+        output.should.have.been.calledWithExactly({
+          text: 'a'
+        }, {text: null}, undefined);
+      });
     });
 
-    it('should not transform data if requested', function() {
-      var instance = this.BasicModel.create({foo: 'bar'}, true);
-      instance.get('foo', true).should.eq('bar');
+    it('should get multiple attributes', function() {
+      var output = this.transforms.output;
+      return this.Model.create({text: 'a', text2: 'b'}).then(function(instance) {
+        instance.get(['text', 'text2']).should.deep.eq({
+          text: 'output(a)', text2: 'output(b)'
+        });
+        output.lastCall.thisValue.should.eq(instance);
+        output.should.have.been.calledWithExactly({
+          text: 'a', text2: 'b'
+        }, {text: undefined, text2: undefined}, undefined);
+      });
     });
 
-    it('should extend transforms correctly', function() {
-      var instance = this.TransformModel.create({foo: 'bar'}, true);
-      instance.get('foo').should.eq('output0(output1(output2(bar)))');
+    it('should get multiple attributes with options', function() {
+      var output = this.transforms.output;
+      return this.Model.create({text: 'a', text2: 'b'}).then(function(instance) {
+        instance.get({text: 1, text2: 2}).should.deep.eq({
+          text: 'output(a)', text2: 'output(b)'
+        });
+        output.lastCall.thisValue.should.eq(instance);
+        output.should.have.been.calledWithExactly({
+          text: 'a', text2: 'b'
+        }, {text: 1, text2: 2}, undefined);
+      });
     });
 
-    it('should support getting multiple attributes', function() {
-      var instance = this.BasicModel.create({foo: 'bar', bar: 'baz'}, true);
-      var result = instance.get(['foo', 'bar'], true);
-      result.should.deep.eq({foo: 'bar', bar: 'baz'});
+    it('should apply user transforms if requested', function() {
+      var output = this.transforms.output;
+      return this.Model.create({text: 'a'}).then(function(instance) {
+        instance.get('text', true).should.eq('output(a)');
+        output.lastCall.thisValue.should.eq(instance);
+        output.should.have.been.calledWithExactly({
+          text: 'a'
+        }, {text: null}, true);
+      });
     });
   });
 
@@ -85,6 +112,22 @@ describe('Instance', function() {
 
   xdescribe('#fetch()', function() {
 
+    it('should only fetch requested attributes', function(done) {
+      var scope = ['string'];
+      testUtils.saveAndReload(this.instance, scope, function(err, instance) {
+        if (err) {return done(err);}
+        instance.get('string', true).should.eq('foo');
+        expect(instance.get('integer')).to.be.undefined;
+        done();
+      });
+    });
+
+    it('should resolve indicating if the instance was found', function(done) {
+      var instance = this.Model.withId('undefined');
+      return instance.fetch('all').then(function(instance) {
+        expect(instance).to.be.null;
+      });
+    });
   });
 
   xdescribe('#save()', function() {
@@ -266,28 +309,6 @@ describe('Instance (integration)', function() {
       this.instance.isNew.should.be.false;
       this.instance.isChanged().should.be.false;
       done();
-    });
-  });
-
-  describe('#fetch()', function() {
-
-    it('should only fetch requested attributes', function(done) {
-      var scope = ['string'];
-      testUtils.saveAndReload(this.instance, scope, function(err, instance) {
-        if (err) {return done(err);}
-        instance.get('string', true).should.eq('foo');
-        expect(instance.get('integer')).to.be.undefined;
-        done();
-      });
-    });
-
-    it('should callback indicating if the instance was found', function(done) {
-      var instance = this.Model.get('undefined');
-      instance.fetch('all', function(err, fetched) {
-        if (err) {return done(err);}
-        fetched.should.be.false;
-        done();
-      })
     });
   });
 });
