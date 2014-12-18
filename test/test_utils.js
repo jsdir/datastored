@@ -83,6 +83,14 @@ var modelOptions = {
         }
       })
     },
+  },
+  RequiredModel: {
+    keyspace: 'RequiredModel',
+    id: datastored.Id({type: 'string'}),
+    attributes: {
+      text: datastored.String({hashStores: [hashStore]}),
+      required: datastored.String({required: true, hashStores: [hashStore]})
+    }
   }
 };
 
@@ -96,6 +104,9 @@ function createTestModels(orm) {
     ),
     MixinModel: orm.createModel(
       'MixinModel', modelOptions.MixinModel
+    ),
+    RequiredModel: orm.createModel(
+      'RequiredModel', modelOptions.RequiredModel
     )
   }
 }

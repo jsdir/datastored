@@ -134,16 +134,6 @@ describe('Instance', function() {
   xdescribe('#save()', function() {
 
     before(function() {
-      this.RequiredModel = this.orm.createModel('RequiredModel', {
-        keyspace: 'RequiredModel',
-        id: datastored.Id({type: 'string'}),
-        attributes: {
-          required: datastored.String({
-            required: true, hashStores: [true]
-          })
-        }
-      });
-
       this.ValidationModel = this.orm.createModel('ValidationModel', {
         keyspace: 'ValidationModel',
         id: datastored.Id({type: 'string'}),
@@ -190,22 +180,8 @@ describe('Instance', function() {
       });
     });
 
-    it('should validate required attributes', function(done) {
-      var instance = this.RequiredModel.create({foo: 'bar'});
-      instance.save(function(err) {
-        err.should.deep.eq({required: 'attribute "required" is not defined'});
-        done();
-      });
-    });
-
     it('should callback immediately if no attributes were changed', function() {
-      var spy = sinon.spy();
-      var instance = this.BasicModel.get('foo');
-      instance.save(function(err) {
-        if (err) {throw err;}
-        spy();
-      });
-      spy.should.have.been.called;
+      _save.should.not.have.beenCalled;
     });
 
     it('should fail with serialization errors if they exist', function() {

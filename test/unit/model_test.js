@@ -126,6 +126,15 @@ describe('Model', function() {
           instance.getId().should.not.eq('foo');
         });
     });
+
+    it('should fail if required attributes are not specified', function() {
+      return this.models.RequiredModel.create({text: 'a'})
+        .catch(function(err) {
+          err.should.deep.eq({
+            required: 'attribute "required" is required'
+          });
+        });
+    });
   });
 
   describe('#withId', function() {
@@ -179,9 +188,9 @@ describe('Model', function() {
       process.nextTick(function() {
         self.transforms = self.IndexedModel._transforms
         self.IndexedModel.create({
-          index: 'input;value1',
-          transformIndex: 'input;value2',
-          replaceIndex: 'input;value3'
+          index: 'input(value1)',
+          transformIndex: 'input(value2)',
+          replaceIndex: 'input(value3)'
         }).then(function(instance) {
           self.instance = instance;
         }).then(done, done);
@@ -189,10 +198,8 @@ describe('Model', function() {
     });
 
     beforeEach(function() {
-      sinon.stub(this.transforms, 'input', function(data, transform) {
-        return _.mapValues(data, function(value) {
-          return 'input;' + value;
-        });
+      sinon.stub(this.transforms, 'input', function(data) {
+        return testUtils.wrapValues(data, 'input');
       });
     });
 
@@ -213,16 +220,14 @@ describe('Model', function() {
 
     it('should fail if the query attribute is undefined', function() {
       var Model = this.Model;
-      (function() {
-        Model.find('undefined', 'a');
-      }).should.throw('"undefined" is not defined');
+      (function() {Model.find('undefined', 'a');})
+        .should.throw('"undefined" is not defined');
     });
 
     it('should check that the query attribute is indexed', function() {
       var Model = this.Model;
-      (function() {
-        Model.find('text', 'a');
-      }).should.throw('attribute "text" is not an index');
+      (function() {Model.find('text', 'a');})
+        .should.throw('attribute "text" is not an index');
     });
 
     it('should find the an instance with the indexed value', function() {
@@ -234,7 +239,7 @@ describe('Model', function() {
             index: 'value1'
           }, undefined);
           instance.getId().should.exist;
-          instance.get('index').should.eq('input;value1');
+          instance.get('index').should.eq('input(value1)');
           instance.saved.should.be.true;
         });
     });
@@ -248,7 +253,7 @@ describe('Model', function() {
             transformIndex: 'value2'
           }, true);
           instance.getId().should.exist;
-          instance.get('transformIndex').should.eq('input;value2');
+          instance.get('transformIndex').should.eq('input(value2)');
           instance.saved.should.be.true;
         });
     });
