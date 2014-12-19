@@ -17,26 +17,22 @@ describe('Model', function() {
 
   before(function() {
     testUtils.createTestEnv(this);
-    this.Model = this.models.BasicUnitModel;
-    this.modelOptions = this.options.BasicUnitModel;
   });
 
   beforeEach(function() {
-    sinon.stub(this.Model._transforms, 'input', function(data) {
-      return testUtils.wrapValues(data, 'input');
-    });
-    sinon.stub(this.Model._transforms, 'save', function(data, cb) {
-      cb(null, testUtils.wrapValues(data, 'save'));
-    });
-    this.transforms = this.Model._transforms;
+    var Model = this.models.BasicUnitModel;
+    this.transforms = testUtils.stubTransforms(this.models.BasicUnitModel);
   });
 
   afterEach(function() {
-    this.transforms.input.restore();
-    this.transforms.save.restore();
+    this.transforms.restore();
   });
 
   describe('options', function() {
+
+    before(function() {
+      this.modelOptions = this.options.BasicUnitModel;
+    });
 
     it('should require attributes', function(done) {
       var options = _.omit(this.modelOptions, 'attributes');
@@ -59,8 +55,9 @@ describe('Model', function() {
     });
 
     it('should assign "statics"', function() {
-      this.Model.property.should.eq('text');
-      this.Model.staticFunc().should.deep.eq(this.Model);
+      var Model = this.models.BasicUnitModel;
+      Model.property.should.eq('text');
+      Model.staticFunc().should.deep.eq(Model);
     });
   });
 
@@ -68,62 +65,71 @@ describe('Model', function() {
 
     it('should create and save an instance', function() {
       var transforms = this.transforms;
-      return this.Model
-        .create({text: 'a'})
+      var attributes = ['text', 'defaultFunc', 'default1', 'default2'];
+      var Model = this.models.BasicUnitModel;
+      return Model
+        .create({text: 'a', default1: 'b'})
         .then(function(instance) {
-          instance.get('text').should.eq('input(a)');
+          // Test local data
+          instance.get(attributes).should.deep.eq({
+            text: 'output(input(a))',
+            default1: 'output(input(b))',
+            default2: 'output(default2)',
+            defaultFunc: 'output(defaultFunc)'
+          });
+
+          // Test input transform
           transforms.input.lastCall.thisValue.should.eq(instance);
           transforms.input.should.have.been.calledWithExactly({
-            text: 'a'
-          }, undefined);
+            text: 'a', default1: 'b'
+          }, sinon.match.falsy);
+
+          // Test save transform
           transforms.save.lastCall.thisValue.should.eq(instance);
           transforms.save.should.have.been.calledWith({
-            default1: "default1",
-            default2: "default2",
-            defaultFunc: "defaultFunc",
+            default1: 'input(b)',
+            default2: 'default2',
+            defaultFunc: 'defaultFunc',
             text: 'input(a)'
+          });
+
+          // Fetch the instance for the next assertion.
+          var fetchedInstance = transforms.disabled(function() {
+            return Model.withId(instance.id);
+          });
+
+          return fetchedInstance.fetch(attributes);
+        })
+        .then(function(instance) {
+          // Test that the values were saved.
+          instance.get(attributes).should.deep.eq({
+            text: 'output(fetch(save(input(a))))',
+            default1: 'output(fetch(save(input(b))))',
+            default2: 'output(fetch(save(default2)))',
+            defaultFunc: 'output(fetch(save(defaultFunc)))'
           });
         });
     });
 
     it('should apply user transforms if requested', function() {
       var transforms = this.transforms;
-      return this.Model
+      return this.models.BasicUnitModel
         .create({text: 'a'}, true)
         .then(function(instance) {
-          instance.get('text').should.eq('input(a)');
           transforms.input.lastCall.thisValue.should.eq(instance);
           transforms.input.should.have.been.calledWithExactly({
             text: 'a'
           }, true);
-          transforms.save.lastCall.thisValue.should.eq(instance);
-          transforms.save.should.have.been.calledWith({
-            default1: "default1",
-            default2: "default2",
-            defaultFunc: "defaultFunc",
-            text: 'input(a)'
-          });
-        });
-    });
-
-    it('should set default values', function() {
-      return this.Model
-        .create({text: 'a', default1: 'b'})
-        .then(function(instance) {
-          instance.get('text').should.eq('input(a)');
-          instance.get('default1').should.eq('input(b)');
-          instance.get('default2').should.eq('default2');
-          instance.get('defaultFunc').should.eq('defaultFunc');
         });
     });
 
     it('should only set defined attributes', function() {
-      return this.Model
+      return this.models.BasicUnitModel
         .create({id: 'foo', text: 'a', foobar: 123})
         .then(function(instance) {
-          expect(instance.get('text')).to.eq('input(a)');
+          expect(instance.get('text')).to.eq('output(input(a))');
           expect(instance.get('foobar')).to.be.undefined;
-          instance.getId().should.not.eq('foo');
+          instance.getId().should.not.eq('output(foo)');
         });
     });
 
@@ -140,17 +146,17 @@ describe('Model', function() {
   describe('#withId', function() {
 
     it('should return an instance with the given id', function() {
-      var instance = this.Model.withId('a');
-      instance.getId().should.eq('input(a)');
+      var instance = this.models.BasicUnitModel.withId('a');
+      instance.getId().should.eq('output(input(a))');
       this.transforms.input.lastCall.thisValue.should.eq(instance);
       this.transforms.input.should.have.been.calledWithExactly({
         id: 'a'
-      }, undefined);
+      }, sinon.match.falsy);
     });
 
     it('should apply user transforms if requested', function() {
-      var instance = this.Model.withId('a', true);
-      instance.getId().should.eq('input(a)');
+      var instance = this.models.BasicUnitModel.withId('a', true);
+      instance.getId().should.eq('output(input(a))');
       this.transforms.input.lastCall.thisValue.should.eq(instance);
       this.transforms.input.should.have.been.calledWithExactly({
         id: 'a'
@@ -219,13 +225,13 @@ describe('Model', function() {
     }
 
     it('should fail if the query attribute is undefined', function() {
-      var Model = this.Model;
+      var Model = this.models.BasicUnitModel;
       (function() {Model.find('undefined', 'a');})
         .should.throw('"undefined" is not defined');
     });
 
     it('should check that the query attribute is indexed', function() {
-      var Model = this.Model;
+      var Model = this.models.BasicUnitModel;
       (function() {Model.find('text', 'a');})
         .should.throw('attribute "text" is not an index');
     });

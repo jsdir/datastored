@@ -130,7 +130,7 @@ describe('output transform', function() {
     var MixinModel = this.models.MixinModel;
     return MixinModel.create().then(function(instance) {
       MixinModel._transforms.output.call(instance, {text: 'a'})
-        .should.deep.eq({text: 'attribute.1(mixin.2(mixin.1(a)))'})
+        .should.deep.eq({text: 'mixin.1(mixin.2(attribute.1(a)))'})
     });
   });
 
@@ -165,6 +165,64 @@ describe('output transform', function() {
         }, true);
         optionsOutput.lastCall.thisValue.should.eq(instance);
       }).then(done, done);
+    });
+  });
+});
+
+describe('save transform', function() {
+
+  before(function() {
+    testUtils.createTestEnv(this);
+  });
+
+  before(function() {
+    this.ValidationModel = this.orm.createModel('ValidationModel', {
+      keyspace: 'ValidationModel',
+      id: datastored.Id({type: 'string'}),
+      attributes: {
+        bar: datastored.String({hashStores: [true], rules: {max: 2}}),
+        baz: datastored.String({hashStores: [true], rules: {min: 4}})
+      }
+    });
+  });
+
+  xit('should apply mixin transforms in the correct order', function() {
+    var MixinModel = this.models.MixinModel;
+    return MixinModel.create().then(function(instance) {
+      MixinModel._transforms.save.call(instance, {text: 'a'})
+        .should.deep.eq({text: 'attribute.1(mixin.2(mixin.1(a)))'})
+    });
+  });
+
+  it('should validate data', function() {
+    return this.ValidationModel.create({bar: 'abc', baz: 'abc'})
+      .should.be.rejectedWith({
+        bar: 'attribute "bar" must have a maximum of 2 characters',
+        baz: 'attribute "baz" must have a minimum of 4 characters'
+      });
+  });
+
+  xit('should fail with serialization errors', function(done) {
+    var TypeModel = this.models.TypeModel;
+    TypeModel.create().then(function(instance) {
+      TypeModel._transforms.save.call(instance, {
+        date: 'invalid'
+      }, function(err) {
+        console.log(arguments)
+        err.should.deep.eq(345);
+        done();
+      });
+    }, done);
+  });
+});
+
+describe('fetch transform', function() {
+
+  xit('should apply mixin transforms in the correct order', function() {
+    var MixinModel = this.models.MixinModel;
+    return MixinModel.create().then(function(instance) {
+      MixinModel._transforms.save.call(instance, {text: 'a'})
+        .should.deep.eq({text: 'attribute.1(mixin.2(mixin.1(a)))'})
     });
   });
 });

@@ -131,61 +131,20 @@ describe('Instance', function() {
     });
   });
 
-  xdescribe('#save()', function() {
+  describe('#save()', function() {
 
-    before(function() {
-      this.ValidationModel = this.orm.createModel('ValidationModel', {
-        keyspace: 'ValidationModel',
-        id: datastored.Id({type: 'string'}),
-        attributes: {
-          bar: datastored.String({
-            hashStores: [true],
-            rules: {max: 2}
-          }),
-          baz: datastored.String({
-            hashStores: [true],
-            rules: {min: 4}
-          })
-        }
+    beforeEach(function() {
+      sinon.stub(this.Model._transforms, 'save', function(data, cb) {
+        cb(null, testUtils.wrapValues(data, 'save'));
       });
-
-      this.ErrorModel = this.orm.createModel('ErrorModel', {
-        keyspace: 'ErrorModel',
-        id: datastored.Id({type: 'string'}),
-        attributes: {text: datastored.String({hashStores: [true]})},
-        asyncTransform: {
-          save: function(options, data, cb) {
-            cb('message');
-          }
-        }
-      });
+      this.transforms = this.Model._transforms;
     });
 
-    it('should fail if instance errors exist', function(done) {
-      var instance = this.ErrorModel.create({foo: 'bar'});
-      instance.save(function(err) {
-        err.should.eq('message');
-        done();
-      });
+    afterEach(function() {
+      this.transforms.save.restore();
     });
 
-    it('should validate attributes', function(done) {
-      var instance = this.ValidationModel.create({bar: 'abc', baz: 'abc'});
-      instance.save(function(err) {
-        err.should.deep.eq({
-          bar: 'attribute "bar" must have a maximum of 2 characters',
-          baz: 'attribute "baz" must have a minimum of 4 characters'
-        });
-        done();
-      });
-    });
-
-    it('should callback immediately if no attributes were changed', function() {
-      _save.should.not.have.beenCalled;
-    });
-
-    it('should fail with serialization errors if they exist', function() {
-      return instance.save();
-    });
+    // TODO: test by first by creating all of the data values for RequiredModel,
+    // then save only a few attributes to check that they are not required a second time.
   });
 });

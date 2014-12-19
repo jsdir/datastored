@@ -1,4 +1,5 @@
 var _ = require('lodash');
+var sinon = require('sinon');
 
 var datastored = require('..');
 var memoryDatastores = require('../lib/datastores/memory');
@@ -137,7 +138,36 @@ function createTestEnv(ctx) {
   }
 }
 
+function stubTransforms(model) {
+  var transforms = _.clone(model._transforms);
+  var stubs = {
+    input: sinon.spy(function(data) {return wrapValues(data, 'input');}),
+    output: sinon.spy(function(data) {return wrapValues(data, 'output');}),
+    save: sinon.spy(function(data, cb) {cb(null, wrapValues(data, 'save'));}),
+    fetch: sinon.spy(function(data, cb) {cb(null, wrapValues(data, 'fetch'));})
+  }
+  var stubTransforms = model._transforms;
+  _.extend(stubTransforms, stubs);
+
+  function restore() {
+    model._transforms = transforms;
+  }
+
+  return _.extend({
+    restore: restore,
+    disabled: function(func) {
+      // Temporarily disable stubs.
+      restore();
+      var value = func();
+      // Enable stubs.
+      model._transforms = stubTransforms;
+      return value;
+    }
+  }, stubs);
+}
+
 module.exports = {
   createTestEnv: createTestEnv,
-  wrapValues: wrapValues
+  wrapValues: wrapValues,
+  stubTransforms: stubTransforms
 };
