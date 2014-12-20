@@ -175,8 +175,13 @@ function stubTransforms(model) {
   }, stubs);
 }
 
+function shouldReject() {
+  throw new Error('promise should have been rejected');
+}
+
 module.exports = {
   createTestEnv: createTestEnv,
   wrapValues: wrapValues,
-  stubTransforms: stubTransforms
+  stubTransforms: stubTransforms,
+  shouldReject: shouldReject
 };

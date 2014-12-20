@@ -213,9 +213,45 @@ describe('save transform', function() {
     }).catch(done);
   });
 
+  it('should pass parameters to mixins and attribute methods', function(done) {
+    var attributeSave = sinon.spy(function(_, cb) {cb(null, 'a');});
+    var optionsSave = sinon.spy(function(_, cb) {cb(null, {text: 'a'});});
+    var Model = this.orm.createModel('SaveModel', {
+      keyspace: 'SaveModel',
+      id: datastored.Id({type: 'string'}),
+      attributes: {
+        text: datastored.String({
+          save: attributeSave,
+          hashStores: [new memoryDatastores.MemoryHashStore()]
+        })
+      },
+      save: optionsSave
+    });
+
+    process.nextTick(function() {
+      getTransforms(Model, function(transforms, instance) {
+        attributeSave.reset();
+        optionsSave.reset();
+        transforms.save.call(instance, {text: 'a'}, function(err, data) {
+          data.should.deep.eq({text: 'a'});
+
+          attributeSave.should.have.been.calledWithExactly('a',
+            sinon.match.func);
+          attributeSave.lastCall.thisValue.should.eq(instance);
+
+          optionsSave.should.have.been.calledWithExactly({text: 'a'},
+            sinon.match.func);
+          optionsSave.lastCall.thisValue.should.eq(instance);
+
+          done();
+        });
+      }).catch(done);
+    });
+  });
+
   it('should validate data', function() {
     return this.ValidationModel.create({bar: 'abc', baz: 'abc'})
-      .catch(function(err) {
+      .then(testUtils.shouldReject, function(err) {
         err.should.deep.eq({
           bar: 'attribute "bar" must have a maximum of 2 characters',
           baz: 'attribute "baz" must have a minimum of 4 characters'
@@ -223,17 +259,16 @@ describe('save transform', function() {
       });
   });
 
-  xit('should fail with serialization errors', function(done) {
-    var TypeModel = this.models.TypeModel;
-    TypeModel.create().then(function(instance) {
-      TypeModel._transforms.save.call(instance, {
-        date: 'invalid'
-      }, function(err) {
-        console.log(arguments)
-        err.should.deep.eq(345);
+  it('should fail with serialization errors', function(done) {
+    var Model = this.models.TypeModel;
+    getTransforms(Model, function(transforms, instance) {
+      var data = {date: 'invalid'}
+      transforms.input.call(instance, data, true);
+      transforms.save.call(instance, data, function(err) {
+        err.should.deep.eq({date: 'Invalid date'});
         done();
       });
-    }, done);
+    }).catch(done);
   });
 });
 
