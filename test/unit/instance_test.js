@@ -17,14 +17,11 @@ describe('Instance', function() {
   });
 
   beforeEach(function() {
-    sinon.stub(this.Model._transforms, 'output', function(data) {
-      return testUtils.wrapValues(data, 'output');
-    });
-    this.transforms = this.Model._transforms;
+    this.transforms = testUtils.stubTransforms(this.models.BasicUnitModel);
   });
 
   afterEach(function() {
-    this.transforms.output.restore();
+    this.transforms.restore();
   });
 
   describe('model options', function() {
@@ -40,50 +37,54 @@ describe('Instance', function() {
 
     it('should get a single attribute', function() {
       var output = this.transforms.output;
-      return this.Model.create({text: 'a'}).then(function(instance) {
-        instance.get('text').should.eq('output(a)');
-        output.lastCall.thisValue.should.eq(instance);
-        output.should.have.been.calledWithExactly({
-          text: 'a'
-        }, {text: null}, undefined);
-      });
+      return this.Model.create({text: 'a'})
+        .then(function(instance) {
+          instance.get('text').should.eq('output(input(a))');
+          output.lastCall.thisValue.should.eq(instance);
+          output.should.have.been.calledWithExactly({
+            text: 'input(a)'
+          }, {text: null}, sinon.match.falsy);
+        });
     });
 
     it('should get multiple attributes', function() {
       var output = this.transforms.output;
-      return this.Model.create({text: 'a', text2: 'b'}).then(function(instance) {
-        instance.get(['text', 'text2']).should.deep.eq({
-          text: 'output(a)', text2: 'output(b)'
+      return this.Model.create({text: 'a', text2: 'b'})
+        .then(function(instance) {
+          instance.get(['text', 'text2']).should.deep.eq({
+            text: 'output(input(a))', text2: 'output(input(b))'
+          });
+          output.lastCall.thisValue.should.eq(instance);
+          output.should.have.been.calledWithExactly({
+            text: 'input(a)', text2: 'input(b)'
+          }, {text: undefined, text2: undefined}, sinon.match.falsy);
         });
-        output.lastCall.thisValue.should.eq(instance);
-        output.should.have.been.calledWithExactly({
-          text: 'a', text2: 'b'
-        }, {text: undefined, text2: undefined}, undefined);
-      });
     });
 
     it('should get multiple attributes with options', function() {
       var output = this.transforms.output;
-      return this.Model.create({text: 'a', text2: 'b'}).then(function(instance) {
-        instance.get({text: 1, text2: 2}).should.deep.eq({
-          text: 'output(a)', text2: 'output(b)'
+      return this.Model.create({text: 'a', text2: 'b'})
+        .then(function(instance) {
+          instance.get({text: 1, text2: 2}).should.deep.eq({
+            text: 'output(input(a))', text2: 'output(input(b))'
+          });
+          output.lastCall.thisValue.should.eq(instance);
+          output.should.have.been.calledWithExactly({
+            text: 'input(a)', text2: 'input(b)'
+          }, {text: 1, text2: 2}, sinon.match.falsy);
         });
-        output.lastCall.thisValue.should.eq(instance);
-        output.should.have.been.calledWithExactly({
-          text: 'a', text2: 'b'
-        }, {text: 1, text2: 2}, undefined);
-      });
     });
 
     it('should apply user transforms if requested', function() {
       var output = this.transforms.output;
-      return this.Model.create({text: 'a'}).then(function(instance) {
-        instance.get('text', true).should.eq('output(a)');
-        output.lastCall.thisValue.should.eq(instance);
-        output.should.have.been.calledWithExactly({
-          text: 'a'
-        }, {text: null}, true);
-      });
+      return this.Model.create({text: 'a'})
+        .then(function(instance) {
+          instance.get('text', true).should.eq('output(input(a))');
+          output.lastCall.thisValue.should.eq(instance);
+          output.should.have.been.calledWithExactly({
+            text: 'input(a)'
+          }, {text: null}, true);
+        });
     });
   });
 
@@ -94,18 +95,18 @@ describe('Instance', function() {
     });
 
     it('should return the instance id', function() {
-      this.instance.getId().should.eq('output(value)');
+      this.instance.getId().should.eq('output(input(value))');
       this.transforms.output.lastCall.thisValue.should.eq(this.instance);
       this.transforms.output.should.have.been.calledWithExactly({
-        id: 'value'
-      }, null, undefined);
+        id: 'input(value)'
+      }, null, sinon.match.falsy);
     });
 
     it('should apply user transforms if requested', function() {
-      this.instance.getId(true).should.eq('output(value)');
+      this.instance.getId(true).should.eq('output(input(value))');
       this.transforms.output.lastCall.thisValue.should.eq(this.instance);
       this.transforms.output.should.have.been.calledWithExactly({
-        id: 'value'
+        id: 'input(value)'
       }, null, true);
     });
   });
@@ -114,11 +115,14 @@ describe('Instance', function() {
 
     it('should only fetch requested attributes', function() {
       var Model = this.Model;
+      var transforms = this.transforms;
       return Model.create({text: 'a', text2: 'b'}).then(function(instance) {
-        var newInstance = Model.withId(instance.id);
+        var newInstance = transforms.disabled(function() {
+          return Model.withId(instance.id);
+        });
         return newInstance.fetch(['text']);
       }).then(function(instance) {
-        instance.get('text').should.eq('output(a)');
+        instance.get('text').should.eq('output(fetch(save(input(a))))');
         expect(instance.get('text2')).to.be.undefined;
       });
     });
@@ -133,18 +137,19 @@ describe('Instance', function() {
 
   describe('#save()', function() {
 
-    beforeEach(function() {
-      sinon.stub(this.Model._transforms, 'save', function(data, cb) {
-        cb(null, testUtils.wrapValues(data, 'save'));
-      });
-      this.transforms = this.Model._transforms;
+    it('should save values', function() {
+      var attributes = ['text', 'required'];
+      return this.models.RequiredModel.create({
+        text: 'a', required: 'b'
+      })
+        // Make sure required errors are not thrown when `required` is not
+        // saved.
+        .then(function(instance) {return instance.save({text: 'c'});})
+        // Test that the saved attributes were persisted.
+        .then(testUtils.reloadInstance(attributes))
+        .then(function(instance) {
+          instance.get(attributes).should.deep.eq({text: 'c', required: 'b'});
+        });
     });
-
-    afterEach(function() {
-      this.transforms.save.restore();
-    });
-
-    // TODO: test by first by creating all of the data values for RequiredModel,
-    // then save only a few attributes to check that they are not required a second time.
   });
 });

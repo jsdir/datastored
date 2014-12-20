@@ -188,9 +188,16 @@ function shouldReject() {
   throw new Error('promise should have been rejected');
 }
 
+function reloadInstance(attributes) {
+  return function(instance) {
+    return instance.model.withId(instance.id).fetch(attributes);
+  }
+}
+
 module.exports = {
   createTestEnv: createTestEnv,
   wrapValues: wrapValues,
   stubTransforms: stubTransforms,
-  shouldReject: shouldReject
+  shouldReject: shouldReject,
+  reloadInstance: reloadInstance
 };
