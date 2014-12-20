@@ -66,6 +66,9 @@ var modelOptions = {
       },
       save: function(data, cb) {
         cb(null, wrapValues(data, 'mixin.1'));
+      },
+      fetch: function(data, cb) {
+        cb(null, wrapValues(data, 'mixin.1'));
       }
     }, {
       input: function(data) {
@@ -75,6 +78,9 @@ var modelOptions = {
         return wrapValues(data, 'mixin.2');
       },
       save: function(data, cb) {
+        cb(null, wrapValues(data, 'mixin.2'));
+      },
+      fetch: function(data, cb) {
         cb(null, wrapValues(data, 'mixin.2'));
       }
     }],
@@ -89,6 +95,9 @@ var modelOptions = {
           return 'attribute.1(' + value + ')';
         },
         save: function(value, cb) {
+          cb(null, 'attribute.1(' + value + ')');
+        },
+        fetch: function(value, cb) {
           cb(null, 'attribute.1(' + value + ')');
         }
       })

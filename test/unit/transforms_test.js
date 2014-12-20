@@ -272,13 +272,56 @@ describe('save transform', function() {
   });
 });
 
-xdescribe('fetch transform', function() {
+describe('fetch transform', function() {
 
-  xit('should apply mixin transforms in the correct order', function() {
-    var MixinModel = this.models.MixinModel;
-    return MixinModel.create().then(function(instance) {
-      MixinModel._transforms.save.call(instance, {text: 'a'})
-        .should.deep.eq({text: 'attribute.1(mixin.2(mixin.1(a)))'})
+  before(function() {
+    testUtils.createTestEnv(this);
+  });
+
+  it('should apply transforms in the correct order', function(done) {
+    var Model = this.models.MixinModel;
+    getTransforms(Model, function(transforms, instance) {
+      transforms.fetch.call(instance, {text: 'a'}, function(err, data) {
+        if (err) {return done(err);}
+        data.should.deep.eq({text: 'mixin.1(mixin.2(attribute.1(a)))'});
+        done();
+      });
+    }).catch(done);
+  });
+
+  it('should pass parameters to mixins and attribute methods', function(done) {
+    var attributeFetch = sinon.spy(function(_, cb) {cb(null, 'a');});
+    var optionsFetch = sinon.spy(function(_, cb) {cb(null, {text: 'a'});});
+    var Model = this.orm.createModel('FetchModel', {
+      keyspace: 'FetchModel',
+      id: datastored.Id({type: 'string'}),
+      attributes: {
+        text: datastored.String({
+          fetch: attributeFetch,
+          hashStores: [new memoryDatastores.MemoryHashStore()]
+        })
+      },
+      fetch: optionsFetch
+    });
+
+    process.nextTick(function() {
+      getTransforms(Model, function(transforms, instance) {
+        attributeFetch.reset();
+        optionsFetch.reset();
+        transforms.fetch.call(instance, {text: 'a'}, function(err, data) {
+          data.should.deep.eq({text: 'a'});
+
+          attributeFetch.should.have.been.calledWithExactly('a',
+            sinon.match.func);
+          attributeFetch.lastCall.thisValue.should.eq(instance);
+
+          optionsFetch.should.have.been.calledWithExactly({text: 'a'},
+            sinon.match.func);
+          optionsFetch.lastCall.thisValue.should.eq(instance);
+
+          done();
+        });
+      }).catch(done);
     });
   });
 });
