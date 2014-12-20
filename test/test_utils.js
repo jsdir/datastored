@@ -190,7 +190,10 @@ function shouldReject() {
 
 function reloadInstance(attributes) {
   return function(instance) {
-    return instance.model.withId(instance.id).fetch(attributes);
+    var newInstance = instance.model.withId(instance.id);
+    // Override the input transform.
+    newInstance.id = instance.id;
+    return newInstance.fetch(attributes);
   }
 }
 

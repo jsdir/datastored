@@ -93,13 +93,9 @@ describe('Model', function() {
             text: 'input(a)'
           });
 
-          // Fetch the instance for the next assertion.
-          var fetchedInstance = transforms.disabled(function() {
-            return Model.withId(instance.id);
-          });
-
-          return fetchedInstance.fetch(attributes);
+          return instance;
         })
+        .then(testUtils.reloadInstance(attributes))
         .then(function(instance) {
           // Test that the values were saved.
           instance.get(attributes).should.deep.eq({

@@ -116,15 +116,12 @@ describe('Instance', function() {
     it('should only fetch requested attributes', function() {
       var Model = this.Model;
       var transforms = this.transforms;
-      return Model.create({text: 'a', text2: 'b'}).then(function(instance) {
-        var newInstance = transforms.disabled(function() {
-          return Model.withId(instance.id);
+      return Model.create({text: 'a', text2: 'b'})
+        .then(testUtils.reloadInstance(['text']))
+        .then(function(instance) {
+          instance.get('text').should.eq('output(fetch(save(input(a))))');
+          expect(instance.get('text2')).to.be.undefined;
         });
-        return newInstance.fetch(['text']);
-      }).then(function(instance) {
-        instance.get('text').should.eq('output(fetch(save(input(a))))');
-        expect(instance.get('text2')).to.be.undefined;
-      });
     });
 
     it('should resolve indicating if the instance was found', function() {
