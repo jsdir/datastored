@@ -58,29 +58,38 @@ var modelOptions = {
   MixinModel: {
     keyspace: 'MixinModel',
     mixins: [{
-      input: function(data, applyUserTransforms) {
+      input: function(data) {
         return wrapValues(data, 'mixin.1');
       },
-      output: function(data, applyUserTransforms) {
+      output: function(data) {
         return wrapValues(data, 'mixin.1');
+      },
+      save: function(data, cb) {
+        cb(null, wrapValues(data, 'mixin.1'));
       }
     }, {
-      input: function(data, applyUserTransforms) {
+      input: function(data) {
         return wrapValues(data, 'mixin.2');
       },
-      output: function(data, applyUserTransforms) {
+      output: function(data) {
         return wrapValues(data, 'mixin.2');
+      },
+      save: function(data, cb) {
+        cb(null, wrapValues(data, 'mixin.2'));
       }
     }],
     id: datastored.Id({type: 'string'}),
     attributes: {
       text: datastored.String({
         hashStores: [hashStore],
-        input: function(value, applyUserTransforms) {
+        input: function(value) {
           return 'attribute.1(' + value + ')';
         },
-        output: function(value, applyUserTransforms) {
+        output: function(value) {
           return 'attribute.1(' + value + ')';
+        },
+        save: function(value, cb) {
+          cb(null, 'attribute.1(' + value + ')');
         }
       })
     },

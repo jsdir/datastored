@@ -52,6 +52,10 @@ Boolean value. Default `false`. Set to `true` to prevent the user from setting t
 
 The valids-compatible type for use in the datastore marshallers.
 
+#### `rules`
+
+valids-compatible rules for attribute validation.
+
 ### Functions
 
 #### `input`
