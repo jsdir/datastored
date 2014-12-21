@@ -1,5 +1,8 @@
+var domain = require('domain');
+
 var _ = require('lodash');
 var sinon = require('sinon');
+var RSVP = require('rsvp');
 
 var datastored = require('..');
 var memoryDatastores = require('../lib/datastores/memory');
@@ -10,6 +13,12 @@ function wrapValues(data, wrapValue) {
   return _.mapValues(data, function(value) {
     return wrapValue + '(' + value + ')';
   });
+}
+
+function getAsyncError(func, cb) {
+  var errDomain = domain.create();
+  errDomain.on('error', cb);
+  errDomain.run(func);
 }
 
 var modelOptions = {
@@ -131,28 +140,38 @@ function createTestModels(orm) {
 }
 
 function createTestEnv(ctx) {
-  ctx.orm = datastored.createOrm();
+  ctx.orm = datastored.createOrm({createModelsAtRuntime: true});
   ctx.options = modelOptions;
   ctx.models = createTestModels(ctx.orm);
 
   ctx.assertCreateFails = function(options, message, cb) {
     if (cb) {
-      listeners = process.listeners('uncaughtException');
-      process.removeAllListeners('uncaughtException');
-
-      process.once('uncaughtException', function(err) {
+      getAsyncError(function() {
+        ctx.orm.createModel(_.uniqueId(), options);
+      }, function(err) {
         err.message.should.eq(message);
-        _.each(listeners, function(listener) {
-          process.on('uncaughtException', listener);
-        });
         cb();
       });
-      ctx.orm.createModel(_.uniqueId(), options);
     } else {
       (function() {
         ctx.orm.createModel(_.uniqueId(), options);
       }).should.throw(message);
     }
+  }
+
+  ctx.createWithAttributes = function(name, attributes) {
+    // `name` is optional
+    if (_.isNull(attributes)) {
+      attributes = name;
+      // If `name` is not defined, set it to a random id.
+      name = _.uniqueId();
+    }
+
+    return ctx.orm.createModel(name, {
+      keyspace: name,
+      id: datastored.Id({type: 'integer'}),
+      attributes: attributes
+    });
   }
 }
 
