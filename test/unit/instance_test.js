@@ -43,7 +43,7 @@ describe('Instance', function() {
           output.lastCall.thisValue.should.eq(instance);
           output.should.have.been.calledWithExactly({
             text: 'input(a)'
-          }, {text: null}, sinon.match.falsy);
+          }, {text: true}, sinon.match.falsy);
         });
     });
 
@@ -83,7 +83,7 @@ describe('Instance', function() {
           output.lastCall.thisValue.should.eq(instance);
           output.should.have.been.calledWithExactly({
             text: 'input(a)'
-          }, {text: null}, true);
+          }, {text: true}, true);
         });
     });
   });
@@ -127,7 +127,7 @@ describe('Instance', function() {
     it('should resolve indicating if the instance was found', function() {
       var instance = this.Model.withId('undefined');
       return instance.fetch('text').then(function(instance) {
-        expect(instance).to.be.null;
+        expect(instance).to.be.false;
       });
     });
   });

@@ -5,9 +5,8 @@ var sinon = require('sinon');
 var RSVP = require('rsvp');
 
 var datastored = require('..');
-var memoryDatastores = require('../lib/datastores/memory');
 
-var hashStore = new memoryDatastores.MemoryHashStore();
+var hashStore = new datastored.MemoryHashStore();
 
 function wrapValues(data, wrapValue) {
   return _.mapValues(data, function(value) {
@@ -97,16 +96,16 @@ var modelOptions = {
     attributes: {
       text: datastored.String({
         hashStores: [hashStore],
-        input: function(value) {
+        input: function(name, value) {
           return 'attribute.1(' + value + ')';
         },
-        output: function(value) {
+        output: function(name, value) {
           return 'attribute.1(' + value + ')';
         },
-        save: function(value, cb) {
+        save: function(name, value, cb) {
           cb(null, 'attribute.1(' + value + ')');
         },
-        fetch: function(value, cb) {
+        fetch: function(name, value, cb) {
           cb(null, 'attribute.1(' + value + ')');
         }
       })
@@ -212,7 +211,10 @@ function reloadInstance(attributes) {
     var newInstance = instance.model.withId(instance.id);
     // Override the input transform.
     newInstance.id = instance.id;
-    return newInstance.fetch(attributes);
+    return newInstance.fetch(attributes).then(function(exists) {
+      exists.should.be.true;
+      return newInstance;
+    });
   }
 }
 

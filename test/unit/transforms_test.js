@@ -52,7 +52,7 @@ describe('input transform', function() {
         transforms.input.call(instance, {text: 'a'}, true)
           .should.deep.eq({text: 'a'});
 
-        attributeInput.should.have.been.calledWithExactly('a', true);
+        attributeInput.should.have.been.calledWithExactly('text', 'a', true);
         attributeInput.lastCall.thisValue.should.eq(instance);
 
         optionsInput.should.have.been.calledWithExactly({text: 'a'}, true);
@@ -135,7 +135,7 @@ describe('output transform', function() {
         transforms.output.call(instance, {text: 'a'}, {option: 'value'}, true)
           .should.deep.eq({text: 'a'});
 
-        attributeOutput.should.have.been.calledWithExactly('a', {
+        attributeOutput.should.have.been.calledWithExactly('text', 'a', {
           option: 'value'
         }, true);
         attributeOutput.lastCall.thisValue.should.eq(instance);
@@ -214,7 +214,7 @@ describe('save transform', function() {
   });
 
   it('should pass parameters to mixins and attribute methods', function(done) {
-    var attributeSave = sinon.spy(function(_, cb) {cb(null, 'a');});
+    var attributeSave = sinon.spy(function(n, _, cb) {cb(null, 'a');});
     var optionsSave = sinon.spy(function(_, cb) {cb(null, {text: 'a'});});
     var Model = this.orm.createModel('SaveModel', {
       keyspace: 'SaveModel',
@@ -235,7 +235,7 @@ describe('save transform', function() {
         transforms.save.call(instance, {text: 'a'}, function(err, data) {
           data.should.deep.eq({text: 'a'});
 
-          attributeSave.should.have.been.calledWithExactly('a',
+          attributeSave.should.have.been.calledWithExactly('text', 'a',
             sinon.match.func);
           attributeSave.lastCall.thisValue.should.eq(instance);
 
@@ -290,7 +290,7 @@ describe('fetch transform', function() {
   });
 
   it('should pass parameters to mixins and attribute methods', function(done) {
-    var attributeFetch = sinon.spy(function(_, cb) {cb(null, 'a');});
+    var attributeFetch = sinon.spy(function(n, _, cb) {cb(null, 'a');});
     var optionsFetch = sinon.spy(function(_, cb) {cb(null, {text: 'a'});});
     var Model = this.orm.createModel('FetchModel', {
       keyspace: 'FetchModel',
@@ -311,7 +311,7 @@ describe('fetch transform', function() {
         transforms.fetch.call(instance, {text: 'a'}, function(err, data) {
           data.should.deep.eq({text: 'a'});
 
-          attributeFetch.should.have.been.calledWithExactly('a',
+          attributeFetch.should.have.been.calledWithExactly('text', 'a',
             sinon.match.func);
           attributeFetch.lastCall.thisValue.should.eq(instance);
 
