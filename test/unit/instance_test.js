@@ -57,7 +57,7 @@ describe('Instance', function() {
           output.lastCall.thisValue.should.eq(instance);
           output.should.have.been.calledWithExactly({
             text: 'input(a)', text2: 'input(b)'
-          }, {text: undefined, text2: undefined}, sinon.match.falsy);
+          }, {text: true, text2: true}, sinon.match.falsy);
         });
     });
 

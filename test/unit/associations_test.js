@@ -102,33 +102,43 @@ describe('HasOne', function() {
     });
 
     it('should save nested instances', function() {
+      var child;
+      var attributes = {
+        foo: true,
+        child: {
+          foo: true,
+          // Undefined attribute
+          child2: {foo: true}
+        }
+      };
       var data = {
         foo: 'bar1',
         child: {foo: 'bar2'}
       };
+
       return this.ParentModel
         .create(data)
         .then(function(instance) {
           // Test get without user transforms.
-          var child = instance.get('child');
+          child = instance.get('child');
           instance.get('foo').should.eq('bar1');
           child.get('foo').should.eq('bar2');
 
           // Test get with user transforms.
-          instance.get({
-            foo: true,
-            child: {
-              foo: true,
-              child2: {
-                foo: true
-              }
-            }
-          }, true).should.deep.eq(data);
+          instance.get(attributes, true).should.deep.eq(data);
 
+          return instance;
         })
+        .then(testUtils.reloadInstance(['foo', 'child']))
         .then(function(instance) {
-          // Test fetched state. fetch state with options == data. get and fetch options are equal.
-          // fetch parent from datastore and check that child models are assigned.
+          instance.get(['foo', 'child'], true).should.deep.eq({
+            foo: 'bar1', child: child.id
+          });
+          return instance;
+        })
+        .then(testUtils.reloadInstance(attributes))
+        .then(function(instance) {
+          instance.get(attributes, true).should.deep.eq(data);
         });
     });
   });
@@ -149,7 +159,6 @@ describe('HasOne', function() {
       (function() {
         self.parent.save({child: {child: {foo: 'bar'}}})
       }).should.throw('cannot save nested instances in multi-type associations');
-      self
     });
   });
 

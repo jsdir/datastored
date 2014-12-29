@@ -75,7 +75,7 @@ var modelOptions = {
       save: function(data, cb) {
         cb(null, wrapValues(data, 'mixin.1'));
       },
-      fetch: function(data, cb) {
+      fetch: function(data, options, cb) {
         cb(null, wrapValues(data, 'mixin.1'));
       }
     }, {
@@ -88,7 +88,7 @@ var modelOptions = {
       save: function(data, cb) {
         cb(null, wrapValues(data, 'mixin.2'));
       },
-      fetch: function(data, cb) {
+      fetch: function(data, options, cb) {
         cb(null, wrapValues(data, 'mixin.2'));
       }
     }],
@@ -105,7 +105,7 @@ var modelOptions = {
         save: function(name, value, cb) {
           cb(null, 'attribute.1(' + value + ')');
         },
-        fetch: function(name, value, cb) {
+        fetch: function(name, value, options, cb) {
           cb(null, 'attribute.1(' + value + ')');
         }
       })
@@ -180,7 +180,7 @@ function stubTransforms(model) {
     input: sinon.spy(function(data) {return wrapValues(data, 'input');}),
     output: sinon.spy(function(data) {return wrapValues(data, 'output');}),
     save: sinon.spy(function(data, cb) {cb(null, wrapValues(data, 'save'));}),
-    fetch: sinon.spy(function(data, cb) {cb(null, wrapValues(data, 'fetch'));})
+    fetch: sinon.spy(function(data, options, cb) {cb(null, wrapValues(data, 'fetch'));})
   }
   var stubTransforms = model._transforms;
   _.extend(stubTransforms, stubs);
