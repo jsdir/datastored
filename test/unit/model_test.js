@@ -131,7 +131,7 @@ describe('Model', function() {
 
     it('should fail if required attributes are not specified', function() {
       return this.models.RequiredModel.create({text: 'a'})
-        .catch(function(err) {
+        .then(testUtils.shouldReject, function(err) {
           err.should.deep.eq({
             required: 'attribute "required" is required'
           });
