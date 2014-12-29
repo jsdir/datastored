@@ -49,10 +49,21 @@ describe('HasOne', function() {
       child: datastored.HasOne({
         type: 'ChildModel', link: 'parent', hashStores: [this.hashStore]
       }),
+      guardedChild: datastored.HasOne({
+        type: 'ChildModel', hashStores: [this.hashStore], guarded: true
+      }),
       unlinkedChild: datastored.HasOne({
         type: 'ChildModel', hashStores: [this.hashStore]
       }),
       multiTypeChild: datastored.HasOne({hashStores: [this.hashStore]})
+    });
+
+    this.RequiredChildModel = this.createWithAttributes('RequiredChildModel', {
+      child: datastored.HasOne({
+        type: 'ChildModel',
+        required: true,
+        hashStores: [this.hashStore]
+      })
     });
   });
 
@@ -193,33 +204,40 @@ describe('HasOne', function() {
     });
   });
 
-  xdescribe('saving a child instance', function() {
+  describe('saving a child instance', function() {
 
     it('should check that the instance is valid', function() {
       var parent = this.parent;
       (function() {parent.save({child: true});})
-        .should.throw('HasOne associations can only be saved with an ' +
-          'instance object or "null"');
+        .should.throw('HasOne associations can only be set with an instance ' +
+          'object, attribute hash, or "null"');
     });
 
     // Test that the association uses the standard attribute options.
 
     it('should require the child if requested', function() {
-      return this.createFromAttributes({
-        child: datastored.HasOne({relatedModel: 'ChildModel', required: true})
-      }).then(function(Model) {
-        Model.create({}).should.be.rejectedWith('required');
-      });
+      return this.RequiredChildModel.create({})
+        .then(testUtils.shouldReject, function(err) {
+          err.should.deep.eq({child: 'attribute "child" is required'});
+        });
     });
 
     it('should guard the child if requested', function() {
-      var child = this.ChildModel.create();
-      var parent = this.ParentGuardedModel.create();
-      parent.set({foo: 'bar', child: child});
-      expect(parent.get('child')).to.be.undefined;
+      var self = this;
+      return this.ParentModel
+        .create({guardedChild: this.child})
+        .then(function(instance) {
+          instance.get('guardedChild').should.eq(self.child);
+          return instance.save({guardedChild: null}, true);
+        })
+        .then(function(instance) {
+          instance.get('guardedChild').should.eq(self.child);
+        });
     });
 
-    it('should update parent/child link', function() {
+    // Test links
+
+    xit('should update parent/child link', function() {
       return parent
         .save({child: child})
         .then(function() {
