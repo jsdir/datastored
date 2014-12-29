@@ -52,7 +52,7 @@ describe('HasOne', function() {
       unlinkedChild: datastored.HasOne({
         type: 'ChildModel', hashStores: [this.hashStore]
       }),
-      multiTypeChild: datastored.HasOne({hashStores: [this.hashStores]})
+      multiTypeChild: datastored.HasOne({hashStores: [this.hashStore]})
     });
   });
 
@@ -96,8 +96,9 @@ describe('HasOne', function() {
           expect(instance.get('child')).to.be.null;
           return instance;
         })
+        .then(testUtils.reloadInstance(['child']))
         .then(function(instance) {
-          expect(instance.get('child')).to.be.null;
+          expect(instance.get('child')).to.be.undefined;
         });
     });
 
@@ -143,21 +144,51 @@ describe('HasOne', function() {
     });
   });
 
-  xdescribe('multi-type', function() {
+  describe('multi-type', function() {
 
     it('should save instances', function() {
-      parent.save({child: basicInstance})
-      // also save with other instance with same id type
-      parent.get('child').should.eq(basicInstance);
-      // fetch should return child
-      // set to null
-      // fetch should return null
+      var self = this;
+      return this.parent
+        .save({multiTypeChild: this.child})
+        .then(function(instance) {
+          // Test local change.
+          instance.get('multiTypeChild').should.eq(self.child);
+          return instance;
+        })
+        .then(testUtils.reloadInstance(['multiTypeChild']))
+        .then(function(instance) {
+          instance.get('multiTypeChild').model.should.eq(self.child.model);
+          instance.get('multiTypeChild').id.should.eq(self.child.id);
+          instance.get('multiTypeChild', true).should.eq(self.child.id);
+          return instance.save({multiTypeChild: self.parent});
+        })
+        .then(function(instance) {
+          // Test local change.
+          instance.get('multiTypeChild').should.eq(self.parent);
+          return instance;
+        })
+        .then(testUtils.reloadInstance(['multiTypeChild']))
+        .then(function(instance) {
+          instance.get('multiTypeChild').model.should.eq(self.parent.model);
+          instance.get('multiTypeChild').id.should.eq(self.parent.id);
+          instance.get('multiTypeChild', true).should.eq(self.parent.id);
+          return instance.save({multiTypeChild: null});
+        })
+        .then(function(instance) {
+          // Test local change.
+          expect(instance.get('multiTypeChild')).to.be.null;
+          return instance;
+        })
+        .then(testUtils.reloadInstance(['multiTypeChild']))
+        .then(function(instance) {
+          expect(instance.get('multiTypeChild')).to.be.undefined;
+        });
     });
 
     it('should fail to save nested instances', function() {
       var self = this;
       (function() {
-        self.parent.save({child: {child: {foo: 'bar'}}})
+        self.parent.save({multiTypeChild: {child: {foo: 'bar'}}})
       }).should.throw('cannot save nested instances in multi-type associations');
     });
   });
