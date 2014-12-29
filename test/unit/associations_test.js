@@ -15,31 +15,6 @@ describe('HasOne', function() {
     testUtils.createTestEnv(this);
     this.hashStore = new datastored.MemoryHashStore();
 
-    /*
-    var self = this;
-    this.ChildModel = this.createWithAttributes('ChildModel', {
-      foo: datastored.String({hashStores: [true]})
-    });
-
-    this.ParentModel = this.createWithAttributes('ParentModel', {
-      child: datastored.HasOne({type: 'ChildModel'}),
-      anyChild: datastored.HasOne({idType: 'string'})
-    });
-
-    this.RequiredChildModel = this.createWithAttributes('RequiredChildModel', {
-      child: datastored.HasOne({type: 'ChildModel', required: true})
-    });
-
-    process.nextTick(function() {
-      self.models.BasicUnitModel.create().then(function(instance) {
-        self.basicInstance = instance;
-        return self.ParentModel.create();
-      }).then(function(instance) {
-        self.parent = instance;
-      }).then(done, done);
-    });
-    */
-
     this.ChildModel = this.createWithAttributes('ChildModel', {
       foo: datastored.String({hashStores: [this.hashStore]})
     });
@@ -51,6 +26,9 @@ describe('HasOne', function() {
       }),
       guardedChild: datastored.HasOne({
         type: 'ChildModel', hashStores: [this.hashStore], guarded: true
+      }),
+      hiddenChild: datastored.HasOne({
+        type: 'ChildModel', hashStores: [this.hashStore], hidden: true
       }),
       unlinkedChild: datastored.HasOne({
         type: 'ChildModel', hashStores: [this.hashStore]
@@ -272,13 +250,13 @@ describe('HasOne', function() {
     // NOTE: joined properties are access by fetch({foo: 'bar', child: ['joinedProperty']})
   });
 
-  xit('should be hidden if requested', function() {
+  it('should hide the child if requested', function() {
     var self = this;
-    return this.RequiredChildModel
-      .create({child: this.basicInstance})
+    return this.ParentModel
+      .create({hiddenChild: this.child})
       .then(function(instance) {
-        instance.get('child').should.eq(self.basicInstance);
-        expect(instance.get('child', true)).to.be.undefined;
+        instance.get('hiddenChild').should.eq(self.child);
+        expect(instance.get('hiddenChild', true)).to.be.undefined;
       });
   });
 });
