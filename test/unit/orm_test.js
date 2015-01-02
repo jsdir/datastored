@@ -5,21 +5,19 @@ var testUtils = require('../test_utils');
 
 chai.should();
 
-xdescribe('orm', function() {
+describe('orm', function() {
 
   before(function() {
-    testUtils.setupOrm.call(this);
+    testUtils.createTestEnv(this);
   });
 
   describe('#createModel()', function() {
 
-    it('should fail if the model type has already been registered',
-    function() {
-      var orm = this.orm;
-      orm.createModel('Model', testUtils.baseOptions);
+    it('should fail if the model type is already registered', function() {
+      var self = this;
       (function() {
-        orm.createModel('Model', testUtils.baseOptions);
-      }).should.throw('model "Model" is already defined');
+        self.orm.createModel('BasicUnitModel', {});
+      }).should.throw('model "BasicUnitModel" is already defined');
     });
   });
 });
