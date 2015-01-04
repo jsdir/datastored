@@ -1,4 +1,5 @@
-## ORM
+ORM
+===
 
 The orm is a single unit that manages configuration and model definitions. It is best practice to export an orm instance from a module so that it behaves like a singleton and can be easily required when creating models.
 
@@ -23,40 +24,9 @@ module.exports = datastored.createOrm({
 });
 ```
 
-### Options
+## datastored.createOrm
 
-`datastored.createOrm(options)` can use the following options:
+- Options
+  - generateId (function, optional)
 
-#### redisClient
-
-A [redis client](https://github.com/mranney/node_redis).
-
-#### cassandraClient
-
-A [cassandra client](https://github.com/datastax/nodejs-driver).
-
-#### memory
-
-If set to `true`, the orm will use in-memory datastores instead of redis and cassandra. This is useful for testing. Defaults to `false`.
-
-#### generateId
-
-A function that calls an errback with a unique id on invocation. `generateId` defaults to lodash's `uniqueId`. Datastored requires this function to call back with a unique id in respect to the database. If the orm will be running on multiple nodes, use a package like [flake-idgen](https://github.com/T-PWK/flake-idgen) to generate unique, cluster-wide ids.
-
-```js
-var settings = {
-  generateId: generateIdAsync
-};
-```
-
-#### redisNamespace
-
-Defines the namespace for redis to use. This option is useful when running multiple orm instances on the same redis server. The default namespace is `ds`.
-
-#### mutators
-
-Defines mutators to use for each model instance. More documentation about mutators can be found [here](mutators.md).
-
-#### marshaller
-
-Defines a default marshaller to use for each model. This can be overridden per model. `modelMarshaller` defaults to `marshallers.JSONMarshaller`. A list of available marshallers is documented [here](marshallers.md).
+    A function that calls an errback with a unique id on invocation. `generateId` defaults to lodash's `uniqueId`. Datastored requires this function to call back with a unique id in respect to the database. If the orm will be running on multiple nodes, use a package like [flake-idgen](https://github.com/T-PWK/flake-idgen) to generate unique, cluster-wide ids.
