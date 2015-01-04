@@ -104,3 +104,7 @@ describe('RedisList', function() {
   });
 });
 */
+
+describe('RedisList', function() {
+
+});
