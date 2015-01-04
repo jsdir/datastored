@@ -1,21 +1,24 @@
 Datastores
 ==========
 
-Datastores are abstractions over the databases that datastored uses.
+Datastores are abstractions over the databases that datastored uses. Different attributes require differenct types of datastores.
 
-- `HashStore`
-- `IndexStore`
-- `RedisCollectionStore`
+- HashStores
+  
+  HashStores save and fetch hashes (objects) from databases.
 
-## `HashStore`
+  + `MemoryHashStore`
+  + `RedisHashStore`
 
-`HashStores` save hashes (objects) to the database and can also fetch them.
+- IndexStores
 
-## `IndexStore`
+  IndexStores can set and unset key/value pairs.
 
-`IndexStores` set keys to values and can also unset them.
+  + `MemoryIndexStore`
+  + `RedisMemoryStore`
 
-## `RedisCollectionStore`
+- RedisAssociationStores
+  
+  RedisAssociationStores provide an interface with a Redis connection.
 
-`RedisCollectionStore` is an abstraction over the `SET`, `LIST`, and `ZSET` data structures in redis. It can also create, read, and manipulate nested relationships.
-
+  + `RedisAssociationStore`
