@@ -141,7 +141,7 @@ Builds a new `Instance` with `data` and saves it. If successful, the returned pr
 - `options` (object, optional)
   - `user` = false (boolean, optional) ... Set to `true` to [apply user transforms](security.md) to `data`.
 
-- Returns: `Promise`
+- Returns: `Promise` to be fulfilled with `Instance`
 
 ```js
 Book
@@ -174,7 +174,7 @@ Finds a single `Instance` with the value of index attribute `name` equal to `val
 - `value` (*, required) ... The indexed attribute's value.
   - `user` = false (boolean, optional) ... Set to `true` to [apply user transforms](security.md) to `data`.
 
-- Returns: `Promise`
+- Returns: `Promise` to be fulfilled with `Instance`
 
 ```js
 Book
