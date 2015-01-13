@@ -1,47 +1,126 @@
-# Model
+Model
+=====
+
+A model is a static definition of an `Instance`, its attributes, and their behaviors.
+
+```js
+// Book.js
+
+var datastored = require('datastored');
+var orm = require('./orm');
+var hashStore = require('./hash_store');
+
+var Book = orm.createModel('Book', {
+  keyspace: 'book',
+  id: 'string',
+  attributes: {
+    title: datastored.String({
+      required: true,
+      hashStores: [hashStore]
+    }),
+    subtitle: datastored.String({
+      hashStores: [hashStore]
+    }),
+    isbn: datastored.Integer({
+      required: true,
+      hashStores: [hashStore]
+    })
+  }
+});
+
+module.exports = Book;
+```
+
+## Defining a model
+
+### `orm.createModel(modelName, options)`
+
+Models are defined with `orm.createModel`. The model name is case-insensitive and must be unique to the orm.
+
+- `options`
+
+  - `keyspace` (required, string)
+
+    The redis key fragment and the cassandra column family name. This defaults to the model's name in lowercase.
+
+  - `id` (required, string)
+
+    The model's id type.
+
+  - `mixins` (optional, array)
+
+    Used to extend the model with common functionality.
+
+  - `statics` (optional, object)
+
+    Defines static properties for the model constructor. This option will overwrite any existing static properties on conflict. Static functions are automatically bound to the model.
+
+  - `methods` (optional, object)
+
+    Defines methods for the model instance. This option will overwrite any existing instance methods on conflict. Instance methods are automatically bound to the instance.
+
+  - `attributes` (required, object)
+
+    Describes model attributes and their values. Attributes are defined with the names as keys and the options as values. Multiple built-in attribute options are exported from the `datastored` module:
+
+    ```js
+    {
+      attributes: {
+        title: datastored.String({
+          datastores: [db.MYSQL, db.REDIS]
+        }),
+        description: datastored.String({
+          datastores: [db.MYSQL],
+          required: true,
+          rules: {
+            max: 10000
+          }
+        })
+      }
+    }
+    ```
+
+    Attribute options and built-in attribute options are described [here](attributes.md) with further detail.
+
+  - `input` (optional, function)
+
+  - `output` (optional, function)
+
+  - `outputAsync` (optional, function)
+
+  - `save` (optional, function)
+
+  - `fetch` (optional, function)
 
 ## Methods
 
-### `Model.build(data, applyUserTransforms)`
+### `Model.create(data[, options])`
 
-Builds a new `Instance` with `data`.
+Builds a new `Instance` with `data` and saves it. If successful, the returned promise is fulfilled with the instance including an id and the loaded data.
 
-- Parameters
-  + data (optional, object)
+- `data` (object, required) ... Data to initialize the new `Instance` with.
+- `options` (object, optional)
+  - `user` = false (boolean, optional) ... Set to `true` to [apply user transforms](security.md) to `data`.
 
-    Data to initialize the new `Instance` with.
-
-  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to `data`.
-
-- Returns: `Instance` ... A new instance initialized with `data`.
+- Returns: `Promise`
 
 ```js
-var emptyBook = Book.build();
-var book = Book.build({title: 'A Book'}};
+Book
+  .create({title: 'A Book', isbn: 1234567890})
+  .then(function(instance) {
+    console.log('Built and saved:', instance);
+  }, function(err) {
+    throw err;
+  });
 ```
 
-### `Model.withId(id, applyUserTransforms)`
+### `Model.find(name, value[, options])`
 
-Returns an instance with the given id.
+Finds a single `Instance` with the value of index attribute `name` equal to `value`. If the instance is found, the returned promise is fulfilled with the instance including an id and the loaded data. If no such instance is found, the returned promise is fulfilled with `null`.
 
-- Parameters
-  + id (required, {string, integer}) ... The id of the `Instance` to return.
-  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to `id`.
-
-- Returns: `Instance` ... An instance set to the given id.
-
-```js
-var book = Book.withId(123);
-```
-
-### `Model.find(name, value, applyUserTransforms)`
-
-Finds a single `Instance` with the value of index attribute `name` equal to `value`. If the instance is found, the returned promise is fulfilled with the instance. If no such instance is found, the returned promise is fulfilled with `null`.
-
-- Parameters
-  + name (required, string) ... The indexed attribute's name.
-  + value (required, *) ... The indexed attribute's value.
-  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to `value`.
+- `name` (string, required) ... The indexed attribute's name.
+- `value` (*, required) ... The indexed attribute's value.
+  - `user` = false (boolean, optional) ... Set to `true` to [apply user transforms](security.md) to `data`.
 
 - Returns: `Promise`
 
@@ -58,115 +137,6 @@ Book
     throw err;
   });
 ```
-
-### `Model.create(data, applyUserTransforms)`
-
-Builds a new instance with `data` and saves it. Since `Model.create(data, raw)` is only a shortcut for `Model.build(data, raw).save()`, it shares the same parameters as `Model.build`.
-
-- Parameters
-  + data (required, object) ... Data to initialize the new `Instance` with.
-  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to `data`.
-
-- Returns: `Promise`
-
-```js
-Book
-  .create({title: 'A Book', isbn: 1234567890})
-  .done(function(instance) {
-    console.log('Built and saved:', instance);
-  }, function(err) {
-    throw err;
-  });
-```
-
-## Defining a model
-
-A model can be defined with `orm.createModel`. `orm.createModel` is called with the model name and options.
-
-```js
-var datastored = require('datastored');
-
-var orm = require('./orm');
-var db = require('./db');
-
-var Book = orm.createModel('Book', {
-  keyspace: 'books',
-  id: datastored.Id({type: 'string'}),
-  attributes: {
-    title: datastored.String({
-      datastores: [db.MYSQL, db.REDIS]
-    }),
-    description: datastored.String({
-      datastores: [db.MYSQL],
-      required: true,
-      rules: {
-        max: 10000
-      }
-    }),
-    isbn: datastored.Integer({
-      datastores: [db.MYSQL],
-      required: true
-    })
-  }
-});
-```
-
-The model name is case-insensitive and must be unique to the orm.
-
-### Options
-
-- `keyspace` (required, string)
-
-  The redis key fragment and the cassandra column family name. This defaults to the model's name in lowercase.
-
-- `id` (required, `datastored.Id`)
-
-  The model's id attribute.
-
-- `mixins` (optional, array)
-
-  Used to extend the model with common functionality.
-
-- `statics` (optional, object)
-
-  Defines static properties for the model constructor. This option will overwrite any existing static properties on conflict. Static functions are automatically bound to the model.
-
-- `methods` (optional, object)
-
-  Defines methods for the model instance. This option will overwrite any existing instance methods on conflict. Instance methods are automatically bound to the instance.
-
-- `attributes` (required, object)
-
-  Describes model attributes and their values. Attributes are defined with the names as keys and the options as values. Multiple built-in attribute options are exported from the `datastored` module:
-
-  ```js
-  {
-    attributes: {
-      title: datastored.String({
-        datastores: [db.MYSQL, db.REDIS]
-      }),
-      description: datastored.String({
-        datastores: [db.MYSQL],
-        required: true,
-        rules: {
-          max: 10000
-        }
-      })
-    }
-  }
-  ```
-
-  Attribute options and built-in attribute options are described [here](attributes.md) with further detail.
-
-- `input` (optional, function)
-
-- `output` (optional, function)
-
-- `outputAsync` (optional, function)
-
-- `save` (optional, function)
-
-- `fetch` (optional, function)
 
 ## Extending a model
 
