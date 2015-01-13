@@ -1,18 +1,12 @@
 Testing
 =======
 
-Tests for datastored are divided into **unit** and **integration** tests.
+Tests for datastored are divided into unit and integration tests.
 
-#### Unit Tests: `tests/unit`
+## Unit Tests: `tests/unit`
 
 If a test does not touch any datastores, it is a unit test.
 
-#### Integration Tests: `tests/integration`
+## Integration Tests: `tests/integration`
 
 If a test uses the datastores either explicitly or implicitly, it is an integration test.
-
-#### Recommended Subjects
-
-For each functional static or instance method:
-
-- If the method uses the `raw` parameter, test with and without raw input.
