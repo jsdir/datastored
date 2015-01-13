@@ -12,7 +12,7 @@ var hashStore = require('./hash_store');
 
 var Book = orm.createModel('Book', {
   keyspace: 'book',
-  id: 'string',
+  id: datastored.Id({type: 'string'}),
   attributes: {
     title: datastored.String({
       required: true,
@@ -39,58 +39,87 @@ Models are defined with `orm.createModel`. The model name is case-insensitive an
 
 - `options`
 
-  - `keyspace` (required, string)
+  - `keyspace` (string, required)
 
     The redis key fragment and the cassandra column family name. This defaults to the model's name in lowercase.
 
-  - `id` (required, string)
+  - `id` (`datastored.Id`, required)
 
     The model's id type.
 
-  - `mixins` (optional, array)
+  - `mixins` (array, optional)
 
     Used to extend the model with common functionality.
 
-  - `statics` (optional, object)
+  - `statics` (object, optional)
 
     Defines static properties for the model constructor. This option will overwrite any existing static properties on conflict. Static functions are automatically bound to the model.
 
-  - `methods` (optional, object)
+  - `methods` (object, optional)
 
     Defines methods for the model instance. This option will overwrite any existing instance methods on conflict. Instance methods are automatically bound to the instance.
 
-  - `attributes` (required, object)
+  - `attributes` (object, required)
 
-    Describes model attributes and their values. Attributes are defined with the names as keys and the options as values. Multiple built-in attribute options are exported from the `datastored` module:
+    Describes model attributes and their values. Attributes are defined with the names as keys and the attributes as values. Multiple built-in attribute types are exported from the `datastored` module:
 
     ```js
     {
-      attributes: {
-        title: datastored.String({
-          datastores: [db.MYSQL, db.REDIS]
-        }),
-        description: datastored.String({
-          datastores: [db.MYSQL],
-          required: true,
-          rules: {
-            max: 10000
-          }
-        })
-      }
+      title: datastored.String({
+        hashStores: [hashStores.mysql, hashStores.redis]
+      }),
+      description: datastored.String({
+        hashStores: [hashStores.mysql],
+        required: true,
+        constraints: {
+          length: {maximum: 10000}
+        }
+      })
     }
     ```
 
     Attribute options and built-in attribute options are described [here](attributes.md) with further detail.
 
-  - `input` (optional, function)
+  `input`, `output`, `save`, and `fetch` methods are provided to change data at the model level. More info about data flow can be found [here](data_flow.md).
 
-  - `output` (optional, function)
+  - `input` (function, optional)
 
-  - `outputAsync` (optional, function)
+    `function(data, options)`
+    This method is applied to all input data.
 
-  - `save` (optional, function)
+    - `data` (object)
+    - `options` (object)
+      - `user` = false (boolean)
 
-  - `fetch` (optional, function)
+  - `output` (function, optional)
+
+    `function(data, options[, cb])`
+    This method is applied to all output data.
+
+    - `data` (object)
+    - `options` (object)
+      - `user` = false (boolean)
+    - `cb` (function, optional) ... Call `cb` as an errback with data if asynchronous or return the data if synchronous.
+
+  - `save` (function, optional)
+
+    `function(data, options, cb)`
+    This method is applied to all saved data.
+
+    - `data` (object)
+    - `options` (object)
+      - `user` = false (boolean)
+    - `cb` (function) ... Call `cb` as an errback with data.
+
+  - `fetch` (function, optional)
+
+    `function(data, options, cb)`
+    This method is applied to all fetched data.
+
+    - `data` (object)
+    - `options` (object)
+      - `user` = false (boolean)
+    - `cb` (function) ... Call `cb` as an errback with data.
 
 ## Methods
 
@@ -108,10 +137,23 @@ Builds a new `Instance` with `data` and saves it. If successful, the returned pr
 Book
   .create({title: 'A Book', isbn: 1234567890})
   .then(function(instance) {
-    console.log('Built and saved:', instance);
+    console.log('Created and saved:', instance);
   }, function(err) {
     throw err;
   });
+```
+
+### `Model.withId(id[, options])`
+
+Returns an `Instance` of type `Model` with its id set to `id`.
+
+- `options` (object, options)
+  - `user` = false (boolean, optional) ... Set to `true` to [apply user transforms](security.md) to `data`.
+
+- Returns: `Instance`
+
+```js
+var book = Book.withId('a76j2kd')
 ```
 
 ### `Model.find(name, value[, options])`
@@ -137,7 +179,3 @@ Book
     throw err;
   });
 ```
-
-## Extending a model
-
-To have several model types share common functionality, use mixins.
