@@ -91,6 +91,8 @@ Models are defined with `orm.createModel`. The model name is case-insensitive an
     - `options` (object)
       - `user` = false (boolean)
 
+    - Returns: modified `data`
+
   - `output` (function, optional)
 
     `function(data, options[, cb])`
@@ -99,7 +101,11 @@ Models are defined with `orm.createModel`. The model name is case-insensitive an
     - `data` (object)
     - `options` (object)
       - `user` = false (boolean)
-    - `cb` (function, optional) ... Call `cb` as an errback with data if asynchronous or return the data if synchronous.
+    - `cb` (function, optional)
+
+      Call `cb` as an errback with the data if asynchronous.
+
+    - Returns: modified `data` (only if synchronous)
 
   - `save` (function, optional)
 
@@ -109,7 +115,9 @@ Models are defined with `orm.createModel`. The model name is case-insensitive an
     - `data` (object)
     - `options` (object)
       - `user` = false (boolean)
-    - `cb` (function) ... Call `cb` as an errback with data.
+    - `cb` (function)
+
+      Call `cb` as an errback with modified `data`.
 
   - `fetch` (function, optional)
 
@@ -119,7 +127,9 @@ Models are defined with `orm.createModel`. The model name is case-insensitive an
     - `data` (object)
     - `options` (object)
       - `user` = false (boolean)
-    - `cb` (function) ... Call `cb` as an errback with data.
+    - `cb` (function)
+
+      Call `cb` as an errback with modified `data`.
 
 ## Methods
 

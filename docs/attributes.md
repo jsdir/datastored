@@ -1,5 +1,5 @@
-Attribute API
-=============
+Attributes
+==========
 
 In datastored, models are defined with attributes. Every valid attribute exposes an API that defines its interaction with the parent instance.
 
@@ -11,77 +11,111 @@ var Model = orm.createModel('Model', {
 })
 ```
 
-Attribute Options
------------------
+## Attribute Options
 
-### Values
+- `required` = false (boolean, optional)
 
-#### `required`
+  Set to `true` if the attribute must be defined before saving a new instance.
 
-Boolean value. Default `false`. Set to `true` if the attribute must be defined before saving a new instance.
+- `hashStores` (array, required)
 
-#### `hashStores`
+  An array of `HashStores` to save the attribute to.
 
-An array of `HashStores` to save the attribute to.
+- `indexStore` (`IndexStore`, optional)
 
-#### `indexStore`
+  An `IndexStore` to index the instance.
 
-An `IndexStore` to index the instance.
+- `replaceIndex` = false (boolean, optional)
 
-#### `replaceIndex`
+  Set to `true` to overwrite old indexes when the value changes.
 
-Boolean value. Default `false`. Set to `true` to overwrite old indexes when the value changes.
+- `guarded` = false (boolean, optional)
 
-#### `guarded`
+  Set to `true` to prevent the user from changing this attribute through `instance.set`.
 
-Boolean value. Default `false`. Set to `true` to prevent the user from setting this attribute.
+- `hidden` = false (boolean, optional)
 
-#### `hidden`
+  Set to `true` to prevent the user from viewing this attribute.
 
-Boolean value. Default `false`. Set to `true` to prevent the user from viewing this attribute.
+- `defaultValue` (*, optional)
 
-#### `defaultValue`
+  The default value to set when the instance is created. This can be a value or a function that returns a value.
 
-The default value to set when the instance is created. This can be the value or a function that returns the value.
+- `virtual` = false (boolean, optional)
 
-#### `virtual`
+  Set to `true` to prevent the user from setting this attribute, to prevent the attribute from being joined in a `HasOne` association, and to prevent the attribute from being saved to a `HashStore`. Virtual attributes are useful for creating attribute abstractions like associations that are defined in model mixins.
 
-Boolean value. Default `false`. Set to `true` to prevent the user from setting this attribute, to prevent the attribute from being joined in a `HasOne` association, and to prevent the attribute from being saved to a HashStore.
+- `type` (string, required)
 
-#### `type`
+  One of the following attribute value types:
 
-The valids-compatible type for use in the datastore marshallers.
+  - `string`
+  - `integer`
+  - `float`
+  - `boolean`
+  - `date`
+  - `datetime`
 
-#### `rules`
+- `constraints` (object, optional)
 
-valids-compatible rules for attribute validation.
+  [validate.js constraints](http://validatejs.org/#constraints) for attribute validation.
 
-### Functions
+`input`, `output`, `save`, and `fetch` methods are provided to change data at the attribute level. More info about data flow can be found [here](data_flow.md).
 
-#### `input`
+- `input` (function, optional)
 
-`input(value, userMode)` or `array` for auto-composition
-Called per-attribute on `instance.get()`. This function can be sync/async.
+  `function(attrName, attrValue, options)`
+  This method is applied to all input values for the attribute.
 
-#### `output`
+  - `attrName` (string)
+  - `attrValue` (*)
+  - `options` (object)
+    - `user` = false (boolean)
 
-`output(value, userMode)` or `array` for auto-composition
+  - Returns: modified `attrValue`
 
-#### `outputAsync`
+- `output` (function, optional)
 
-`outputAsync(value, userMode, cb)` or `array` for auto-composition
+  `function(attrName, attrValue, options[, cb])`
+  This method is applied to all output values for the attribute.
 
-#### `save`
+  - `attrName` (string)
+  - `attrValue` (*)
+  - `options` (object)
+    - `user` = false (boolean)
+  - `cb` (function, optional)
 
-`save(value, cb)` or `array` for auto-composition
+    Call `cb` as an errback with the modified `attrValue` if asynchronous.
 
-Called instead of saving the attribute to a `HashStore`.
+  - Returns: modified `attrValue` (only id synchronous)
 
-#### `fetch`
+- `save` (function, optional)
 
-`fetch(value)` or `array` for auto-composition
+  `function(attrName, attrValue, options, cb)`
+  This method is applied to all saved values for the attribute.
 
-### Waiting for the loaded ORM
+  - `attrName` (string)
+  - `attrValue` (*)
+  - `options` (object)
+    - `user` = false (boolean)
+  - `cb` (function)
+
+    Call `cb` as an errback with the modified `attrValue`.
+
+- `fetch` (function, optional)
+
+  `function(attrName, attrValue, options, cb)`
+  This method is applied to all fetched values for the attribute.
+
+  - `attrName` (string)
+  - `attrValue` (*)
+  - `options` (object)
+    - `user` = false (boolean)
+  - `cb` (function)
+
+    Call `cb` as an errback with the modified `attrValue`.
+
+## Waiting for the loaded ORM
 
 If the orm needs to be accessed when all of its models are loaded to performs things like cross-model link checking and other validations, the attribute can instead be a function that accepts the orm as its first parameter and returns the attribute object:
 
@@ -90,15 +124,12 @@ function Attribute(options) {
   // This function will be called by the orm when all of the models are loaded.
   return function(orm, model) {
     // Use `orm` to check `options`.
-    return {
-      type: 'string'
-    };
+    return {type: 'string'};
   }
 }
 ```
 
-Built-in Attributes
--------------------
+## Built-in Attributes
 
 - `datastored.String`
 - `datastored.Boolean`
@@ -107,4 +138,3 @@ Built-in Attributes
 - `datastored.Date`
 - `datastored.Datetime`
 - `datastored.Enum`
-- `datastored.Id`
