@@ -95,6 +95,10 @@ var Model = orm.createModel('Model', {
   - `attrValue` (*)
   - `options` (object)
     - `user` = false (boolean)
+    - `attributes`
+
+      `attributes` parameter from `fetch` and `get` instance methods
+
   - `cb` (function)
 
     Call `cb` as an errback with the modified `attrValue`.
@@ -108,6 +112,10 @@ var Model = orm.createModel('Model', {
   - `attrValue` (*)
   - `options` (object)
     - `user` = false (boolean)
+    - `attributes`
+
+      `attributes` parameter from `fetch` and `get` instance methods
+
   - `cb` (function)
 
     Call `cb` as an errback with the modified `attrValue`.

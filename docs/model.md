@@ -112,6 +112,10 @@ Models are defined with `orm.createModel`. The model name is case-insensitive an
     - `data` (object)
     - `options` (object)
       - `user` = false (boolean)
+      - `attributes`
+
+        `attributes` parameter from `fetch` and `get` instance methods
+
     - `cb` (function)
 
       Call `cb` as an errback with modified `data`.
@@ -124,6 +128,10 @@ Models are defined with `orm.createModel`. The model name is case-insensitive an
     - `data` (object)
     - `options` (object)
       - `user` = false (boolean)
+      - `attributes`
+
+        `attributes` parameter from `fetch` and `get` instance methods
+
     - `cb` (function)
 
       Call `cb` as an errback with modified `data`.
@@ -132,7 +140,7 @@ Models are defined with `orm.createModel`. The model name is case-insensitive an
 
 ### `Model.create(data[, options])`
 
-Builds a new `Instance` with `data` and saves it. If successful, the returned promise is fulfilled with the instance including an id and the loaded data.
+Builds a new `Instance` with `data` and saves it. If successful, the returned promise is fulfilled with the instance including an id and the loaded data. `data` is transformed with the input transform set.
 
 - `data` (object, required) ... Data to initialize the new `Instance` with.
 - `options` (object, optional)
@@ -152,7 +160,7 @@ Book
 
 ### `Model.withId(id[, options])`
 
-Returns an `Instance` of type `Model` with its id set to `id`.
+Returns an `Instance` of type `Model` with its id set to `id`. `id` is transformed with the input transform set.
 
 - `options` (object, options)
   - `user` = false (boolean, optional) ... Set to `true` to [apply user transforms](security.md) to `data`.
@@ -160,12 +168,12 @@ Returns an `Instance` of type `Model` with its id set to `id`.
 - Returns: `Instance`
 
 ```js
-var book = Book.withId('a76j2kd')
+var book = Book.withId('1234567890');
 ```
 
 ### `Model.find(name, value[, options])`
 
-Finds a single `Instance` with the value of index attribute `name` equal to `value`. If the instance is found, the returned promise is fulfilled with the instance including an id and the loaded data. If no such instance is found, the returned promise is fulfilled with `null`.
+Finds a single `Instance` with the value of index attribute `name` equal to `value`. If the instance is found, the returned promise is fulfilled with the instance including an id and the loaded data. If no such instance is found, the returned promise is fulfilled with `null`. `value` is transformed with the input transform set.
 
 - `name` (string, required) ... The indexed attribute's name.
 - `value` (*, required) ... The indexed attribute's value.
