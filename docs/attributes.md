@@ -76,18 +76,15 @@ var Model = orm.createModel('Model', {
 
 - `output` (function, optional)
 
-  `function(attrName, attrValue, options[, cb])`
+  `function(attrName, attrValue, options)`
   This method is applied to all output values for the attribute.
 
   - `attrName` (string)
   - `attrValue` (*)
   - `options` (object)
     - `user` = false (boolean)
-  - `cb` (function, optional)
 
-    Call `cb` as an errback with the modified `attrValue` if asynchronous.
-
-  - Returns: modified `attrValue` (only id synchronous)
+  - Returns: modified `attrValue`
 
 - `save` (function, optional)
 

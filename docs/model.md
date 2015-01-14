@@ -95,17 +95,14 @@ Models are defined with `orm.createModel`. The model name is case-insensitive an
 
   - `output` (function, optional)
 
-    `function(data, options[, cb])`
+    `function(data, options)`
     This method is applied to all output data.
 
     - `data` (object)
     - `options` (object)
       - `user` = false (boolean)
-    - `cb` (function, optional)
 
-      Call `cb` as an errback with the data if asynchronous.
-
-    - Returns: modified `data` (only if synchronous)
+    - Returns: modified `data`
 
   - `save` (function, optional)
 
