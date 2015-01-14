@@ -122,7 +122,7 @@ Author
   });
 ```
 
-When fetching a child, the child attributes to fetch must also be defined. Child attributes to fetch can be defined with a list or object. With an object, the keys must be attribute names, and the values must be `true`. It is also possible to fetch unlimited levels of nested children. 
+When fetching a child, the child attributes to fetch must also be defined. Child attributes to fetch can be defined with a list or object. With an object, the keys must be attribute names, and the values must be `true`. It is also possible to fetch unlimited levels of nested children.
 
 ```js
 author.get({
@@ -135,7 +135,7 @@ author.get({
     name: 'John Doe',
     book: {
       title: 'A book',
-      isbn: 12345  
+      isbn: 12345
     }
   }
  */
