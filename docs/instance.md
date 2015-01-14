@@ -1,57 +1,78 @@
-# Instance
+Instance
+========
+
+An `Instance` is an instantiated `Model`.
+
+```js
+Book.find({isbn: 1234567890})
+  .then(function(user) {
+    if (user !== null) {
+      console.log('Found instance: ', user);
+    }
+  }, function(err) {
+    throw err;
+  });
+```
+
+## Attribute Requests
+
+Both the `get` and `fetch` methods use Attribute Requests to define required data. The request can be used in several ways:
+
+- Request one attribute: `'isbn'`
+- Request multiple attributes: `['isbn', 'title']`
+- Request multiple attributes with options:
+
+  ```
+  {
+    isbn: true,
+    title: true,
+    owner: ['first_name', 'last_name']
+  }
+  ```
 
 ## Methods
 
-### `instance.fetch(attributes)`
+### `instance.save(data[, options])`
 
-Fetches attribute values from defined hash stores.
+Validates attribute `rules` and `required`. The instance is persisted to `HashStore`s and `IndexStore`s. `data` is transformed with the save transform set.
 
-- Parameters
-  + attributes (required, {string, array, object})
+- `data` (object, required)
+- `options` (object, optional)
+  - `user` = false (boolean, optional)
 
-    If `attributes` is a string, the orm with fetch one attribute as that name. If `attributes` is an object, the keys are the attribute names and the values are the attribute fetch options. If the attribute object has an attribute without options, the options can be set to `true`.
+- Returns: `Promise` to be fulfilled with `Instance`
 
-```js
-// Fetch attributes.
-instance.fetch(['foo', 'bar']);
-// Fetch attributes with options.
-instance.fetch({foo: {option: 'value'}, bar: true});
-```
+### `instance.fetch(attributes[, options])`
 
-- Returns: `Promise`
+Fetches attributes and optionally outputs them asynchronously. Fetched data is always transformed with the fetch transform set.
 
-### `instance.save(attributes)`
+- `attributes` ({array, object}, required) ... A valid Attribute Request
+- `options` (object, optional)
+  - `reload` = false (boolean, optional)
 
-Validates attribute `rules` and `required`. Persists the instance to the data stores.
+    If set to `false`, `fetch` will not fetch any attributes that are already loaded. If set to `true`, `fetch` will fetch all attributes regardless of whether or not they are already loaded.
 
-- Parameters:
-  + attributes (required, object) ... Attribute values.
+  - `output` = true (boolean, optional)
 
-- Returns: `Promise` 
+    If set to `true`, `fetch` will transform the data with the output transform set and will return a `Promise` this is fulfilled with the transformed data. If set to `false`, `fetch` will not transform the data or return a `Promise`. This is useful for preventing the fetched values from being further transformed if they are not immediately needed.
 
-### `instance.get(attributes, applyUserTransforms)`
+- Returns: `Promise` to be fulfilled with output values if `options.output` is `true`
 
-Returns attribute values.
+### `instance.get(attributes[, options])`
 
-- Parameters:
-  + attributes (required, {string, array, object})
+Outputs fetched attributes synchronously. Output data is transformed with the output transform set.
 
-    - `'attributeName'` => `'attributeValue'`
-    - `['attribute1Name', 'attribute2Name']` => `{attribute1Name: attribute1Value, attribute2Name: attribute2Value}`
-    - `{attribute1Name: true, attribute2Name: attribute2Options}` => `{attribute1Name: attribute1Value, attribute2Name: attribute2Value}`
+- `attributes` ({array, object}, required) ... A valid Attribute Request
+- `options` (object, optional)
+  - `user`
 
-  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to the returned id value.
+- Returns: Attribute values
 
-- Returns:
-  + Promise when any of the requested attributes are asynchonous. The promise is fulfilled with the attribute data.
-  + Object when requesting multiple, synchronous attributes.
-  + Value when requesting a single, synchronous attribute.
-
-### `instance.getId(applyUserTransforms)` 
+### `instance.getId([options])`
 
 Returns the instance id. If the instance is not saved, `null` is returned.
 
-- Parameters:
-  + applyUserTransforms = `false` (optional, boolean) ... Set to `true` to [apply user transforms](security.md) to the returned id value.
+- `options` (object, optional)
+  - `user` = false (boolean, optional)
 
-- Returns: {string, integer}
+- Returns: {string, integer, `null`}
