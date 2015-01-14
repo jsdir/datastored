@@ -1,7 +1,7 @@
 Associations
 ============
 
-Datastored provides options for relational modeling that can describe relationships between models. Associations are defined as model attributes:
+Datastored can describe relationships between models with associations. Associations are defined as model attributes:
 
 ```js
 var datastored = require('datastored');
@@ -15,88 +15,260 @@ var model = orm.model('Book', {
 });
 ```
 
-## Association Types
+Provided are several built-in associations that can model 1:1, 1:n, and n:n relationships between models of any type. They are listed below grouped by their order:
 
-Several association types are provided by datastored:
+- 1:1
+  - `datastored.HasOne`
+- 1:n and n:n
+  - `datastored.RedisList`
+  - `datastored.RedisSet`
 
-- `datastored.HasOne`
-- `datastored.RedisList`
-- `datastored.RedisSet`
+### Options
 
-### datastored.HasOne
+Associations can be constructed with options:
 
-Parent and child model.
+```js
+datastored.HasOne({required: true, type: 'User', link: 'book'})
+```
 
-#### Attribute Options
+Although options will differ between associations, all associations share two common options: `link` and `type`.
 
-`HasOne` has many of the same attribute options that a normal attribute has since the representations are similar. The id is stored in one or more HashStores.
+#### `link`
 
-+ required
-+ hashStores
-+ guarded
-+ hidden
-+ joinedAttributes
+`link` is used to make associations reversible. Instances in reversible associations can be accessed both ways. `link` must be set to the attribute on the target model with which a reversible link should be formed. In the following example, the `Book` and `Author` instances are reversibly linked.
 
-  Set to a list of non-virtual attributes existing on the child model to copy the attributes to the parent and to subsequently keep the copied parent attributes in sync with the child. Although `joinedAttributes` can be specified without a parent link, a link is required if the `joinedAttributes` must stay in sync.
+```js
+var Author = orm.createModel({
+  keyspace: 'author',
+  attributes: {
+    book: datastored.HasOne({type: 'Book', link: 'author'})
+  }
+});
 
-+ link
+var Book = orm.createModel({
+  keyspace: 'book',
+  attributes: {
+    author: datastored.HasOne({type: 'Author'}),
+    title: datastored.String({hashStores: [hashStore]})
+  }
+});
 
-  Set to the `HasOne` association attribute on the child to establish a two-way link:
+Author.create({
+  name: 'John Doe',
+  book: {
+    title: 'My Recipes'
+  }
+}).then(function(author) {
+  // book === author.book
+  var book = author.get('book');
+  // author === book.author
+  assert(book.get('author') === author);
+});
+```
 
-  `parent.child <-> child.parent`
+#### `type`
 
-  A parent-child link is required for syncing `joinedAttributes`.
+By default, associations support target instances with multiple types. The references are stored as a concatenation of instance type and id. The `type` option is not needed in this scenario. However, if it is already known that the association will link instances of only one type, the `type` option can be set to the target model name. When `type` is set, the attributes will only accept instances of the given type. Only the instance id will be persisted and the type will be inferred from the definition on fetch. Because the type does not need to be stored, using the `type` option saves more space, an important choice when dealing with situations where space is at a premium, such as in-memory datastores like Redis.
+
+## 1:1 associations
+
+### `datastored.HasOne(options)`
+
+- `options`
+
+  `HasOne` has many of the same options that a normal attribute has since they are both stored the same way.
+
+  - `required` (boolean, optional)
+  - `hashStores` (array, required)
+  - `guarded` (boolean, optional)
+  - `hidden` (boolean, optional)
+  - `joinedAttributes` (array, optional)
+
+    Set this to a list of non-virtual attributes existing on the child model to copy the attributes to the parent and to subsequently keep the copied parent attributes in sync with the child. Although `joinedAttributes` can be specified without `link`, a link is required if the child's `joinedAttributes` should stay in sync with those of the parent.
+
+  - `link` (string, optional)
+
+    This option must be defined for syncing `joinedAttributes` since the child must know its parent in order to update its joined properties once they change.
 
 #### Usage
 
-Fetch:
+`HasOne` association attributes can be saved with either an Instance or `null`. Saving as `null` detaches the child instance.
 
 ```js
-fetch({child: ["attr1", "attr2"]})
-// or use tree
-fetch({child: {attr1: true, attr2: true, grandchild: ['attr1']}})
+Author
+  .create({name: 'John Doe'})
+  .then(function(john) {
+    return Book
+      .create({title: 'A book'})
+      .then(function(book) {
+        return book.save({author: john});
+      })
+      .then(function(book) {
+        return book.save({author: null});
+      });
+  });
 ```
 
-### datastored.RedisList
+Nested models can also be saved using a single object.
 
-`datastored.RedisList(associationStore)`
+```js
+Author
+  .create({
+    name: 'John Doe',
+    favorite_book: {
+      title: 'A book',
+      isbn: 12345
+    }
+  });
+```
 
-- Parameters
-  + store (RedisAssociationStore)
-  + link
+When fetching a child, the child attributes to fetch must also be defined. Child attributes to fetch can be defined with a list or object. With an object, the keys must be attribute names, and the values must be `true`. It is also possible to fetch unlimited levels of nested children. 
 
-`.get` interface:
-  in user transform mode:
-    {listAttrName: {page: {limit, offset}, attributes: [...]}} => `[]` (direct results)
-  Page defaults to a fixed number of results (10).
+```js
+author.get({
+  name: true,
+  book: ['title', 'isbn']
+}).then(function(author) {
+  console.log(author);
+  /*
+  {
+    name: 'John Doe',
+    book: {
+      title: 'A book',
+      isbn: 12345  
+    }
+  }
+ */
+});
+fetch({child: ["attr1", "attr2"]})
 
-`.save` interface:
-  + immutability helpers
-    * push
-    * pushl?
+// Fetch nested models.
+author.fetch({
+  child: {
+    attr1: true,
+    attr2: true,
+    grandchild: ['attr1']
+  }
+});
+```
 
-- supports pushing instances of multiple types (document how this will be done when id generation is documented)
-- support link when adding/removing child from list.
+## 1:n and n:n associations
 
-### datastored.RedisSet
+Before getting to the different HasMany associations, it is important to know that HasMany (1:n) associations can be used to make ManyToMany associations (n:n) by using links. Since the parent and child in a HasMany association can be the same model, the association can link to itself. This can be used to model common user relationships.
 
-`datastored.RedisSet(associationStore)`
+```js
+var User = orm.createModel('User', {
+  keyspace: 'user',
+  attributes: {
+    name: datastored.String({hashStores: [hashStore]}),
+    friends: datastored.RedisSet({type: 'User', link: 'friends'})
+  }
+});
 
-- Parameters
-  + store (RedisAssociationStore)
-  + set
+Promise.all(
+  john: User.create({name: 'John Doe'}),
+  jane: User.create({name: 'Jane Smith'})
+).then(function(users) {
+  return users.john
+    // Add a friend.
+    .save({friends: {add: users.jane}})
+    .then(function() {
+      return users.jane.get({friends: {pop: true}});
+    }).then(function(friend) {
+      // Confirms a functional ManyToMany relationship.
+      assert(friend === users.john);
+    });
+});
+```
 
-`.save` interface
-  + immutability helpers
-    * add
-    * remove
+#### Swapped Definitions
 
-- supports adding instances of multiple types
-- support link when adding/removing child from set.
+Though the reversible links `a.HasOne <-> b.HasMany` and `b.HasMany <-> a.HasOne` have swapped definitions, datastored considers them equivalent.
 
-### `datastored.RedisSortedSet(associationStore)` [later]
+### `datastored.RedisList(options)`
 
-- Parameters
-  + store (RedisAssociationStore)
+- `options`
+  - `store` (`RedisAssociationStore`, required)
+  - `link` (string, optional)
 
-### `datastored.CassandraList(associationStore)` [later]
+#### Usage
+
+get({attributes}, {forceFetch: false, output: true, applyUserTransforms: true})
+- force fetch attributes (output or no output)
+- fetch (lazy-load) attributes (output or no output)
+
+- Most redis commands for the LIST data structure can be used. Datastored just translates between instances and their references. For example "add".
+- instance.save only uses commands that modify the list (like add, remove)
+- instance.get only can use commands that do not modify the list and return a value, such as range or get.
+
+Get:
+
+```js
+author
+  .get({
+    books: {
+      fetch: ['title', 'isbn'], // Apply fetch to the instance.
+      command: ['all']
+    }
+  }, true)
+  .then(function(books) {
+    console.log('Books by author:', books);
+  });
+
+author
+  .get({
+    name: null,
+    books: ['range', 1, 2] // Short form Redis commands.
+  }, true)
+  .then(function(author) {
+    util.format('Books by %s: %s', author.name, author.books);
+  });
+```
+
+Save:
+
+```js
+// Different ways to save with various short forms.
+
+author.save({
+  journals: ['push', journal1, journal2],
+  books: ['push', [book1, book2]], // Redis command and arguments.
+  publications: ['push', publications]
+});
+```
+
+Supported Methods:
+
+- `lindex`
+- `linsert`
+- `llen`
+- `lpop`
+- `lpush`
+- `lrange`
+- `lrem`
+- `lset`
+- `ltrim`
+- `rpop`
+- `rpush`
+
+- save works on all commands
+- get works on all commands and additionally returns the values as an array.
+
+### `datastored.RedisSet(options)`
+
+- `options`
+  - `store` (`RedisAssociationStore`, required)
+
+#### Usage
+
+`datastored.RedisSet` has different usage parameters than those of `RedisList`.
+
+Supported Methods:
+
+- `sadd`
+- `scard`
+- `sismember`
+- `smembers`
+- `spop`
+- `srandmember`
+- `srem`
