@@ -2,6 +2,7 @@ var _ = require('lodash');
 var async = require('async');
 var chai = require('chai');
 var sinon = require('sinon');
+var sinonChai = require('sinon-chai');
 var chaiAsPromised = require('chai-as-promised');
 
 var datastored = require('../..');
@@ -10,6 +11,7 @@ var testUtils = require('../test_utils');
 
 var expect = chai.expect;
 chai.use(chaiAsPromised);
+chai.use(sinonChai);
 
 describe('Model', function() {
 
