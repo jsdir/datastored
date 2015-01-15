@@ -49,10 +49,14 @@ describe('Transform sets >', function() {
       float: datastored.Float({hashStores: [hashStore]}),
       boolean: datastored.Boolean({hashStores: [hashStore]}),
       date: datastored.Date({hashStores: [hashStore]}),
-      datetime: datastored.Datetime({hashStores: [hashStore]})
+      datetime: datastored.Datetime({hashStores: [hashStore]}),
+
+      validated: datastored.String({hashStores: [hashStore], constraints: {
+        length: {is: 3}
+      }})
     });
 
-    // Create isntances.
+    // Create instances.
 
     return testUtils.nextTick(function() {
       return RSVP.all([
@@ -254,8 +258,17 @@ describe('Transform sets >', function() {
       });
     });
 
-
-    xit('should fail on validation failure');
+    it('should fail on validation failure', function(done) {
+      var model = this.models.type;
+      model.transforms.save.call(model.instance, {
+        validated: '1234'
+      }, {}, function(err) {
+        err.should.deep.eq({validated: [
+          'Validated is the wrong length (should be 3 characters)'
+        ]});
+        done();
+      });
+    });
   });
 
   describe('fetch', function() {
