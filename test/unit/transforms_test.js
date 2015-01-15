@@ -8,6 +8,7 @@ var testUtils = require('../test_utils');
 describe('Transform sets >', function() {
 
   before(function() {
+    var self = this;
     this.env = testUtils.createTestEnv();
     var hashStore = this.env.hashStore;
     this.models = {mixin: {}, type: {}, basic: {}};
