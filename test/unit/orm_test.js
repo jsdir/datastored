@@ -16,8 +16,8 @@ describe('orm', function() {
     it('should fail if the model type is already registered', function() {
       var self = this;
       (function() {
-        self.env.orm.createModel('BasicUnitModel', {});
-      }).should.throw('model "BasicUnitModel" is already defined');
+        self.env.orm.createModel('BasicModel', {});
+      }).should.throw('model "BasicModel" is already defined');
     });
   });
 });
