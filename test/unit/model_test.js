@@ -82,16 +82,16 @@ describe('Model', function() {
           transforms.input.lastCall.thisValue.should.eq(instance);
           transforms.input.should.have.been.calledWithExactly({
             text: 'a', default1: 'b'
-          }, sinon.match.falsy);
+          }, {});
 
           // Test save transform
           transforms.save.lastCall.thisValue.should.eq(instance);
-          transforms.save.should.have.been.calledWith({
+          transforms.save.should.have.been.calledWithExactly({
             default1: 'input(b)',
             default2: 'default2',
             defaultFunc: 'defaultFunc',
             text: 'input(a)'
-          });
+          }, {});
 
           return instance;
         })
@@ -107,15 +107,18 @@ describe('Model', function() {
         });
     });
 
-    it('should apply user transforms if requested', function() {
+    it('should call transforms with options', function() {
       var transforms = this.transforms;
       return this.models.BasicUnitModel
-        .create({text: 'a'}, true)
+        .create({text: 'a'}, {user: true})
         .then(function(instance) {
           transforms.input.lastCall.thisValue.should.eq(instance);
-          transforms.input.should.have.been.calledWithExactly({
-            text: 'a'
-          }, true);
+          transforms.input.should.have.been.calledWithExactly(
+            {text: 'a'}, {user: true});
+
+          transforms.save.lastCall.thisValue.should.eq(instance);
+          transforms.save.should.have.been.calledWithExactly(
+            {text: 'a'}, {user: true});
         });
     });
 
@@ -145,18 +148,16 @@ describe('Model', function() {
       var instance = this.models.BasicUnitModel.withId('a');
       instance.getId().should.eq('output(input(a))');
       this.transforms.input.lastCall.thisValue.should.eq(instance);
-      this.transforms.input.should.have.been.calledWithExactly({
-        id: 'a'
-      }, sinon.match.falsy);
+      this.transforms.input.should.have.been.calledWithExactly(
+        {id: 'a'}, {});
     });
 
-    it('should apply user transforms if requested', function() {
-      var instance = this.models.BasicUnitModel.withId('a', true);
+    it('should call transforms with options', function() {
+      var instance = this.models.BasicUnitModel.withId('a', {user: true});
       instance.getId().should.eq('output(input(a))');
       this.transforms.input.lastCall.thisValue.should.eq(instance);
-      this.transforms.input.should.have.been.calledWithExactly({
-        id: 'a'
-      }, true);
+      this.transforms.input.should.have.been.calledWithExactly(
+        {id: 'a'}, {user: true});
     });
   });
 
@@ -195,6 +196,7 @@ describe('Model', function() {
           replaceIndex: 'input(value3)'
         }).then(function(instance) {
           self.instance = instance;
+          self.id = instance.id;
         }).then(done, done);
       });
     });
@@ -232,29 +234,29 @@ describe('Model', function() {
         .should.throw('attribute "text" is not an index');
     });
 
-    it('should find the an instance with the indexed value', function() {
+    it('should find the instance with the indexed value', function() {
+      var self = this;
       var transforms = this.transforms;
       return this.IndexedModel.find('index', 'value1')
         .then(function(instance) {
           transforms.input.lastCall.thisValue.should.eq(instance);
-          transforms.input.should.have.been.calledWithExactly({
-            index: 'value1'
-          }, undefined);
-          instance.getId().should.exist;
+          transforms.input.should.have.been.calledWithExactly(
+            {index: 'value1'}, {});
+          instance.id.should.eq(self.id);
           instance.get('index').should.eq('input(value1)');
           instance.saved.should.be.true;
         });
     });
 
-    it('should apply user transforms if requested', function() {
+    it('should call transforms with options', function() {
+      var self = this;
       var transforms = this.transforms;
-      return this.IndexedModel.find('transformIndex', 'value2', true)
+      return this.IndexedModel.find('transformIndex', 'value2', {user: true})
         .then(function(instance) {
           transforms.input.lastCall.thisValue.should.eq(instance);
-          transforms.input.should.have.been.calledWithExactly({
-            transformIndex: 'value2'
-          }, true);
-          instance.getId().should.exist;
+          transforms.input.should.have.been.calledWithExactly(
+            {transformIndex: 'value2'}, {user: true});
+          instance.id.should.eq(self.id);
           instance.get('transformIndex').should.eq('input(value2)');
           instance.saved.should.be.true;
         });

@@ -1,327 +1,318 @@
+var _ = require('lodash');
 var sinon = require('sinon');
+var RSVP = require('rsvp');
 
 var datastored = require('../..');
 var memoryDatastores = require('../../lib/datastores/memory');
 var testUtils = require('../test_utils');
-
-function getTransforms(model, func) {
-  return model.create().then(function(instance) {
-    func(model._transforms, instance)
-  });
-}
 
 /**
  * Tests must be run at least one process tick after the model was defined to
  * allow for registration of all defined models.
  */
 
-describe('input transform', function() {
+function wrap(value, wrapValue) {
+  return wrapValue + '(' + value + ')';
+}
+
+function wrapValues(data, wrapValue) {
+  return _.mapValues(data, function(value) {
+    return wrap(value, wrapValue);
+  });
+}
+
+function wrapMixin(wrapValue) {
+  return {
+    input: sinon.spy(function(data, options) {
+      return wrapValues(data, wrapValue + '.input');
+    }),
+    output: sinon.spy(function(data, options) {
+      return wrapValues(data, wrapValue + '.output');
+    }),
+    fetch: sinon.spy(function(data, options, cb) {
+      cb(null, wrapValues(data, wrapValue + '.fetch'));
+    }),
+    save: sinon.spy(function(data, options, cb) {
+      cb(null, wrapValues(data, wrapValue + '.save'));
+    })
+  };
+}
+
+describe('Transform sets >', function() {
 
   before(function() {
-    testUtils.createTestEnv(this);
-  });
+    this.env = testUtils.createTestEnv();
+    this.hashStore = new memoryDatastores.MemoryHashStore();
+    this.mixin = wrapMixin('mixin.1');
+    this.models = {
+      mixin: {}, type: {}, basic: {}
+    };
 
-  it('should apply transforms in the correct order', function() {
-    var Model = this.models.MixinModel;
-    return getTransforms(Model, function(transforms, instance) {
-      transforms.input.call(instance, {text: 'a'})
-        .should.deep.eq({text: 'attribute.1(mixin.2(mixin.1(a)))'});
-    });
-  });
+    this.attribute = {
+      input: sinon.spy(function(name, value, options) {
+        return wrap(value, 'attribute.input');
+      }),
+      output: sinon.spy(function(name, value, options) {
+        return wrap(value, 'attribute.output');
+      }),
+      fetch: sinon.spy(function(name, value, options, cb) {
+        cb(null, wrap(value, 'attribute.fetch'));
+      }),
+      save: sinon.spy(function(name, value, options, cb) {
+        cb(null, wrap(value, 'attribute.save'));
+      })
+    };
+    this.attribute.hashStores = [this.hashStore];
 
-  it('should pass parameters to mixins and attribute methods', function(done) {
-    var attributeInput = sinon.spy(function() {return 'a';});
-    var optionsInput = sinon.spy(function() {return {text: 'a'};});
-    var Model = this.orm.createModel('InputModel', {
-      keyspace: 'InputModel',
+    // Define models
+
+    this.MixinModel = this.env.orm.createModel('MixinModel', {
+      keyspace: 'MixinModel',
       id: datastored.Id({type: 'string'}),
+      mixins: [this.mixin, wrapMixin('mixin.2')],
       attributes: {
-        text: datastored.String({
-          input: attributeInput,
-          hashStores: [new memoryDatastores.MemoryHashStore()]
-        })
-      },
-      input: optionsInput
+        text: datastored.String(this.attribute)
+      }
     });
 
-    process.nextTick(function() {
-      getTransforms(Model, function(transforms, instance) {
-        attributeInput.reset();
-        optionsInput.reset();
+    this.TypeModel = this.env.createWithAttributes({
+      string: datastored.String({hashStores: [this.hashStore]}),
+      integer: datastored.Integer({hashStores: [this.hashStore]}),
+      float: datastored.Float({hashStores: [this.hashStore]}),
+      boolean: datastored.Boolean({hashStores: [this.hashStore]}),
+      date: datastored.Date({hashStores: [this.hashStore]}),
+      datetime: datastored.Datetime({hashStores: [this.hashStore]})
+    });
 
-        transforms.input.call(instance, {text: 'a'}, true)
-          .should.deep.eq({text: 'a'});
+    this.BasicModel = this.env.BasicModel(this.hashStore);
+  });
 
-        attributeInput.should.have.been.calledWithExactly('text', 'a', true);
-        attributeInput.lastCall.thisValue.should.eq(instance);
-
-        optionsInput.should.have.been.calledWithExactly({text: 'a'}, true);
-        optionsInput.lastCall.thisValue.should.eq(instance);
-      }).then(done, done);
+  before(function() {
+    var self = this;
+    return new RSVP.Promise(function(resolve) {
+      process.nextTick(resolve);
+    }).then(function() {
+      return RSVP.all([
+        self.MixinModel.create()
+          .then(function(instance) {
+            self.models.mixin.instance = instance;
+            self.models.mixin.transforms = instance.model._transforms;
+          })
+      , self.TypeModel.create()
+          .then(function(instance) {
+            self.models.type.instance = instance;
+            self.models.type.transforms = instance.model._transforms;
+          })
+      , self.BasicModel.create()
+          .then(function(instance) {
+            self.models.basic.instance = instance;
+            self.models.basic.transforms = instance.model._transforms;
+          })
+      ]);
     });
   });
 
-  it('should unserialize data', function() {
-    var Model = this.models.TypeModel;
-    return getTransforms(Model, function(transforms, instance) {
-      var data = transforms.input.call(instance, {
-        string: 'a',
-        integer: 123,
-        boolean: true,
-        date: '2000-01-01',
-        datetime: '2000-01-01T00:00:00.000Z'
-      }, true);
+  beforeEach(function(done) {
+    this.mixin.input.reset();
+    this.mixin.output.reset();
+    this.mixin.fetch.reset();
+    this.mixin.save.reset();
+
+    this.attribute.input.reset();
+    this.attribute.output.reset();
+    this.attribute.fetch.reset();
+    this.attribute.save.reset();
+
+    this.hashStore.reset(done);
+  });
+
+  describe('input', function() {
+
+    var testData = {
+      string: 'a',
+      integer: 123,
+      float: 1.2,
+      boolean: true,
+      date: '2000-01-01',
+      datetime: '2000-01-01T00:00:00.000Z'
+    };
+
+    it('should call transforms correctly', function() {
+      var options = {option: 'value'};
+      var model = this.models.mixin;
+
+      model.transforms.input
+        .call(model.instance, {text: 'a'}, options)
+        .should.deep.eq({text: 'attribute.input(mixin.2.input(mixin.1.input(a)))'});
+
+      // Test model-level transforms.
+      this.mixin.input.lastCall.thisValue.should.eq(model.instance);
+      this.mixin.input.should.have.been
+        .calledWithExactly({text: 'a'}, options);
+
+      // Test attribute-level transforms.
+      this.attribute.input.lastCall.thisValue.should.eq(model.instance);
+      this.attribute.input.should.have.been
+        .calledWithExactly('text', 'mixin.2.input(mixin.1.input(a))', options);
+    });
+
+    it('should not unserialize data by default', function() {
+      var model = this.models.type;
+      model.transforms.input.call(model.instance, testData, {})
+        .should.deep.eq(testData);
+    });
+
+    it('should unserialize data when using user transforms', function() {
+      var model = this.models.type;
+      var data = model.transforms.input
+        .call(model.instance, testData, {user: true});
 
       data.string.should.eq('a');
       data.integer.should.eq(123);
+      data.float.should.eq(1.2);
       data.boolean.should.eq(true);
       data.date.getTime().should.eq(946684800000);
       data.datetime.getTime().should.eq(946684800000);
     });
-  });
 
-  it('should not remove guarded values by default', function() {
-    var Model = this.models.BasicUnitModel;
-    return getTransforms(Model, function(transforms, instance) {
-      transforms.input.call(instance, {
+    it('should not remove guarded values by default', function() {
+      var model = this.models.basic;
+      model.transforms.input.call(model.instance, {
         guarded: 'guarded', text: 'a'
-      }).should.deep.eq({guarded: 'guarded', text: 'a'});
+      }, {}).should.deep.eq({guarded: 'guarded', text: 'a'});
     });
-  });
 
-  it('should remove guarded values when using user transforms', function() {
-    var Model = this.models.BasicUnitModel;
-    return getTransforms(Model, function(transforms, instance) {
-      transforms.input.call(instance, {
+    it('should remove guarded values when using user transforms', function() {
+      var model = this.models.basic;
+      model.transforms.input.call(model.instance, {
         guarded: 'guarded', text: 'a'
-      }, true).should.deep.eq({text: 'a'});
-    });
-  });
-});
-
-describe('output transform', function() {
-
-  before(function() {
-    testUtils.createTestEnv(this);
-  });
-
-  it('should apply transforms in the correct order', function() {
-    var Model = this.models.MixinModel;
-    return getTransforms(Model, function(transforms, instance) {
-      transforms.output.call(instance, {text: 'a'})
-        .should.deep.eq({text: 'mixin.1(mixin.2(attribute.1(a)))'})
+      }, {user: true}).should.deep.eq({text: 'a'});
     });
   });
 
-  it('should pass parameters to mixins and attribute methods', function(done) {
-    var attributeOutput = sinon.spy(function() {return 'a';});
-    var optionsOutput = sinon.spy(function() {return {text: 'a'};});
-    var Model = this.orm.createModel('OutputModel', {
-      keyspace: 'OutputModel',
-      id: datastored.Id({type: 'string'}),
-      attributes: {
-        text: datastored.String({
-          output: attributeOutput,
-          hashStores: [new memoryDatastores.MemoryHashStore()]
-        })
-      },
-      output: optionsOutput
+  describe('output', function() {
+
+    var testData = {
+      string: 'a',
+      integer: 123,
+      float: 1.2,
+      boolean: true,
+      date: new Date('2000-01-01'),
+      datetime: new Date('2000-01-01T00:00:00.000Z')
+    };
+
+    it('should call transforms correctly', function() {
+      var options = {option: 'value'};
+      var model = this.models.mixin;
+
+      model.transforms.output
+        .call(model.instance, {text: 'a'}, options)
+        .should.deep.eq({text: 'mixin.1.output(mixin.2.output(attribute.output(a)))'});
+
+      // Test attribute-level transforms.
+      this.mixin.output.lastCall.thisValue.should.eq(model.instance);
+      this.mixin.output.should.have.been
+        .calledWithExactly({text: 'mixin.2.output(attribute.output(a))'}, options);
+
+      // Test model-level transforms.
+      this.attribute.output.lastCall.thisValue.should.eq(model.instance);
+      this.attribute.output.should.have.been
+        .calledWithExactly('text', 'a', options);
     });
 
-    process.nextTick(function() {
-      getTransforms(Model, function(transforms, instance) {
-        attributeOutput.reset();
-        optionsOutput.reset();
-        transforms.output.call(instance, {text: 'a'}, {option: 'value'}, true)
-          .should.deep.eq({text: 'a'});
-
-        attributeOutput.should.have.been.calledWithExactly('text', 'a', {
-          option: 'value'
-        }, true);
-        attributeOutput.lastCall.thisValue.should.eq(instance);
-
-        optionsOutput.should.have.been.calledWithExactly({text: 'a'}, {
-          option: 'value'
-        }, true);
-        optionsOutput.lastCall.thisValue.should.eq(instance);
-      }).then(done, done);
+    it('should not serialize data by default', function() {
+      var model = this.models.type;
+      model.transforms.output.call(model.instance, testData, {})
+        .should.deep.eq(testData);
     });
-  });
 
-  it('should serialize data', function() {
-    var Model = this.models.TypeModel;
-    return getTransforms(Model, function(transforms, instance) {
-      transforms.output.call(instance, {
-        string: 'a',
-        integer: 123,
-        boolean: true,
-        date: new Date('2000-01-01'),
-        datetime: new Date('2000-01-01T00:00:00.000Z')
-      }, {}, true).should.deep.eq({
-        string: 'a',
-        integer: 123,
-        boolean: true,
-        date: '2000-01-01',
-        datetime: '2000-01-01T00:00:00.000Z'
-      });
+    it('should serialize data when using user transforms', function() {
+      var model = this.models.type;
+      model.transforms.output.call(model.instance, testData, {user: true})
+        .should.deep.eq({
+          string: 'a',
+          integer: 123,
+          float: 1.2,
+          boolean: true,
+          date: '2000-01-01',
+          datetime: '2000-01-01T00:00:00.000Z'
+        });
     });
-  });
 
-  it('should not remove hidden values by default', function() {
-    var Model = this.models.BasicUnitModel;
-    return getTransforms(Model, function(transforms, instance) {
-      transforms.output.call(instance, {hidden: 'hidden', text: 'a'}, {})
-        .should.deep.eq({hidden: 'hidden', text: 'a'});
+    it('should not remove hidden values by default', function() {
+      var model = this.models.basic;
+      model.transforms.output.call(model.instance, {
+        hidden: 'hidden', text: 'a'
+      }, {}).should.deep.eq({hidden: 'hidden', text: 'a'});
     });
-  });
 
-  it('should remove hidden values when using user transforms', function() {
-    var Model = this.models.BasicUnitModel;
-    return getTransforms(Model, function(transforms, instance) {
-      transforms.output.call(instance, {hidden: 'hidden', text: 'a'}, {}, true)
-        .should.deep.eq({text: 'a'});
-    });
-  });
-});
-
-describe('save transform', function() {
-
-  before(function() {
-    testUtils.createTestEnv(this);
-  });
-
-  before(function() {
-    var hashStore = new memoryDatastores.MemoryHashStore();
-    this.ValidationModel = this.orm.createModel('ValidationModel', {
-      keyspace: 'ValidationModel',
-      id: datastored.Id({type: 'string'}),
-      attributes: {
-        bar: datastored.String({hashStores: [hashStore], rules: {max: 2}}),
-        baz: datastored.String({hashStores: [hashStore], rules: {min: 4}})
-      }
+    it('should remove hidden values when using user transforms', function() {
+      var model = this.models.basic;
+      model.transforms.output.call(model.instance, {
+        hidden: 'hidden', text: 'a'
+      }, {user: true}).should.deep.eq({text: 'a'});
     });
   });
 
-  it('should apply transforms in the correct order', function(done) {
-    var Model = this.models.MixinModel;
-    getTransforms(Model, function(transforms, instance) {
-      transforms.save.call(instance, {text: 'a'}, function(err, data) {
-        if (err) {return done(err);}
-        data.should.deep.eq({text: 'attribute.1(mixin.2(mixin.1(a)))'});
-        done();
-      });
-    }).catch(done);
-  });
+  describe('save', function() {
 
-  it('should pass parameters to mixins and attribute methods', function(done) {
-    var attributeSave = sinon.spy(function(n, _, cb) {cb(null, 'a');});
-    var optionsSave = sinon.spy(function(_, cb) {cb(null, {text: 'a'});});
-    var Model = this.orm.createModel('SaveModel', {
-      keyspace: 'SaveModel',
-      id: datastored.Id({type: 'string'}),
-      attributes: {
-        text: datastored.String({
-          save: attributeSave,
-          hashStores: [new memoryDatastores.MemoryHashStore()]
-        })
-      },
-      save: optionsSave
-    });
+    it('should call transforms correctly', function(done) {
+      var self = this;
+      var options = {option: 'value'};
+      var model = this.models.mixin;
 
-    process.nextTick(function() {
-      getTransforms(Model, function(transforms, instance) {
-        attributeSave.reset();
-        optionsSave.reset();
-        transforms.save.call(instance, {text: 'a'}, function(err, data) {
-          data.should.deep.eq({text: 'a'});
+      model.transforms.save
+        .call(model.instance, {text: 'a'}, options, function(err, data) {
+          data.should.deep.eq({text: 'attribute.save(mixin.2.save(mixin.1.save(a)))'});
 
-          attributeSave.should.have.been.calledWithExactly('text', 'a',
-            sinon.match.func);
-          attributeSave.lastCall.thisValue.should.eq(instance);
+          // Test attribute-level transforms.
+          self.mixin.save.lastCall.thisValue.should.eq(model.instance);
+          self.mixin.save.should.have.been
+            .calledWithExactly({text: 'a'}, options, sinon.match.func);
 
-          optionsSave.should.have.been.calledWithExactly({text: 'a'},
-            sinon.match.func);
-          optionsSave.lastCall.thisValue.should.eq(instance);
+          // Test model-level transforms.
+          self.attribute.save.lastCall.thisValue.should.eq(model.instance);
+          self.attribute.save.should.have.been
+            .calledWithExactly('text', 'mixin.2.save(mixin.1.save(a))', options, sinon.match.func);
 
           done();
         });
-      }).catch(done);
     });
-  });
 
-  it('should validate data', function() {
-    return this.ValidationModel.create({bar: 'abc', baz: 'abc'})
-      .then(testUtils.shouldReject, function(err) {
-        err.should.deep.eq({
-          bar: 'attribute "bar" must have a maximum of 2 characters',
-          baz: 'attribute "baz" must have a minimum of 4 characters'
-        });
-      });
-  });
-
-  it('should fail with serialization errors', function(done) {
-    var Model = this.models.TypeModel;
-    getTransforms(Model, function(transforms, instance) {
-      var data = {date: 'invalid'}
-      transforms.input.call(instance, data, true);
-      transforms.save.call(instance, data, function(err) {
+    it('should fail with serialization errors', function(done) {
+      var model = this.models.type;
+      var data = {date: 'invalid'};
+      model.transforms.input.call(model.instance, data, {user: true});
+      model.transforms.save.call(model.instance, data, {}, function(err) {
         err.should.deep.eq({date: 'Invalid date'});
         done();
       });
-    }).catch(done);
-  });
-});
-
-describe('fetch transform', function() {
-
-  before(function() {
-    testUtils.createTestEnv(this);
-  });
-
-  it('should apply transforms in the correct order', function(done) {
-    var Model = this.models.MixinModel;
-    getTransforms(Model, function(transforms, instance) {
-      transforms.fetch.call(instance, {text: 'a'}, {}, function(err, data) {
-        if (err) {return done(err);}
-        data.should.deep.eq({text: 'mixin.1(mixin.2(attribute.1(a)))'});
-        done();
-      });
-    }).catch(done);
-  });
-
-  it('should pass parameters to mixins and attribute methods', function(done) {
-    var attributeFetch = sinon.spy(function(n, v, o, cb) {cb(null, 'a');});
-    var optionsFetch = sinon.spy(function(d, o, cb) {cb(null, {text: 'a'});});
-    var Model = this.orm.createModel('FetchModel', {
-      keyspace: 'FetchModel',
-      id: datastored.Id({type: 'string'}),
-      attributes: {
-        text: datastored.String({
-          fetch: attributeFetch,
-          hashStores: [new memoryDatastores.MemoryHashStore()]
-        })
-      },
-      fetch: optionsFetch
     });
+  });
 
-    process.nextTick(function() {
-      getTransforms(Model, function(transforms, instance) {
-        attributeFetch.reset();
-        optionsFetch.reset();
-        transforms.fetch.call(instance, {text: 'a'}, {}, function(err, data) {
-          data.should.deep.eq({text: 'a'});
+  describe('fetch', function() {
 
-          attributeFetch.should.have.been.calledWithExactly('text', 'a', {},
-            sinon.match.func);
-          attributeFetch.lastCall.thisValue.should.eq(instance);
+    it('should call transforms correctly', function(done) {
+      var self = this;
+      var options = {option: 'value'};
+      var model = this.models.mixin;
 
-          optionsFetch.should.have.been.calledWithExactly({text: 'a'}, {},
-            sinon.match.func);
-          optionsFetch.lastCall.thisValue.should.eq(instance);
+      model.transforms.fetch
+        .call(model.instance, {text: 'a'}, options, function(err, data) {
+          data.should.deep.eq({text: 'mixin.1.fetch(mixin.2.fetch(attribute.fetch(a)))'});
+
+          // Test attribute-level transforms.
+          self.mixin.fetch.lastCall.thisValue.should.eq(model.instance);
+          self.mixin.fetch.should.have.been
+            .calledWithExactly({text: 'mixin.2.fetch(attribute.fetch(a))'}, options, sinon.match.func);
+
+          // Test model-level transforms.
+          self.attribute.fetch.lastCall.thisValue.should.eq(model.instance);
+          self.attribute.fetch.should.have.been
+            .calledWithExactly('text', 'a', options, sinon.match.func);
 
           done();
         });
-      }).catch(done);
     });
   });
 });

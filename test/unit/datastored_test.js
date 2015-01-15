@@ -8,26 +8,13 @@ chai.should();
 
 describe('datastored', function() {
 
-  describe('#mapAttributes()', function() {
-
-    it('should map attribute values to a function', function() {
-      function transform(value) {
-        return 'foobar'
-      }
-      var func = datastored.mapAttributes(['foo', 'bar'], transform);
-      func({foo: 'foo', bar: 'bar', baz: 'baz'})
-        .should.deep.eq({foo: 'foobar', bar: 'foobar', baz: 'baz'});
-    });
-  });
-
   describe('#createOrm()', function() {
 
     before(function() {
       testUtils.createTestEnv(this);
     });
 
-    it('should use a stub id generator if `generateId` is not defined',
-    function(done) {
+    it('should fall back if `generateId` is not defined', function(done) {
       var orm = this.orm;
 
       async.series([
