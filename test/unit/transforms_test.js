@@ -3,13 +3,7 @@ var sinon = require('sinon');
 var RSVP = require('rsvp');
 
 var datastored = require('../..');
-var memoryDatastores = require('../../lib/datastores/memory');
 var testUtils = require('../test_utils');
-
-/**
- * Tests must be run at least one process tick after the model was defined to
- * allow for registration of all defined models.
- */
 
 function wrap(value, wrapValue) {
   return wrapValue + '(' + value + ')';
@@ -42,12 +36,14 @@ describe('Transform sets >', function() {
 
   before(function() {
     this.env = testUtils.createTestEnv();
-    this.hashStore = new memoryDatastores.MemoryHashStore();
-    this.mixin = wrapMixin('mixin.1');
+    var hashStore = this.env.hashStore;
     this.models = {
       mixin: {}, type: {}, basic: {}
     };
 
+    // MixinModel
+
+    this.mixin = wrapMixin('mixin.1');
     this.attribute = {
       input: sinon.spy(function(name, value, options) {
         return wrap(value, 'attribute.input');
@@ -62,9 +58,7 @@ describe('Transform sets >', function() {
         cb(null, wrap(value, 'attribute.save'));
       })
     };
-    this.attribute.hashStores = [this.hashStore];
-
-    // Define models
+    this.attribute.hashStores = [hashStore];
 
     this.MixinModel = this.env.orm.createModel('MixinModel', {
       keyspace: 'MixinModel',
@@ -75,21 +69,23 @@ describe('Transform sets >', function() {
       }
     });
 
-    this.TypeModel = this.env.createWithAttributes({
-      string: datastored.String({hashStores: [this.hashStore]}),
-      integer: datastored.Integer({hashStores: [this.hashStore]}),
-      float: datastored.Float({hashStores: [this.hashStore]}),
-      boolean: datastored.Boolean({hashStores: [this.hashStore]}),
-      date: datastored.Date({hashStores: [this.hashStore]}),
-      datetime: datastored.Datetime({hashStores: [this.hashStore]})
-    });
+    // TypeModel
 
-    this.BasicModel = this.env.BasicModel(this.hashStore);
+    this.TypeModel = this.env.createWithAttributes({
+      string: datastored.String({hashStores: [hashStore]}),
+      integer: datastored.Integer({hashStores: [hashStore]}),
+      float: datastored.Float({hashStores: [hashStore]}),
+      boolean: datastored.Boolean({hashStores: [hashStore]}),
+      date: datastored.Date({hashStores: [hashStore]}),
+      datetime: datastored.Datetime({hashStores: [hashStore]})
+    });
   });
 
   before(function() {
     var self = this;
     return new RSVP.Promise(function(resolve) {
+      // Tests must be run at least one process tick after the model was
+      // defined to allow for registration of all defined models.
       process.nextTick(resolve);
     }).then(function() {
       return RSVP.all([
@@ -103,7 +99,7 @@ describe('Transform sets >', function() {
             self.models.type.instance = instance;
             self.models.type.transforms = instance.model._transforms;
           })
-      , self.BasicModel.create()
+      , self.env.BasicModel.create()
           .then(function(instance) {
             self.models.basic.instance = instance;
             self.models.basic.transforms = instance.model._transforms;
@@ -123,7 +119,7 @@ describe('Transform sets >', function() {
     this.attribute.fetch.reset();
     this.attribute.save.reset();
 
-    this.hashStore.reset(done);
+    this.env.hashStore.reset(done);
   });
 
   describe('input', function() {
@@ -143,7 +139,9 @@ describe('Transform sets >', function() {
 
       model.transforms.input
         .call(model.instance, {text: 'a'}, options)
-        .should.deep.eq({text: 'attribute.input(mixin.2.input(mixin.1.input(a)))'});
+        .should.deep.eq({
+          text: 'attribute.input(mixin.2.input(mixin.1.input(a)))'
+        });
 
       // Test model-level transforms.
       this.mixin.input.lastCall.thisValue.should.eq(model.instance);
@@ -207,12 +205,16 @@ describe('Transform sets >', function() {
 
       model.transforms.output
         .call(model.instance, {text: 'a'}, options)
-        .should.deep.eq({text: 'mixin.1.output(mixin.2.output(attribute.output(a)))'});
+        .should.deep.eq({
+          text: 'mixin.1.output(mixin.2.output(attribute.output(a)))'
+        });
 
       // Test attribute-level transforms.
       this.mixin.output.lastCall.thisValue.should.eq(model.instance);
       this.mixin.output.should.have.been
-        .calledWithExactly({text: 'mixin.2.output(attribute.output(a))'}, options);
+        .calledWithExactly({
+          text: 'mixin.2.output(attribute.output(a))'
+        }, options);
 
       // Test model-level transforms.
       this.attribute.output.lastCall.thisValue.should.eq(model.instance);
@@ -263,7 +265,9 @@ describe('Transform sets >', function() {
 
       model.transforms.save
         .call(model.instance, {text: 'a'}, options, function(err, data) {
-          data.should.deep.eq({text: 'attribute.save(mixin.2.save(mixin.1.save(a)))'});
+          data.should.deep.eq({
+            text: 'attribute.save(mixin.2.save(mixin.1.save(a)))'
+          });
 
           // Test attribute-level transforms.
           self.mixin.save.lastCall.thisValue.should.eq(model.instance);
@@ -273,7 +277,8 @@ describe('Transform sets >', function() {
           // Test model-level transforms.
           self.attribute.save.lastCall.thisValue.should.eq(model.instance);
           self.attribute.save.should.have.been
-            .calledWithExactly('text', 'mixin.2.save(mixin.1.save(a))', options, sinon.match.func);
+            .calledWithExactly('text', 'mixin.2.save(mixin.1.save(a))',
+              options, sinon.match.func);
 
           done();
         });
@@ -299,12 +304,16 @@ describe('Transform sets >', function() {
 
       model.transforms.fetch
         .call(model.instance, {text: 'a'}, options, function(err, data) {
-          data.should.deep.eq({text: 'mixin.1.fetch(mixin.2.fetch(attribute.fetch(a)))'});
+          data.should.deep.eq({
+            text: 'mixin.1.fetch(mixin.2.fetch(attribute.fetch(a)))'
+          });
 
           // Test attribute-level transforms.
           self.mixin.fetch.lastCall.thisValue.should.eq(model.instance);
           self.mixin.fetch.should.have.been
-            .calledWithExactly({text: 'mixin.2.fetch(attribute.fetch(a))'}, options, sinon.match.func);
+            .calledWithExactly({
+              text: 'mixin.2.fetch(attribute.fetch(a))'
+            }, options, sinon.match.func);
 
           // Test model-level transforms.
           self.attribute.fetch.lastCall.thisValue.should.eq(model.instance);
