@@ -5,57 +5,28 @@ var RSVP = require('rsvp');
 var datastored = require('../..');
 var testUtils = require('../test_utils');
 
-function wrap(value, wrapValue) {
-  return wrapValue + '(' + value + ')';
-}
-
-function wrapValues(data, wrapValue) {
-  return _.mapValues(data, function(value) {
-    return wrap(value, wrapValue);
-  });
-}
-
-function wrapMixin(wrapValue) {
-  return {
-    input: sinon.spy(function(data, options) {
-      return wrapValues(data, wrapValue + '.input');
-    }),
-    output: sinon.spy(function(data, options) {
-      return wrapValues(data, wrapValue + '.output');
-    }),
-    fetch: sinon.spy(function(data, options, cb) {
-      cb(null, wrapValues(data, wrapValue + '.fetch'));
-    }),
-    save: sinon.spy(function(data, options, cb) {
-      cb(null, wrapValues(data, wrapValue + '.save'));
-    })
-  };
-}
-
 describe('Transform sets >', function() {
 
   before(function() {
     this.env = testUtils.createTestEnv();
     var hashStore = this.env.hashStore;
-    this.models = {
-      mixin: {}, type: {}, basic: {}
-    };
+    this.models = {mixin: {}, type: {}, basic: {}};
 
     // MixinModel
 
-    this.mixin = wrapMixin('mixin.1');
+    this.mixin = testUtils.wrapMixin('mixin.1');
     this.attribute = {
       input: sinon.spy(function(name, value, options) {
-        return wrap(value, 'attribute.input');
+        return testUtils.wrap(value, 'attribute.input');
       }),
       output: sinon.spy(function(name, value, options) {
-        return wrap(value, 'attribute.output');
+        return testUtils.wrap(value, 'attribute.output');
       }),
       fetch: sinon.spy(function(name, value, options, cb) {
-        cb(null, wrap(value, 'attribute.fetch'));
+        cb(null, testUtils.wrap(value, 'attribute.fetch'));
       }),
       save: sinon.spy(function(name, value, options, cb) {
-        cb(null, wrap(value, 'attribute.save'));
+        cb(null, testUtils.wrap(value, 'attribute.save'));
       })
     };
     this.attribute.hashStores = [hashStore];
@@ -63,7 +34,7 @@ describe('Transform sets >', function() {
     this.MixinModel = this.env.orm.createModel('MixinModel', {
       keyspace: 'MixinModel',
       id: datastored.Id({type: 'string'}),
-      mixins: [this.mixin, wrapMixin('mixin.2')],
+      mixins: [this.mixin, testUtils.wrapMixin('mixin.2')],
       attributes: {
         text: datastored.String(this.attribute)
       }
@@ -79,15 +50,10 @@ describe('Transform sets >', function() {
       date: datastored.Date({hashStores: [hashStore]}),
       datetime: datastored.Datetime({hashStores: [hashStore]})
     });
-  });
 
-  before(function() {
-    var self = this;
-    return new RSVP.Promise(function(resolve) {
-      // Tests must be run at least one process tick after the model was
-      // defined to allow for registration of all defined models.
-      process.nextTick(resolve);
-    }).then(function() {
+    // Create isntances.
+
+    return testUtils.nextTick(function() {
       return RSVP.all([
         self.MixinModel.create()
           .then(function(instance) {
@@ -109,15 +75,8 @@ describe('Transform sets >', function() {
   });
 
   beforeEach(function(done) {
-    this.mixin.input.reset();
-    this.mixin.output.reset();
-    this.mixin.fetch.reset();
-    this.mixin.save.reset();
-
-    this.attribute.input.reset();
-    this.attribute.output.reset();
-    this.attribute.fetch.reset();
-    this.attribute.save.reset();
+    testUtils.resetTransforms(this.mixin);
+    testUtils.resetTransforms(this.attribute);
 
     this.env.hashStore.reset(done);
   });
@@ -293,6 +252,9 @@ describe('Transform sets >', function() {
         done();
       });
     });
+
+
+    xit('should fail on validation failure');
   });
 
   describe('fetch', function() {

@@ -13,18 +13,19 @@ function getAsyncError(func, cb) {
   errDomain.run(func);
 }
 
-/*
-var hashStore = new datastored.MemoryHashStore();
+exports.createTestEnv = function() {
+  var hashStore = new memoryStores.MemoryHashStore();
+  var orm = datastored.createOrm({createModelsAtRuntime: true});
+  var basicModelOptions = {};
 
-function wrapValues(data, wrapValue) {
-  return _.mapValues(data, function(value) {
-    return wrapValue + '(' + value + ')';
-  });
-}
+  var env = {
+    orm: orm,
+    hashStore: hashStore
+  };
 
-var modelOptions = {
-  BasicUnitModel: {
-    keyspace: 'BasicUnitModel',
+  // Utility models
+
+  env.basicModelOptions = {
     id: datastored.Id({type: 'string'}),
     attributes: {
       text: datastored.String({hashStores: [hashStore]}),
@@ -53,70 +54,21 @@ var modelOptions = {
     methods: {
       methodFunc: function() {return this;}
     }
-  },
-  TypeModel: {
-    keyspace: 'TypeModel',
-    id: datastored.Id({type: 'string'}),
-    attributes: {
-      string: datastored.String({hashStores: [hashStore]}),
-      integer: datastored.Integer({hashStores: [hashStore]}),
-      boolean: datastored.Boolean({hashStores: [hashStore]}),
-      date: datastored.Date({hashStores: [hashStore]}),
-      datetime: datastored.Datetime({hashStores: [hashStore]})
-    }
-  }
-  RequiredModel: {
-    keyspace: 'RequiredModel',
-    id: datastored.Id({type: 'string'}),
-    attributes: {
-      text: datastored.String({hashStores: [hashStore]}),
-      required: datastored.String({required: true, hashStores: [hashStore]})
-    }
-  }
-};
-*/
-
-exports.createTestEnv = function() {
-  var hashStore = new memoryStores.MemoryHashStore();
-  var orm = datastored.createOrm({createModelsAtRuntime: true});
-  var env = {
-    orm: orm,
-    hashStore: hashStore,
-
-    // Utility models
-
-    BasicModel: orm.createModel('BasicModel', {
-      keyspace: 'BasicModel',
-      id: datastored.Id({type: 'string'}),
-      attributes: {
-        text: datastored.String({hashStores: [hashStore]}),
-        text2: datastored.String({hashStores: [hashStore]}),
-        default1: datastored.String({
-          hashStores: [hashStore],
-          defaultValue: 'default1'
-        }),
-        default2: datastored.String({
-          hashStores: [hashStore],
-          defaultValue: 'default2'
-        }),
-        defaultFunc: datastored.String({
-          hashStores: [hashStore],
-          defaultValue: function() {
-            return 'defaultFunc';
-          }
-        }),
-        guarded: datastored.String({hashStores: [hashStore], guarded: true}),
-        hidden: datastored.String({hashStores: [hashStore], hidden: true})
-      },
-      statics: {
-        staticFunc: function() {return this;},
-        property: 'text'
-      },
-      methods: {
-        methodFunc: function() {return this;}
-      }
-    })
   };
+
+  env.BasicModel = orm.createModel('BasicModel', _.extend(
+    {}, env.basicModelOptions, {keyspace: 'BasicModel'}
+  ));
+
+  env.basicModelLogMixin = exports.wrapMixin('m');
+  env.BasicModelLog = orm.createModel('BasicModelLog', _.extend(
+    {}, env.basicModelOptions, {
+      keyspace: 'BasicModelLog',
+      mixins: [env.basicModelLogMixin]
+    }
+  ));
+
+  // Utility methods
 
   env.assertCreateFails = function(options, message, cb) {
     if (cb) {
@@ -142,7 +94,7 @@ exports.createTestEnv = function() {
     }
     return env.orm.createModel(name, {
       keyspace: name,
-      id: datastored.Id({type: 'integer'}),
+      id: datastored.Id({type: 'string'}),
       attributes: attributes
     });
   };
@@ -154,14 +106,44 @@ exports.shouldReject = function() {
   throw new Error('promise should have been rejected');
 };
 
-exports.reloadInstance = function(attributes) {
-  return function(instance) {
-    var newInstance = instance.model.withId(instance.id);
-    // Override the input transform.
-    newInstance.id = instance.id;
-    return newInstance.fetch(attributes).then(function(exists) {
-      exists.should.be.true;
-      return newInstance;
-    });
-  }
+exports.wrap = function(value, wrapValue) {
+  return wrapValue + '(' + value + ')';
+};
+
+exports.wrapValues = function(data, wrapValue) {
+  return _.mapValues(data, function(value) {
+    return exports.wrap(value, wrapValue);
+  });
+};
+
+exports.wrapMixin = function(wrapValue) {
+  return {
+    input: sinon.spy(function(data, options) {
+      return exports.wrapValues(data, wrapValue + '.input');
+    }),
+    output: sinon.spy(function(data, options) {
+      return exports.wrapValues(data, wrapValue + '.output');
+    }),
+    fetch: sinon.spy(function(data, options, cb) {
+      cb(null, exports.wrapValues(data, wrapValue + '.fetch'));
+    }),
+    save: sinon.spy(function(data, options, cb) {
+      cb(null, exports.wrapValues(data, wrapValue + '.save'));
+    })
+  };
+};
+
+exports.resetTransforms = function(obj) {
+  obj.input.reset();
+  obj.output.reset();
+  obj.fetch.reset();
+  obj.save.reset();
+};
+
+exports.nextTick = function(func) {
+  return new RSVP.Promise(function(resolve) {
+    // Tests must be run at least one process tick after the model was
+    // defined to allow for registration of all defined models.
+    process.nextTick(resolve);
+  }).then(func);
 };

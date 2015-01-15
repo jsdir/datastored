@@ -148,7 +148,5 @@ describe('Instance', function() {
           instance.get(attributes).should.deep.eq({text: 'c', required: 'b'});
         });
     });
-
-    xit('should fail on validation failure');
   });
 });
