@@ -8,7 +8,7 @@ chai.should();
 describe('orm', function() {
 
   before(function() {
-    testUtils.createTestEnv(this);
+    this.env = testUtils.createTestEnv();
   });
 
   describe('#createModel()', function() {
@@ -16,7 +16,7 @@ describe('orm', function() {
     it('should fail if the model type is already registered', function() {
       var self = this;
       (function() {
-        self.orm.createModel('BasicUnitModel', {});
+        self.env.orm.createModel('BasicUnitModel', {});
       }).should.throw('model "BasicUnitModel" is already defined');
     });
   });

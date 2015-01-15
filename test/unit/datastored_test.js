@@ -11,11 +11,11 @@ describe('datastored', function() {
   describe('#createOrm()', function() {
 
     before(function() {
-      testUtils.createTestEnv(this);
+      this.env = testUtils.createTestEnv();
     });
 
     it('should fall back if `generateId` is not defined', function(done) {
-      var orm = this.orm;
+      var orm = this.env.orm;
 
       async.series([
         function(cb) {
