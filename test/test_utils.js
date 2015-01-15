@@ -5,6 +5,7 @@ var sinon = require('sinon');
 var RSVP = require('rsvp');
 
 var datastored = require('..');
+var memoryStores = require('../lib/datastores/memory');
 
 function getAsyncError(func, cb) {
   var errDomain = domain.create();
@@ -76,42 +77,45 @@ var modelOptions = {
 */
 
 exports.createTestEnv = function() {
+  var hashStore = new memoryStores.MemoryHashStore();
   var orm = datastored.createOrm({createModelsAtRuntime: true});
   var env = {
     orm: orm,
-    BasicModel: function(hashStore) {
-      return orm.createModel('BasicModel', {
-        keyspace: 'BasicModel',
-        id: datastored.Id({type: 'string'}),
-        attributes: {
-          text: datastored.String({hashStores: [hashStore]}),
-          text2: datastored.String({hashStores: [hashStore]}),
-          default1: datastored.String({
-            hashStores: [hashStore],
-            defaultValue: 'default1'
-          }),
-          default2: datastored.String({
-            hashStores: [hashStore],
-            defaultValue: 'default2'
-          }),
-          defaultFunc: datastored.String({
-            hashStores: [hashStore],
-            defaultValue: function() {
-              return 'defaultFunc';
-            }
-          }),
-          guarded: datastored.String({hashStores: [hashStore], guarded: true}),
-          hidden: datastored.String({hashStores: [hashStore], hidden: true})
-        },
-        statics: {
-          staticFunc: function() {return this;},
-          property: 'text'
-        },
-        methods: {
-          methodFunc: function() {return this;}
-        }
-      });
-    }
+    hashStore: hashStore,
+
+    // Utility models
+
+    BasicModel: orm.createModel('BasicModel', {
+      keyspace: 'BasicModel',
+      id: datastored.Id({type: 'string'}),
+      attributes: {
+        text: datastored.String({hashStores: [hashStore]}),
+        text2: datastored.String({hashStores: [hashStore]}),
+        default1: datastored.String({
+          hashStores: [hashStore],
+          defaultValue: 'default1'
+        }),
+        default2: datastored.String({
+          hashStores: [hashStore],
+          defaultValue: 'default2'
+        }),
+        defaultFunc: datastored.String({
+          hashStores: [hashStore],
+          defaultValue: function() {
+            return 'defaultFunc';
+          }
+        }),
+        guarded: datastored.String({hashStores: [hashStore], guarded: true}),
+        hidden: datastored.String({hashStores: [hashStore], hidden: true})
+      },
+      statics: {
+        staticFunc: function() {return this;},
+        property: 'text'
+      },
+      methods: {
+        methodFunc: function() {return this;}
+      }
+    })
   };
 
   env.assertCreateFails = function(options, message, cb) {
