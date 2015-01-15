@@ -1,7 +1,7 @@
 var _ = require('lodash');
+var async = require('async');
 var chai = require('chai');
 var sinon = require('sinon');
-var sinonChai = require('sinon-chai');
 var chaiAsPromised = require('chai-as-promised');
 
 var datastored = require('../..');
@@ -9,53 +9,48 @@ var memoryDatastores = require('../../lib/datastores/memory');
 var testUtils = require('../test_utils');
 
 var expect = chai.expect;
-chai.should();
-chai.use(sinonChai);
 chai.use(chaiAsPromised);
 
 describe('Model', function() {
 
   before(function() {
-    testUtils.createTestEnv(this);
+    this.env = testUtils.createTestEnv();
+    this.modelOptions = _.extend({}, this.env.basicModelOptions, {
+      keyspace: 'Model'
+    });
   });
 
-  beforeEach(function() {
-    var Model = this.models.BasicUnitModel;
-    this.transforms = testUtils.stubTransforms(this.models.BasicUnitModel);
-  });
-
-  afterEach(function() {
-    this.transforms.restore();
+  beforeEach(function(done) {
+    testUtils.resetTransforms(this.env.basicModelLogMixin);
+    this.env.hashStore.reset(done);
   });
 
   describe('options', function() {
 
-    before(function() {
-      this.modelOptions = this.options.BasicUnitModel;
-    });
-
     it('should require attributes', function(done) {
       var options = _.omit(this.modelOptions, 'attributes');
-      this.assertCreateFails(options, 'no attributes have been defined', done);
+      var message = 'no attributes have been defined';
+      this.env.assertCreateFails(options, message, done);
     });
 
     it('should require an id attribute', function() {
       var options = _.omit(this.modelOptions, 'id');
-      this.assertCreateFails(options, '"id" is not defined');
+      this.env.assertCreateFails(options, '"id" is not defined');
     });
 
     it('should require a keyspace', function() {
       var options = _.omit(this.modelOptions, 'keyspace');
-      this.assertCreateFails(options, '"keyspace" is not defined');
+      this.env.assertCreateFails(options, '"keyspace" is not defined');
     });
 
     it('should fail if an attribute is named "id"', function(done) {
       var options = _.merge({}, this.modelOptions, {attributes: {id: {}}});
-      this.assertCreateFails(options, 'attribute name cannot be "id"', done);
+      var message = 'attribute name cannot be "id"';
+      this.env.assertCreateFails(options, message, done);
     });
 
     it('should assign "statics"', function() {
-      var Model = this.models.BasicUnitModel;
+      var Model = this.env.BasicModel;
       Model.property.should.eq('text');
       Model.staticFunc().should.deep.eq(Model);
     });
@@ -63,19 +58,25 @@ describe('Model', function() {
 
   describe('#create', function() {
 
+    before(function() {
+      var hashStore = this.env.hashStore;
+      this.RequiredModel = this.env.createWithAttributes({
+        required: datastored.String({required: true, hashStores: [hashStore]})
+      });
+    });
+
     it('should create and save an instance', function() {
-      var transforms = this.transforms;
+      var transforms = this.env.basicModelLogMixin;
       var attributes = ['text', 'defaultFunc', 'default1', 'default2'];
-      var Model = this.models.BasicUnitModel;
-      return Model
+      return this.env.BasicModelLog
         .create({text: 'a', default1: 'b'})
         .then(function(instance) {
           // Test local data
           instance.get(attributes).should.deep.eq({
-            text: 'output(input(a))',
-            default1: 'output(input(b))',
-            default2: 'output(default2)',
-            defaultFunc: 'output(defaultFunc)'
+            text: 'm.output(m.input(a))',
+            default1: 'm.output(m.input(b))',
+            default2: 'm.output(default2)',
+            defaultFunc: 'm.output(defaultFunc)'
           });
 
           // Test input transform
@@ -87,29 +88,30 @@ describe('Model', function() {
           // Test save transform
           transforms.save.lastCall.thisValue.should.eq(instance);
           transforms.save.should.have.been.calledWithExactly({
-            default1: 'input(b)',
+            default1: 'm.input(b)',
             default2: 'default2',
             defaultFunc: 'defaultFunc',
-            text: 'input(a)'
-          }, {});
+            text: 'm.input(a)'
+          }, {}, sinon.match.func);
 
-          return instance;
+          return instance.fetch([
+            'text', 'defaultFunc', 'default1', 'default2'
+          ], {reload: true});
         })
-        .then(testUtils.reloadInstance(attributes))
-        .then(function(instance) {
+        .then(function(data) {
           // Test that the values were saved.
-          instance.get(attributes).should.deep.eq({
-            text: 'output(fetch(save(input(a))))',
-            default1: 'output(fetch(save(input(b))))',
-            default2: 'output(fetch(save(default2)))',
-            defaultFunc: 'output(fetch(save(defaultFunc)))'
+          data.should.deep.eq({
+            text: 'm.output(m.fetch(m.save(m.input(a))))',
+            default1: 'm.output(m.fetch(m.save(m.input(b))))',
+            default2: 'm.output(m.fetch(m.save(default2)))',
+            defaultFunc: 'm.output(m.fetch(m.save(defaultFunc)))'
           });
         });
     });
 
     it('should call transforms with options', function() {
-      var transforms = this.transforms;
-      return this.models.BasicUnitModel
+      var transforms = this.env.basicModelLogMixin;
+      return this.env.BasicModelLog
         .create({text: 'a'}, {user: true})
         .then(function(instance) {
           transforms.input.lastCall.thisValue.should.eq(instance);
@@ -117,23 +119,27 @@ describe('Model', function() {
             {text: 'a'}, {user: true});
 
           transforms.save.lastCall.thisValue.should.eq(instance);
-          transforms.save.should.have.been.calledWithExactly(
-            {text: 'a'}, {user: true});
+          transforms.save.should.have.been.calledWithExactly({
+            default1: "default1",
+            default2: "default2",
+            defaultFunc: "defaultFunc",
+            text: "m.input(a)"
+          }, {user: true}, sinon.match.func);
         });
     });
 
     it('should only set defined attributes', function() {
-      return this.models.BasicUnitModel
+      return this.env.BasicModelLog
         .create({id: 'foo', text: 'a', foobar: 123})
         .then(function(instance) {
-          expect(instance.get('text')).to.eq('output(input(a))');
+          expect(instance.get('text')).to.eq('m.output(m.input(a))');
           expect(instance.get('foobar')).to.be.undefined;
           instance.getId().should.not.eq('output(foo)');
         });
     });
 
     it('should fail if required attributes are not specified', function() {
-      return this.models.RequiredModel.create({text: 'a'})
+      return this.RequiredModel.create({text: 'a'})
         .then(testUtils.shouldReject, function(err) {
           err.should.deep.eq({
             required: 'attribute "required" is required'
@@ -145,70 +151,81 @@ describe('Model', function() {
   describe('#withId', function() {
 
     it('should return an instance with the given id', function() {
-      var instance = this.models.BasicUnitModel.withId('a');
-      instance.getId().should.eq('output(input(a))');
-      this.transforms.input.lastCall.thisValue.should.eq(instance);
-      this.transforms.input.should.have.been.calledWithExactly(
-        {id: 'a'}, {});
+      var transforms = this.env.basicModelLogMixin;
+      var instance = this.env.BasicModelLog.withId('a');
+      instance.getId().should.eq('m.output(m.input(a))');
+      transforms.input.lastCall.thisValue.should.eq(instance);
+      transforms.input.should.have.been.calledWithExactly({id: 'a'}, {});
     });
 
     it('should call transforms with options', function() {
-      var instance = this.models.BasicUnitModel.withId('a', {user: true});
-      instance.getId().should.eq('output(input(a))');
-      this.transforms.input.lastCall.thisValue.should.eq(instance);
-      this.transforms.input.should.have.been.calledWithExactly(
-        {id: 'a'}, {user: true});
+      var transforms = this.env.basicModelLogMixin;
+      var instance = this.env.BasicModelLog.withId('a', {user: true});
+      instance.getId().should.eq('m.output(m.input(a))');
+      transforms.input.lastCall.thisValue.should.eq(instance);
+      transforms.input.should.have.been.calledWithExactly({
+        id: 'a'
+      }, {user: true});
     });
   });
 
   describe('#find', function() {
 
-    before(function(done) {
+    before(function() {
       var self = this;
-      this.memoryHashStore = new memoryDatastores.MemoryHashStore();
-      this.memoryIndexStore = new memoryDatastores.MemoryIndexStore();
-      testUtils.createTestEnv(this);
-      this.IndexedModel = this.orm.createModel('IndexedModel', {
-        keyspace: 'IndexedModel',
+      this.indexStore = new memoryDatastores.MemoryIndexStore();
+
+      // IndexModel
+
+      this.indexTransforms = testUtils.wrapMixin('m');
+      this.IndexModel = this.env.orm.createModel('IndexModel', {
+        keyspace: 'IndexModel',
+        mixins: [this.indexTransforms],
         id: datastored.Id({type: 'string'}),
         attributes: {
           index: datastored.String({
-            hashStores: [this.memoryHashStore],
-            indexStore: self.memoryIndexStore
-          }),
-          transformIndex: datastored.String({
-            hashStores: [this.memoryHashStore],
-            indexStore: self.memoryIndexStore
-          }),
-          replaceIndex: datastored.String({
-            hashStores: [this.memoryHashStore],
-            indexStore: self.memoryIndexStore,
-            replaceIndex: true
+            hashStores: [this.env.hashStore],
+            indexStore: this.indexStore
           })
         }
       });
 
-      process.nextTick(function() {
-        self.transforms = self.IndexedModel._transforms
-        self.IndexedModel.create({
-          index: 'input(value1)',
-          transformIndex: 'input(value2)',
-          replaceIndex: 'input(value3)'
-        }).then(function(instance) {
-          self.instance = instance;
-          self.id = instance.id;
-        }).then(done, done);
+      // IndexesModel
+
+      this.IndexesModel = this.env.createWithAttributes({
+        index: datastored.String({
+          hashStores: [this.env.hashStore],
+          indexStore: this.indexStore
+        }),
+        replaceIndex: datastored.String({
+          hashStores: [this.env.hashStore],
+          indexStore: this.indexStore,
+          replaceIndex: true
+        })
       });
+    });
+
+    beforeEach(function(done) {
+      testUtils.resetTransforms(this.indexTransforms);
+      this.env.hashStore.reset(done);
     });
 
     beforeEach(function() {
-      sinon.stub(this.transforms, 'input', function(data) {
-        return testUtils.wrapValues(data, 'input');
+      // Create instances.
+      var self = this;
+      return testUtils.nextTick(function() {
+        return self.IndexModel.create({
+          index: '1',
+          replaceIndex: '1'
+        }).then(function(instance) {
+          self.instance = instance;
+          self.id = instance.id;
+        });
       });
     });
 
-    afterEach(function() {
-      this.transforms.input.restore();
+    afterEach(function(done) {
+      this.indexStore.reset(done);
     });
 
     function assertExists(model, name, value, exists) {
@@ -223,66 +240,72 @@ describe('Model', function() {
     }
 
     it('should fail if the query attribute is undefined', function() {
-      var Model = this.models.BasicUnitModel;
+      var Model = this.env.BasicModel;
       (function() {Model.find('undefined', 'a');})
         .should.throw('"undefined" is not defined');
     });
 
     it('should check that the query attribute is indexed', function() {
-      var Model = this.models.BasicUnitModel;
+      var Model = this.env.BasicModel;
       (function() {Model.find('text', 'a');})
         .should.throw('attribute "text" is not an index');
     });
 
     it('should find the instance with the indexed value', function() {
       var self = this;
-      var transforms = this.transforms;
-      return this.IndexedModel.find('index', 'value1')
+      var transforms = this.indexTransforms;
+      return this.IndexModel.find('index', '1')
         .then(function(instance) {
           transforms.input.lastCall.thisValue.should.eq(instance);
           transforms.input.should.have.been.calledWithExactly(
-            {index: 'value1'}, {});
+            {index: '1'}, {});
           instance.id.should.eq(self.id);
-          instance.get('index').should.eq('input(value1)');
+          instance.get('index').should.eq('m.output(m.input(1))');
           instance.saved.should.be.true;
         });
     });
 
     it('should call transforms with options', function() {
       var self = this;
-      var transforms = this.transforms;
-      return this.IndexedModel.find('transformIndex', 'value2', {user: true})
+      var transforms = this.indexTransforms;
+      return this.IndexModel.find('index', '1', {user: true})
         .then(function(instance) {
           transforms.input.lastCall.thisValue.should.eq(instance);
           transforms.input.should.have.been.calledWithExactly(
-            {transformIndex: 'value2'}, {user: true});
+            {index: '1'}, {user: true});
           instance.id.should.eq(self.id);
-          instance.get('transformIndex').should.eq('input(value2)');
+          instance.get('index').should.eq('m.output(m.input(1))');
           instance.saved.should.be.true;
         });
     });
 
     it('should resolve with `null` if nothing was found', function() {
-      return this.IndexedModel.find('index', 'undefined')
+      return this.IndexModel.find('index', 'undefined')
         .then(function(instance) {
           expect(instance).to.be.null;
         });
     });
 
     it('should use old indexes that have not been replaced', function() {
-      return this.instance.save({index: 'value2'})
-        .then(assertExists(this.IndexedModel, 'index', 'value1'))
-        .then(assertExists(this.IndexedModel, 'index', 'value2'));
+      return this.IndexesModel.create({index: '1'})
+        .then(function(instance) {
+          return instance.save({index: '2'});
+        })
+        .then(assertExists(this.IndexesModel, 'index', '1'))
+        .then(assertExists(this.IndexesModel, 'index', '2'));
     });
 
     it('should not use indexes that have been replaced', function() {
-      return this.instance.save({replaceIndex: 'value3'})
-        .then(assertExists(this.IndexedModel, 'replaceIndex', 'value2', false))
-        .then(assertExists(this.IndexedModel, 'replaceIndex', 'value3'));
+      return this.IndexesModel.create({index: '1'})
+        .then(function(instance) {
+          return instance.save({replaceIndex: '2'});
+        })
+        .then(assertExists(this.IndexesModel, 'replaceIndex', '1', false))
+        .then(assertExists(this.IndexesModel, 'replaceIndex', '2'));
     });
 
     it('should should fail if saving a duplicate index', function() {
-      return this.IndexedModel.create({index: 'value1'})
+      return this.IndexModel.create({index: '1'})
         .should.be.rejectedWith('instance with index already exists');
     });
   });
