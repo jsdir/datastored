@@ -124,30 +124,84 @@ Author
 
 When fetching a child, the child attributes to fetch must also be defined. Child attributes to fetch can be defined with a list or object. With an object, the keys must be attribute names, and the values must be `true`. It is also possible to fetch unlimited levels of nested children.
 
+Attribute requests can be defined for both `instance.get` and `instance.fetch`:
+
 ```js
-author.get({
+var authorData = author.get({
   name: true,
   book: ['title', 'isbn']
-}).then(function(author) {
-  console.log(author);
+}, {user: true});
+/*
+authorData === {
+  name: 'John Doe',
+  book: {
+    title: 'A book',
+    isbn: 12345
+  }
+}
+*/
+
+author.fetch({
+  book: ['title', 'isbn', 'rating']
+}, {user: true}).then(function(book) {
   /*
-  {
-    name: 'John Doe',
-    book: {
-      title: 'A book',
-      isbn: 12345
+  book === {
+    title: 'A book',
+    isbn: 12345,
+    rating: 4.67
+  }
+  */
+});
+```
+
+By default, `options.ids` is `true`. Setting `options.ids` to `true` will include the instance id in results where more than one attribute is requested:
+
+```js
+var bookData = author.get({
+  book: ['title', 'isbn', 'rating']
+}, {user: true, ids: true});
+/*
+bookData === {
+  id: 729306,
+  title: 'A book',
+  isbn: 12345,
+  rating: 4.67
+}
+*/
+});
+```
+
+By default, `options.user` is `false`. Setting `options.user` to `true` outputs JSON-formatted data. Setting it to `false` exposes the instance objects instead:
+
+```js
+var book = author.get({
+  book: ['title']
+}, {user: false});
+/*
+book.get('title') === 'A book'
+ */
+```
+
+Multiple levels of children can be fetched as well:
+
+```js
+author.fetch({
+  book: {
+    title: true,
+    store: ['name', 'location']
+  }
+}, {user: true, ids: true}).then(function(book) {
+  /*
+  book === {
+    id: 729306,
+    title: 'A book'
+    store: {
+      id: 11,
+      name: 'The library',
+      location: 'In town'
     }
   }
- */
-});
-fetch({child: ["attr1", "attr2"]})
-
-// Fetch nested models.
-author.fetch({
-  child: {
-    attr1: true,
-    attr2: true,
-    grandchild: ['attr1']
+   */
   }
 });
 ```
@@ -205,7 +259,7 @@ Get:
 
 ```js
 author
-  .get({
+  .fetch({
     books: {
       fetch: ['title', 'isbn'], // Apply fetch to the instance.
       command: ['all']
@@ -216,7 +270,7 @@ author
   });
 
 author
-  .get({
+  .fetch({
     name: null,
     books: ['range', 1, 2] // Short form Redis commands.
   }, true)
