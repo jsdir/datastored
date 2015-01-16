@@ -74,7 +74,7 @@ describe('Model', function() {
         .create({text: 'a', default1: 'b'})
         .then(function(instance) {
           // Test local data
-          instance.get(attributes).should.deep.eq({
+          instance.get(attributes, {ids: false}).should.deep.eq({
             text: 'm.output(m.input(a))',
             default1: 'm.output(m.input(b))',
             default2: 'm.output(default2)',
@@ -98,7 +98,7 @@ describe('Model', function() {
 
           return instance.fetch([
             'text', 'defaultFunc', 'default1', 'default2'
-          ], {reload: true});
+          ], {reload: true, ids: false});
         })
         .then(function(data) {
           // Test that the values were saved.

@@ -155,3 +155,12 @@ exports.cloneInstance = function(instance) {
   clone.saved = instance.saved;
   return clone;
 };
+
+exports.reloadInstance = function(attributes) {
+  return function(instance) {
+    var clone = exports.cloneInstance(instance);
+    return clone.fetch(attributes).then(function() {
+      return clone;
+    });
+  };
+};

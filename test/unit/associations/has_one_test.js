@@ -12,49 +12,55 @@ chai.use(chaiAsPromised);
 describe('HasOne', function() {
 
   before(function() {
-    testUtils.createTestEnv(this);
-    this.hashStore = new datastored.MemoryHashStore();
+    this.env = testUtils.createTestEnv();
+    var hashStore = this.env.hashStore;
 
-    this.ChildModel = this.createWithAttributes('ChildModel', {
-      foo: datastored.String({hashStores: [this.hashStore]})
+    this.ChildModel = this.env.createWithAttributes('ChildModel', {
+      foo: datastored.String({hashStores: [hashStore]})
     });
 
-    this.ParentModel = this.createWithAttributes('ParentModel', {
-      foo: datastored.String({hashStores: [this.hashStore]}),
+    this.ParentModel = this.env.createWithAttributes('ParentModel', {
+      foo: datastored.String({hashStores: [hashStore]}),
       child: datastored.HasOne({
-        type: 'ChildModel', link: 'parent', hashStores: [this.hashStore]
+        type: 'ChildModel', link: 'parent', hashStores: [hashStore]
       }),
       guardedChild: datastored.HasOne({
-        type: 'ChildModel', hashStores: [this.hashStore], guarded: true
+        type: 'ChildModel', hashStores: [hashStore], guarded: true
       }),
       hiddenChild: datastored.HasOne({
-        type: 'ChildModel', hashStores: [this.hashStore], hidden: true
+        type: 'ChildModel', hashStores: [hashStore], hidden: true
       }),
       unlinkedChild: datastored.HasOne({
-        type: 'ChildModel', hashStores: [this.hashStore]
+        type: 'ChildModel', hashStores: [hashStore]
       }),
-      multiTypeChild: datastored.HasOne({hashStores: [this.hashStore]})
+      multiTypeChild: datastored.HasOne({hashStores: [hashStore]})
     });
 
-    this.RequiredChildModel = this.createWithAttributes('RequiredChildModel', {
-      child: datastored.HasOne({
-        type: 'ChildModel',
-        required: true,
-        hashStores: [this.hashStore]
-      })
-    });
+    this.RequiredChildModel = this.env
+      .createWithAttributes('RequiredChildModel', {
+        child: datastored.HasOne({
+          type: 'ChildModel',
+          required: true,
+          hashStores: [hashStore]
+        })
+      });
   });
 
   beforeEach(function() {
     var self = this;
-    return this.ChildModel.create({foo: 'bar'})
-      .then(function(instance) {self.child = instance;});
-  });
-
-  beforeEach(function() {
-    var self = this;
-    return this.ParentModel.create()
-      .then(function(instance) {self.parent = instance;});
+    return testUtils.nextTick(function() {
+      return RSVP.all([
+        self.ChildModel.create({foo: 'bar'})
+          .then(function(instance) {
+            self.child = instance;
+          })
+        ,
+        self.ParentModel.create({foo: 'bar'})
+          .then(function(instance) {
+            self.parent = instance;
+          })
+      ]);
+    });
   });
 
   describe('single-type', function() {
@@ -77,7 +83,7 @@ describe('HasOne', function() {
         .then(testUtils.reloadInstance(['child']))
         .then(function(instance) {
           instance.get('child').id.should.eq(self.child.id);
-          instance.get('child', true).should.eq(self.child.id);
+          instance.get('child', {user: true}).should.eq(self.child.id);
           return instance.save({child: null});
         })
         .then(function(instance) {
@@ -92,6 +98,7 @@ describe('HasOne', function() {
     });
 
     it('should save nested instances', function() {
+      // test instance exists with user off, user on, user on with ids
       var child;
       var attributes = {
         foo: true,
@@ -101,13 +108,23 @@ describe('HasOne', function() {
           child2: {foo: true}
         }
       };
-      var data = {
+
+      var inputData = {
         foo: 'bar1',
         child: {foo: 'bar2'}
       };
 
+      var data = {
+        child: {
+          foo: 'bar2',
+          id: '4;ChildModel'
+        },
+        foo: 'bar1',
+        id: '3;ParentModel'
+      };
+
       return this.ParentModel
-        .create(data)
+        .create(inputData)
         .then(function(instance) {
           // Test get without user transforms.
           child = instance.get('child');
@@ -115,20 +132,31 @@ describe('HasOne', function() {
           child.get('foo').should.eq('bar2');
 
           // Test get with user transforms.
-          instance.get(attributes, true).should.deep.eq(data);
+          var idData = instance.get(attributes, {user: true});
+          idData.id.should.eq(instance.id);
+          idData.foo.should.eq('bar1');
+          idData.child.id.should.eq(child.id);
+          idData.child.foo.should.eq('bar2');
+
+          instance.get(attributes, {user: true, ids: false})
+            .should.deep.eq(inputData);
 
           return instance;
         })
         .then(testUtils.reloadInstance(['foo', 'child']))
         .then(function(instance) {
-          instance.get(['foo', 'child'], true).should.deep.eq({
-            foo: 'bar1', child: child.id
+          instance.get(['foo', 'child'], {user: true}).should.deep.eq({
+            foo: 'bar1', child: child.id, id: instance.id
           });
           return instance;
         })
         .then(testUtils.reloadInstance(attributes))
         .then(function(instance) {
-          instance.get(attributes, true).should.deep.eq(data);
+          var idData = instance.get(attributes, {user: true});
+          idData.id.should.eq(instance.id);
+          idData.foo.should.eq('bar1');
+          idData.child.id.should.eq(child.id);
+          idData.child.foo.should.eq('bar2');
         });
     });
   });
@@ -148,7 +176,7 @@ describe('HasOne', function() {
         .then(function(instance) {
           instance.get('multiTypeChild').model.should.eq(self.child.model);
           instance.get('multiTypeChild').id.should.eq(self.child.id);
-          instance.get('multiTypeChild', true).should.eq(self.child.id);
+          instance.get('multiTypeChild', {user: true}).should.eq(self.child.id);
           return instance.save({multiTypeChild: self.parent});
         })
         .then(function(instance) {
@@ -160,7 +188,7 @@ describe('HasOne', function() {
         .then(function(instance) {
           instance.get('multiTypeChild').model.should.eq(self.parent.model);
           instance.get('multiTypeChild').id.should.eq(self.parent.id);
-          instance.get('multiTypeChild', true).should.eq(self.parent.id);
+          instance.get('multiTypeChild', {user: true}).should.eq(self.parent.id);
           return instance.save({multiTypeChild: null});
         })
         .then(function(instance) {
@@ -206,7 +234,7 @@ describe('HasOne', function() {
         .create({guardedChild: this.child})
         .then(function(instance) {
           instance.get('guardedChild').should.eq(self.child);
-          return instance.save({guardedChild: null}, true);
+          return instance.save({guardedChild: null}, {user: true});
         })
         .then(function(instance) {
           instance.get('guardedChild').should.eq(self.child);
@@ -256,7 +284,7 @@ describe('HasOne', function() {
       .create({hiddenChild: this.child})
       .then(function(instance) {
         instance.get('hiddenChild').should.eq(self.child);
-        expect(instance.get('hiddenChild', true)).to.be.undefined;
+        expect(instance.get('hiddenChild', {user: true})).to.be.undefined;
       });
   });
 });

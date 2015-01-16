@@ -45,27 +45,13 @@ describe('Instance', function() {
       var transforms = this.env.basicModelLogMixin;
       return this.env.BasicModelLog.create({text: 'a', text2: 'b'})
         .then(function(instance) {
-          instance.get(['text', 'text2']).should.deep.eq({
+          instance.get(['text', 'text2'], {ids: false}).should.deep.eq({
             text: 'm.output(m.input(a))', text2: 'm.output(m.input(b))'
           });
           transforms.output.lastCall.thisValue.should.eq(instance);
           transforms.output.should.have.been.calledWithExactly({
             text: 'm.input(a)', text2: 'm.input(b)'
-          }, {attributes: {text: true, text2: true}});
-        });
-    });
-
-    it('should get multiple attributes with options', function() {
-      var transforms = this.env.basicModelLogMixin;
-      return this.env.BasicModelLog.create({text: 'a', text2: 'b'})
-        .then(function(instance) {
-          instance.get({text: 1, text2: 2}, {user: true}).should.deep.eq({
-            text: 'm.output(m.input(a))', text2: 'm.output(m.input(b))'
-          });
-          transforms.output.lastCall.thisValue.should.eq(instance);
-          transforms.output.should.have.been.calledWithExactly({
-            text: 'm.input(a)', text2: 'm.input(b)'
-          }, {user: true, attributes: {text: 1, text2: 2}});
+          }, {attributes: {text: true, text2: true}, ids: false});
         });
     });
   });
@@ -114,7 +100,7 @@ describe('Instance', function() {
     it('should fetch multiple attributes', function() {
       var transforms = this.env.basicModelLogMixin;
       var instance = this.instance;
-      return instance.fetch(['text', 'text2'])
+      return instance.fetch(['text', 'text2'], {ids: false})
         .then(function(data) {
           data.should.deep.eq({
             text: 'm.output(m.fetch(m.save(m.input(a))))',
@@ -126,7 +112,7 @@ describe('Instance', function() {
             text: 'm.save(m.input(a))', text2: 'm.save(m.input(a))'
           }, {
             attributes: {text: true, text2: true},
-            output: true, reload: false
+            output: true, reload: false, ids: false
           }, sinon.match.func);
 
           transforms.output.lastCall.thisValue.should.eq(instance);
@@ -135,7 +121,7 @@ describe('Instance', function() {
             text2: 'm.fetch(m.save(m.input(a)))'
           }, {
             attributes: {text: true, text2: true},
-            output: true, reload: false
+            output: true, reload: false, ids: false
           });
         });
     });
@@ -143,7 +129,7 @@ describe('Instance', function() {
     it('should fetch multiple attributes with options', function() {
       var transforms = this.env.basicModelLogMixin;
       var instance = this.instance;
-      return instance.fetch({text: 1, text2: 2}, {user: true})
+      return instance.fetch({text: 1, text2: 2}, {ids: false})
         .then(function(data) {
           data.should.deep.eq({
             text: 'm.output(m.fetch(m.save(m.input(a))))',
@@ -155,7 +141,7 @@ describe('Instance', function() {
             text: 'm.save(m.input(a))', text2: 'm.save(m.input(a))'
           }, {
             attributes: {text: 1, text2: 2},
-            output: true, reload: false, user: true
+            output: true, reload: false, ids: false
           }, sinon.match.func);
 
           transforms.output.lastCall.thisValue.should.eq(instance);
@@ -164,7 +150,7 @@ describe('Instance', function() {
             text2: 'm.fetch(m.save(m.input(a)))'
           }, {
             attributes: {text: 1, text2: 2},
-            output: true, reload: false, user: true
+            output: true, reload: false, ids: false
           });
         });
     });
@@ -186,7 +172,7 @@ describe('Instance', function() {
       return this.instance
         .save({text: 'b'})
         .then(function() {
-          return instance.fetch(['text', 'text2']);
+          return instance.fetch(['text', 'text2'], {ids: false});
         })
         .then(function(data) {
           data.should.deep.eq({
@@ -200,7 +186,7 @@ describe('Instance', function() {
       return this.instance
         .save({text: 'b'})
         .then(function() {
-          return instance.fetch(['text', 'text2'], {reload: true});
+          return instance.fetch(['text', 'text2'], {reload: true, ids: false});
         })
         .then(function(data) {
           data.should.deep.eq({
