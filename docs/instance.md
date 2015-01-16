@@ -56,7 +56,8 @@ Fetches attributes and optionally outputs them asynchronously. Fetched data is a
 
     If set to `true`, `fetch` will transform the data with the output transform set and will return a `Promise` this is fulfilled with the transformed data. If set to `false`, `fetch` will not transform the data or return a `Promise`. This is useful for preventing the fetched values from being further transformed if they are not immediately needed.
 
-- Returns: `Promise` to be fulfilled with output values if `options.output` is `true`
+- Returns:
+  - `Promise` to be fulfilled with output values if `options.output` is `true`. If no instance is found with the requested attributes, the promise is fulfilled with `null`.
 
 ### `instance.get(attributes[, options])`
 

@@ -147,3 +147,11 @@ exports.nextTick = function(func) {
     process.nextTick(resolve);
   }).then(func);
 };
+
+exports.cloneInstance = function(instance) {
+  var model = instance.model;
+  var clone = new model._constructor(model, {}, {});
+  clone.id = instance.id;
+  clone.saved = instance.saved;
+  return clone;
+};
