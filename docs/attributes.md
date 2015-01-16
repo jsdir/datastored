@@ -83,6 +83,9 @@ var Model = orm.createModel('Model', {
   - `attrValue` (*)
   - `options` (object)
     - `user` = false (boolean)
+    - `attributes`
+
+      `attributes` parameter from `fetch` and `get` instance methods
 
   - Returns: modified `attrValue`
 

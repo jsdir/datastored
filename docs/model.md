@@ -101,6 +101,9 @@ Models are defined with `orm.createModel`. The model name is case-insensitive an
     - `data` (object)
     - `options` (object)
       - `user` = false (boolean)
+      - `attributes`
+
+      `attributes` parameter from `fetch` and `get` instance methods
 
     - Returns: modified `data`
 
