@@ -1,21 +1,77 @@
+var RSVP = require('rsvp');
+var redis = require('redis');
+
+var datastored = require('../../..');
+var redisDatastores = require('../../../lib/datastores/redis');
+var testUtils = require('../../test_utils');
+
 function assertCommandReturns(command, args, assertedResult, cb) {
 
 }
 
-xdescribe('RedisList', function() {
+describe('Redis associaitons >', function() {
 
-  // command should be run in save and fetch contexts, value should be asserted only for fetch.
-  it('should use lpush correctly', function(done) {
-    assertCommandReturns('lpush', [instance, instance], 2, done);
+  before(function() {
+    this.env = testUtils.createTestEnv();
+    this.client = redis.createClient();
+    this.store = new redisDatastores.RedisAssociationStore(this.client);
+
+    this.ParentModel = this.env.createWithAttributes('ParentModel', {
+      children: datastored.RedisList({store: this.store})
+    });
   });
 
-  it('should use lrange correctly', function(done) {
-    // lpush multiple instances.
-    assertCommandReturns('lrange', [2, 4], [3,4,5], done);
+  beforeEach(function(done) {
+    this.store.reset(done);
   });
 
-  it('should fail on redis failure', function() {
-
-    // try syntax error with fetch and save
+  beforeEach(function() {
+    var self = this;
+    return testUtils.nextTick(function() {
+      return RSVP.all([
+        self.ParentModel.create().then(function(instance) {
+          self.parent = instance;
+        }),
+        self.env.BasicModel.create().then(function(instance) {
+          self.child1 = instance;
+        }),
+        self.env.BasicModel.create().then(function(instance) {
+          self.child2 = instance;
+        }),
+      ]);
+    }).then(function() {
+      return self.parent.fetch({children: ['lpush', [
+        self.child1, self.child2
+      ]]});
+    });
   });
+
+  describe('RedisList', function() {
+
+    it('should use lpush correctly', function() {
+      return this.parent.fetch({
+        children: ['lpush', [this.parent, this.parent]]
+      }).then(function(data) {
+        data.should.eq(4);
+      });
+    });
+
+    it('should use lrange correctly', function() {
+      var self = this;
+      var parent = this.parent;
+      return this.parent.fetch({children: ['lrange', [0, 4]]})
+        .then(function(data) {
+          testUtils.assertEqualInstances(data[0], self.child2);
+          testUtils.assertEqualInstances(data[1], self.child1);
+        });
+    });
+
+    it('should save correctly', function() {
+      return this.parent.save({
+        children: ['lpush', [this.parent, this.parent]]
+      });
+    });
+  });
+
+  xit('should fail on redis failure', function() {});
 });

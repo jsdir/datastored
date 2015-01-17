@@ -164,3 +164,7 @@ exports.reloadInstance = function(attributes) {
     });
   };
 };
+
+exports.assertEqualInstances = function(instance1, instance2) {
+  instance1.id.should.eq(instance2.id);
+};

@@ -8,7 +8,6 @@ before_script:
 
 services:
   - redis-server
-  - cassandra
 
 notifications:
   flowdock:

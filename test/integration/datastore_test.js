@@ -1,5 +1,6 @@
 var _ = require('lodash');
 var chai = require('chai');
+var redis = require('redis');
 
 var memoryDatastores = require('../../lib/datastores/memory');
 var redisDatastores = require('../../lib/datastores/redis');
@@ -183,7 +184,7 @@ function testIndexStore(indexStore) {
   });
 }
 
-describe('Memory datastores', function() {
+describe('Memory datastores >', function() {
 
   describe('MemoryHashStore', function() {
     testHashStore(new memoryDatastores.MemoryHashStore());
@@ -194,10 +195,10 @@ describe('Memory datastores', function() {
   });
 });
 
-xdescribe('Redis datastores', function() {
+xdescribe('Redis datastores >', function() {
 
   before(function() {
-    this.client = new redis.Client({});
+    this.client = redis.createClient();
   });
 
   describe('RedisHashStore', function() {
@@ -207,29 +208,12 @@ xdescribe('Redis datastores', function() {
   describe('RedisIndexStore', function() {
     testIndexStore(new redisDatastores.RedisIndexStore(this.client));
   });
-
-  describe('RedisSetStore', function() {
-
-  });
-
-  describe('RedisListStore', function() {
-
-  });
 });
 
-xdescribe('Cassandra datastores', function() {
+xdescribe('PostgresHashStore', function() {
 
 });
 
-/*
-describe('Postgres datastores', function() {
+xdescribe('Cassandra datastores >', function() {
 
-  before(function() {
-    this.client = new pg.sql();
-  });
-
-  describe('RedisHashStore', function() {
-    testHashStore(new postgresDatastores.PostgresHashStore(this.client));
-  });
 });
-*/
