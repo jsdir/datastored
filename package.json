@@ -35,7 +35,7 @@
     "pg": "^4.0.0",
     "redis": "~0.12.1",
     "rsvp": "^3.0.14",
-    "underscore.string": "^2.3.3",
+    "underscore.string": "^3.0.2",
     "validate.js": "^0.3.2",
     "validator": "^3.22.1"
   },
