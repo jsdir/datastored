@@ -1,6 +1,7 @@
 var _ = require('lodash');
 var chai = require('chai');
 var redis = require('redis');
+var pg = require('pg');
 
 var memoryDatastores = require('../../lib/datastores/memory');
 var redisDatastores = require('../../lib/datastores/redis');
@@ -9,10 +10,14 @@ var postgresDatastores = require('../../lib/datastores/postgres');
 chai.should();
 var expect = chai.expect;
 
-function testHashStore(hashStore) {
+function testHashStore(getHashStore) {
+
+  before(function() {
+    this.hashStore = getHashStore.call(this);
+  });
 
   beforeEach(function(done) {
-    hashStore.reset(done);
+    this.hashStore.reset(done);
   });
 
   var date = 1264982400000;
@@ -46,13 +51,13 @@ function testHashStore(hashStore) {
   ]}, fetchOptions);
 
   beforeEach(function(done) {
-    hashStore.save(options, done);
+    this.hashStore.save(_.extend({}, options, {insert: true}), done);
   });
 
   describe('#save()', function() {
 
     it('should persist values of all types', function(done) {
-      hashStore.fetch(fetchAllOptions, function(err, data) {
+      this.hashStore.fetch(fetchAllOptions, function(err, data) {
         if (err) {return done(err);}
         data.integer.should.eq(123);
         data.string.should.eq('foo');
@@ -65,6 +70,7 @@ function testHashStore(hashStore) {
     });
 
     it('should remove attributes with "null"', function(done) {
+      var hashStore = this.hashStore;
       var saveOptions = _.clone(options);
       saveOptions.data = {
         integer: 123,
@@ -91,7 +97,7 @@ function testHashStore(hashStore) {
     it('should only fetch the requested attributes', function(done) {
       var options = _.extend({attributes: ['integer', 'string']}, fetchOptions);
 
-      hashStore.fetch(options, function(err, data) {
+      this.hashStore.fetch(options, function(err, data) {
         if (err) {return done(err);}
         data.should.deep.eq({integer: 123, string: 'foo'});
         done();
@@ -102,7 +108,7 @@ function testHashStore(hashStore) {
       var options = _.extend({
         attributes: ['integer', 'string']
       }, fetchOptions, {id: 2});
-      hashStore.fetch(options, function(err, data) {
+      this.hashStore.fetch(options, function(err, data) {
         if (err) {return done(err);}
         expect(data).to.be.null;
         done();
@@ -187,11 +193,15 @@ function testIndexStore(indexStore) {
 describe('Memory datastores >', function() {
 
   describe('MemoryHashStore', function() {
-    testHashStore(new memoryDatastores.MemoryHashStore());
+    testHashStore(function() {
+      return new memoryDatastores.MemoryHashStore();
+    });
   });
 
   describe('MemoryIndexStore', function() {
-    testIndexStore(new memoryDatastores.MemoryIndexStore());
+    testHashStore(function() {
+      return new memoryDatastores.MemoryHashStore();
+    });
   });
 });
 
@@ -202,16 +212,31 @@ xdescribe('Redis datastores >', function() {
   });
 
   describe('RedisHashStore', function() {
-    testHashStore(new redisDatastores.RedisHashStore(this.client));
+    testHashStore(function() {
+      return new redisDatastores.RedisHashStore(this.client);
+    });
   });
 
   describe('RedisIndexStore', function() {
-    testIndexStore(new redisDatastores.RedisIndexStore(this.client));
+    testHashStore(function() {
+      return new redisDatastores.RedisHashStore(this.client);
+    });
   });
 });
 
-xdescribe('PostgresHashStore', function() {
+describe('Postgres datastores >', function() {
 
+  before(function(done) {
+    // {user: "postgres", database: "test"}
+    this.client = new pg.Client('postgres://postgres@localhost/test');
+    this.client.connect(done);
+  });
+
+  describe('PostgresHashStore', function() {
+    testHashStore(function() {
+      return new postgresDatastores.PostgresHashStore(this.client);
+    });
+  });
 });
 
 xdescribe('Cassandra datastores >', function() {

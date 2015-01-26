@@ -4,11 +4,13 @@ node_js:
   - "0.10"
 
 before_script:
-  - ./scripts/create-schema.sh
+  - "psql -c 'create database test; \c test; create table instances (id int primary key, body bytea)' -U postgres"
 
 services:
   - redis-server
-  - cassandra
+
+addons:
+  postgresql: "9.3.5"
 
 notifications:
   flowdock:

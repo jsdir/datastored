@@ -85,7 +85,7 @@ describe('Model', function() {
           transforms.input.lastCall.thisValue.should.eq(instance);
           transforms.input.should.have.been.calledWithExactly({
             text: 'a', default1: 'b'
-          }, {});
+          }, {insert: true});
 
           // Test save transform
           transforms.save.lastCall.thisValue.should.eq(instance);
@@ -94,7 +94,7 @@ describe('Model', function() {
             default2: 'default2',
             defaultFunc: 'defaultFunc',
             text: 'm.input(a)'
-          }, {}, sinon.match.func);
+          }, {insert: true}, sinon.match.func);
 
           return instance.fetch([
             'text', 'defaultFunc', 'default1', 'default2'
@@ -118,7 +118,7 @@ describe('Model', function() {
         .then(function(instance) {
           transforms.input.lastCall.thisValue.should.eq(instance);
           transforms.input.should.have.been.calledWithExactly(
-            {text: 'a'}, {user: true});
+            {text: 'a'}, {insert: true, user: true});
 
           transforms.save.lastCall.thisValue.should.eq(instance);
           transforms.save.should.have.been.calledWithExactly({
@@ -126,7 +126,7 @@ describe('Model', function() {
             default2: "default2",
             defaultFunc: "defaultFunc",
             text: "m.input(a)"
-          }, {user: true}, sinon.match.func);
+          }, {insert: true, user: true}, sinon.match.func);
         });
     });
 
