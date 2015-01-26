@@ -31,6 +31,7 @@
     "cassandra-driver": "~1.0.0",
     "hiredis": "~0.1.17",
     "lodash": "~2.4.1",
+    "msgpack": "^0.2.4",
     "pg": "^4.0.0",
     "redis": "~0.12.1",
     "rsvp": "^3.0.14",
