@@ -117,10 +117,14 @@ function testHashStore(getHashStore) {
   });
 }
 
-function testIndexStore(indexStore) {
+function testIndexStore(getIndexStore) {
+
+  before(function() {
+    this.indexStore = getIndexStore.call(this);
+  });
 
   beforeEach(function(done) {
-    indexStore.reset(done);
+    this.indexStore.reset(done);
   });
 
   var options = {
@@ -132,31 +136,31 @@ function testIndexStore(indexStore) {
   };
 
   beforeEach(function(done) {
-    indexStore.set(options, done);
+    this.indexStore.set(options, done);
   });
 
   describe('#set()', function() {
 
     it('should set an index', function(done) {
-      indexStore.get(options, function(err, id) {
-        if (err) {return cb(err);}
+      this.indexStore.get(options, function(err, id) {
+        if (err) {return done(err);}
         id.should.eq('foo');
         done();
       });
     });
 
     it('should indicate if the key does not exist', function(done) {
-      var options = _.extend({}, options, {value: 2});
-      indexStore.set(options, function(err, exists) {
-        if (err) {return cb(err);}
+      var testOptions = _.extend({}, options, {attributeValue: 2});
+      this.indexStore.set(testOptions, function(err, exists) {
+        if (err) {return done(err);}
         exists.should.be.false;
         done();
       });
     });
 
     it('should indicate if the key already exists', function(done) {
-      indexStore.set(options, function(err, exists) {
-        if (err) {return cb(err);}
+      this.indexStore.set(options, function(err, exists) {
+        if (err) {return done(err);}
         exists.should.be.true;
         done();
       });
@@ -166,9 +170,9 @@ function testIndexStore(indexStore) {
   describe('#get()', function() {
 
     it('should callback "null" if the key does not exist', function(done) {
-      var options = _.extend({}, options, {value: 2});
-      indexStore.get(options, function(err, id) {
-        if (err) {return cb(err);}
+      var testOptions = _.extend({}, options, {attributeValue: 2});
+      this.indexStore.get(testOptions, function(err, id) {
+        if (err) {return done(err);}
         expect(id).to.be.null;
         done();
       });
@@ -178,6 +182,7 @@ function testIndexStore(indexStore) {
   describe('#del()', function() {
 
     it('should remove an index', function(done) {
+      var indexStore = this.indexStore;
       indexStore.del(options, function(err) {
         if (err) {return done(err);}
         indexStore.get(options, function(err, id) {
@@ -199,13 +204,13 @@ describe('Memory datastores >', function() {
   });
 
   describe('MemoryIndexStore', function() {
-    testHashStore(function() {
-      return new memoryDatastores.MemoryHashStore();
+    testIndexStore(function() {
+      return new memoryDatastores.MemoryIndexStore();
     });
   });
 });
 
-xdescribe('Redis datastores >', function() {
+describe('Redis datastores >', function() {
 
   before(function() {
     this.client = redis.createClient();
@@ -218,8 +223,8 @@ xdescribe('Redis datastores >', function() {
   });
 
   describe('RedisIndexStore', function() {
-    testHashStore(function() {
-      return new redisDatastores.RedisHashStore(this.client);
+    testIndexStore(function() {
+      return new redisDatastores.RedisIndexStore(this.client);
     });
   });
 });
