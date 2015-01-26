@@ -9,6 +9,7 @@ Datastores are abstractions over the databases that datastored uses. Different a
 
   - `MemoryHashStore`
   - `RedisHashStore`
+  - `PostgresHashStore`
 
 - IndexStores
 
