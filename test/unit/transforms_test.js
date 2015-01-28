@@ -104,18 +104,20 @@ describe('Transform sets >', function() {
       model.transforms.input
         .call(model.instance, {text: 'a'}, options)
         .should.deep.eq({
-          text: 'attribute.input(mixin.2.input(mixin.1.input(a)))'
+          text: 'mixin.1.input(mixin.2.input(attribute.input(a)))'
         });
 
       // Test model-level transforms.
       this.mixin.input.lastCall.thisValue.should.eq(model.instance);
       this.mixin.input.should.have.been
-        .calledWithExactly({text: 'a'}, options);
+        .calledWithExactly({
+          text: 'mixin.2.input(attribute.input(a))'
+        }, options);
 
       // Test attribute-level transforms.
       this.attribute.input.lastCall.thisValue.should.eq(model.instance);
       this.attribute.input.should.have.been
-        .calledWithExactly('text', 'mixin.2.input(mixin.1.input(a))', options);
+        .calledWithExactly('text', 'a', options);
     });
 
     it('should not unserialize data by default', function() {
@@ -170,20 +172,19 @@ describe('Transform sets >', function() {
       model.transforms.output
         .call(model.instance, {text: 'a'}, options)
         .should.deep.eq({
-          text: 'mixin.1.output(mixin.2.output(attribute.output(a)))'
+          text: 'attribute.output(mixin.2.output(mixin.1.output(a)))'
         });
 
       // Test attribute-level transforms.
       this.mixin.output.lastCall.thisValue.should.eq(model.instance);
       this.mixin.output.should.have.been
-        .calledWithExactly({
-          text: 'mixin.2.output(attribute.output(a))'
-        }, options);
+        .calledWithExactly({text: 'a'}, options);
 
       // Test model-level transforms.
       this.attribute.output.lastCall.thisValue.should.eq(model.instance);
       this.attribute.output.should.have.been
-        .calledWithExactly('text', 'a', options);
+        .calledWithExactly('text', 'mixin.2.output(mixin.1.output(a))',
+          options);
     });
 
     it('should not serialize data by default', function() {
