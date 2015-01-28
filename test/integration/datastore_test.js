@@ -3,9 +3,7 @@ var chai = require('chai');
 var redis = require('redis');
 var pg = require('pg');
 
-var memoryDatastores = require('../../lib/datastores/memory');
-var redisDatastores = require('../../lib/datastores/redis');
-var postgresDatastores = require('../../lib/datastores/postgres');
+var datastored = require('../..');
 
 chai.should();
 var expect = chai.expect;
@@ -199,13 +197,13 @@ describe('Memory datastores >', function() {
 
   describe('MemoryHashStore', function() {
     testHashStore(function() {
-      return new memoryDatastores.MemoryHashStore();
+      return new datastored.MemoryHashStore();
     });
   });
 
   describe('MemoryIndexStore', function() {
     testIndexStore(function() {
-      return new memoryDatastores.MemoryIndexStore();
+      return new datastored.MemoryIndexStore();
     });
   });
 });
@@ -218,13 +216,13 @@ describe('Redis datastores >', function() {
 
   describe('RedisHashStore', function() {
     testHashStore(function() {
-      return new redisDatastores.RedisHashStore(this.client);
+      return new datastored.RedisHashStore(this.client);
     });
   });
 
   describe('RedisIndexStore', function() {
     testIndexStore(function() {
-      return new redisDatastores.RedisIndexStore(this.client);
+      return new datastored.RedisIndexStore(this.client);
     });
   });
 });
@@ -239,7 +237,7 @@ describe('Postgres datastores >', function() {
 
   describe('PostgresHashStore', function() {
     testHashStore(function() {
-      return new postgresDatastores.PostgresHashStore(this.client);
+      return new datastored.PostgresHashStore(this.client);
     });
   });
 });
