@@ -28,6 +28,7 @@
   "homepage": "https://github.com/jsdir/datastored",
   "dependencies": {
     "async": "~0.9.0",
+    "bignum": "^0.9.1",
     "cassandra-driver": "~1.0.0",
     "hiredis": "~0.1.17",
     "lodash": "~2.4.1",
