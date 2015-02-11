@@ -219,6 +219,13 @@ describe('Transform sets >', function() {
         hidden: 'hidden', text: 'a'
       }, {user: true}).should.deep.eq({text: 'a'});
     });
+
+    it('should add type attribute if requested', function() {
+      var model = this.models.basic;
+      model.transforms.output.call(model.instance, {
+        text: 'a'
+      }, {type: true}).should.deep.eq({text: 'a', type: 'BasicModel'});
+    });
   });
 
   describe('save', function() {
