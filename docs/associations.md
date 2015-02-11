@@ -22,6 +22,7 @@ Provided are several built-in associations that can model 1:1, 1:n, and n:n rela
 - 1:n and n:n
   - `datastored.RedisList`
   - `datastored.RedisSet`
+  - `datastored.RedisTree`
 
 ### Options
 
@@ -326,3 +327,67 @@ Supported Methods:
 - `spop`
 - `srandmember`
 - `srem`
+
+### `datastored.RedisTree(options)`
+
+- `options`
+  - `association` (`Redis{Set,List}`, required) ... The association instance initialized with options,
+  - `maxLevels` = 0 (integer, required)
+  - `rootAttribute` (string, required)
+  - `parentAttribute` (string, required)
+  - `childrenAttribute` (string, required)
+
+#### Usage
+
+`datastored.RedisTree` is a thin wrapper over the basic redis association types. Saving is proxied directly to the association type. Fetching can be performed like the original, with new options:
+
+```js
+var Child = orm.createModal('Child', {
+  attributes
+});
+
+var Parent = orm.createModel('Parent', {
+  attributes: {
+    descendants: datastored.RedisTree(datastored.RedisList(
+      store: associationStore
+    ))
+  }
+});
+
+// Saving is proxied directly to the wrapped association type. In this case,
+// it wraps `RedisList`.
+Parent.create({
+  child: ['lpush', [child1, child2]]
+});
+
+// Fetching can use the save options that `RedisList` uses, with a few more
+// additional, tree-specific options.
+parent.fetch({
+  descendants: ['lrange', [0, 4]]
+});
+
+// Tree-specific:
+parent.fetch({
+  descendants: {
+    maxLevel: 4, // -1 would count back from the furthest descendant
+    attributes: ['title', 'name']
+  }
+}, {user: true}).then(function(res) {
+  /* res:
+  [{
+    id: 3,
+    title: 'child 1',
+    name: 'child 1',
+    children: [{
+      id: 2,
+      title: 'grandchild 1',
+      name: 'grandchild 1'
+    }, {
+      id: 3,
+      title: 'grandchild 2',
+      name: 'grandchild 2'
+    }]
+  }]
+  */
+});
+```
