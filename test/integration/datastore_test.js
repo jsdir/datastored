@@ -23,11 +23,11 @@ function testHashStore(getHashStore) {
   var datetime = 1264982400000;
 
   var options = {
-    keyspace: 'keyspace',
-    id: 1
+    keyspace: 'keyspace'
   };
 
   var typeOptions = _.extend({}, options, {
+    id: 1,
     data: {
       integer: 123,
       string: 'foo',
@@ -48,6 +48,7 @@ function testHashStore(getHashStore) {
   });
 
   var counterOptions = _.extend({}, options, {
+    id: 2,
     data: {
       string: 'foo'
     },
