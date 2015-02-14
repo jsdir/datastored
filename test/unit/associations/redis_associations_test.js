@@ -5,10 +5,6 @@ var datastored = require('../../..');
 var redisDatastores = require('../../../lib/datastores/redis');
 var testUtils = require('../../test_utils');
 
-function assertCommandReturns(command, args, assertedResult, cb) {
-
-}
-
 describe('Redis associaitons >', function() {
 
   before(function() {

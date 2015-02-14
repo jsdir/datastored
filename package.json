@@ -30,14 +30,14 @@
     "async": "~0.9.0",
     "bignum": "^0.9.1",
     "cassandra-driver": "~1.0.0",
-    "hiredis": "~0.1.17",
+    "hiredis": "^0.2.0",
     "lodash": "~2.4.1",
     "msgpack": "^0.2.4",
     "pg": "^4.0.0",
     "redis": "~0.12.1",
     "rsvp": "^3.0.14",
     "underscore.string": "^3.0.2",
-    "validate.js": "^0.3.2",
+    "validate.js": "^0.4.0",
     "validator": "^3.22.1"
   },
   "devDependencies": {
