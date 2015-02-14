@@ -1,6 +1,6 @@
 {
   "name": "datastored",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "synchronized cache and persistent datastore for node.js",
   "main": "index.js",
   "directories": {
