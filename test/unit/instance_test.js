@@ -214,7 +214,7 @@ describe('Instance', function() {
         text: 'a', text2: 'a'
       }).then(function(instance) {
         self.instance = instance;
-      })
+      });
     });
 
     it('should persist values', function() {

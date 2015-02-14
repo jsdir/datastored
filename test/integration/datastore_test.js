@@ -1,4 +1,5 @@
 var _ = require('lodash');
+var async = require('async');
 var chai = require('chai');
 var redis = require('redis');
 var pg = require('pg');
@@ -23,7 +24,10 @@ function testHashStore(getHashStore) {
 
   var options = {
     keyspace: 'keyspace',
-    id: 1,
+    id: 1
+  };
+
+  var typeOptions = _.extend({}, options, {
     data: {
       integer: 123,
       string: 'foo',
@@ -41,21 +45,36 @@ function testHashStore(getHashStore) {
       date: 'date',
       datetime: 'datetime'
     }
-  };
+  });
 
-  var fetchOptions = _.omit(options, 'data');
-  var fetchAllOptions = _.extend({attributes: [
+  var counterOptions = _.extend({}, options, {
+    data: {
+      string: 'foo'
+    },
+    types: {
+      string: 'string',
+      counter1: 'integer',
+      counter2: 'integer'
+    },
+    counters: ['counter1', 'counter2']
+  });
+
+  var typeFetchOptions = _.extend({attributes: [
     'integer', 'string', 'booleanTrue', 'booleanFalse', 'date', 'datetime'
-  ]}, fetchOptions);
+  ]}, typeOptions);
+
+  var counterFetchOptions = _.extend({attributes: [
+    'string', 'counter1', 'counter2'
+  ]}, counterOptions);
 
   beforeEach(function(done) {
-    this.hashStore.save(_.extend({}, options, {insert: true}), done);
+    this.hashStore.save(_.extend({}, typeOptions, {insert: true}), done);
   });
 
   describe('#save()', function() {
 
     it('should persist values of all types', function(done) {
-      this.hashStore.fetch(fetchAllOptions, function(err, data) {
+      this.hashStore.fetch(typeFetchOptions, function(err, data) {
         if (err) {return done(err);}
         data.integer.should.eq(123);
         data.string.should.eq('foo');
@@ -69,31 +88,70 @@ function testHashStore(getHashStore) {
 
     it('should remove attributes with "null"', function(done) {
       var hashStore = this.hashStore;
-      var saveOptions = _.clone(options);
-      saveOptions.data = {
-        integer: 123,
-        string: 'foo',
-        booleanTrue: null,
-        booleanFalse: null,
-        date: null,
-        datetime: null
-      };
+      var saveOptions = _.extend({}, typeOptions, {
+        data: {
+          integer: 123,
+          string: 'foo',
+          booleanTrue: null,
+          booleanFalse: null,
+          date: null,
+          datetime: null
+        }
+      });
 
       hashStore.save(saveOptions, function(err) {
         if (err) {return done(err);}
-        hashStore.fetch(fetchAllOptions, function(err, data) {
+        hashStore.fetch(typeFetchOptions, function(err, data) {
           if (err) {return done(err);}
           data.should.deep.eq({integer: 123, string: 'foo'});
           done();
         });
       });
     });
+
+    it('should initialize all counters with 0', function(done) {
+      var hashStore = this.hashStore;
+      var saveOptions = _.extend({}, counterOptions, {insert: true});
+
+      hashStore.save(saveOptions, function(err) {
+        if (err) {return done(err);}
+        hashStore.fetch(counterFetchOptions, function(err, data) {
+          if (err) {return done(err);}
+          data.should.deep.eq({string: "foo", counter1: 0, counter2: 0});
+          done();
+        });
+      });
+    });
+
+    it('should increment and decrement counters', function(done) {
+      var hashStore = this.hashStore;
+      var saveOptions = _.extend({}, counterOptions, {insert: true});
+      var updateOptions = _.extend({}, counterOptions, {
+        data: {string: "bar"},
+        incr: {counter1: 2, counter2: -3}
+      });
+
+      async.series([
+        function(cb) {hashStore.save(saveOptions, cb);},
+        function(cb) {hashStore.save(updateOptions, cb);},
+        function(cb) {hashStore.save(updateOptions, cb);},
+        function(cb) {
+          hashStore.fetch(counterFetchOptions, function(err, data) {
+            if (err) {return cb(err);}
+            data.should.deep.eq({string: "bar", counter1: 4, counter2: -6});
+            cb();
+          });
+        }
+      ], done);
+    });
   });
 
   describe('#fetch()', function() {
 
     it('should only fetch the requested attributes', function(done) {
-      var options = _.extend({attributes: ['integer', 'string']}, fetchOptions);
+      var options = _.extend({}, typeFetchOptions, {
+        attributes: ['integer', 'string']
+      });
 
       this.hashStore.fetch(options, function(err, data) {
         if (err) {return done(err);}
@@ -103,9 +161,7 @@ function testHashStore(getHashStore) {
     });
 
     it('should callback "null" if the hash was not found', function(done) {
-      var options = _.extend({
-        attributes: ['integer', 'string']
-      }, fetchOptions, {id: 2});
+      var options = _.extend(typeFetchOptions, {id: 2});
       this.hashStore.fetch(options, function(err, data) {
         if (err) {return done(err);}
         expect(data).to.be.null;

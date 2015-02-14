@@ -40,7 +40,7 @@ describe('Counters', function() {
       counter1: {incr: 2}, counter2: {decr: 3}
     })
       .then(function(instance) {
-        return statetestUtils.cloneInstance(instance)
+        return testUtils.cloneInstance(instance)
           .fetch(attributes, {ids: false});
       })
       .then(function(data) {
