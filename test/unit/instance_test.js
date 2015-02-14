@@ -5,6 +5,7 @@ var chaiAsPromised = require('chai-as-promised');
 var datastored = require('../..');
 var testUtils = require('../test_utils');
 
+var should = chai.should();
 var expect = chai.expect;
 chai.use(chaiAsPromised);
 
@@ -22,8 +23,13 @@ describe('Instance', function() {
   describe('model options', function() {
 
     it('should assign "methods"', function() {
+      var self = this;
       return this.env.BasicModel.create().then(function(instance) {
         instance.methodFunc().should.deep.eq(instance);
+        return self.env.EmptyModel.create();
+      }).then(function(emptyInstance) {
+        // Make sure methods do not leak.
+        should.not.exist(emptyInstance.methodFunc);
       });
     });
   });

@@ -10,6 +10,7 @@ var memoryDatastores = require('../../lib/datastores/memory');
 var testUtils = require('../test_utils');
 
 var expect = chai.expect;
+var should = chai.should();
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
@@ -55,6 +56,8 @@ describe('Model', function() {
       var Model = this.env.BasicModel;
       Model.property.should.eq('text');
       Model.staticFunc().should.deep.eq(Model);
+      // Make sure methods do not leak.
+      should.not.exist(this.env.EmptyModel.staticFunc);
     });
   });
 

@@ -99,6 +99,10 @@ exports.createTestEnv = function() {
     });
   };
 
+  env.EmptyModel = env.createWithAttributes({
+    foo: datastored.String({hashStores: [hashStore]})
+  });
+
   return env;
 };
 
