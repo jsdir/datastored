@@ -168,3 +168,22 @@ exports.reloadInstance = function(attributes) {
 exports.assertEqualInstances = function(instance1, instance2) {
   instance1.id.should.eq(instance2.id);
 };
+
+function replaceIds(obj) {
+  if (_.isArray(obj)) {
+    return _.map(obj, replaceIds);
+  }
+  return _.mapValues(obj, function(value, key) {
+    if (_.isPlainObject(value) || _.isArray(value)) {
+      return replaceIds(value);
+    } else if (key === 'id') {
+      return true;
+    } else {
+      return value;
+    }
+  });
+}
+
+exports.assertEqualResults = function(value, other) {
+  replaceIds(value).should.deep.eq(other);
+};
