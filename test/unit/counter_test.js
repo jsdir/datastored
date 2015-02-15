@@ -40,6 +40,9 @@ describe('Counters', function() {
       counter1: {incr: 2}, counter2: {decr: 3}
     })
       .then(function(instance) {
+        instance.get(attributes, {ids: false}).should.deep.eq({
+          counter1: 2, counter2: -3
+        });
         return testUtils.cloneInstance(instance)
           .fetch(attributes, {ids: false});
       })
