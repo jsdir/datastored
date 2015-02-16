@@ -1,6 +1,7 @@
 local rootKey = KEYS[1]
 local childKeyspace = KEYS[2]
 local childrenAttribute = KEYS[3]
+local collectionType = KEYS[4]
 
 local function toJSON(e)
   local t = type (e);
@@ -64,7 +65,15 @@ end
 
 local function loadTree(key,level)
   local data = {}
-  local res = redis.call('lrange',key,0,-1)
+  local res
+
+  if collectionType == "list" then
+    res = redis.call('lrange',key,0,-1)
+  elseif collectionType == "set" then
+    res = redis.call('smembers',key)
+  elseif collectionType == "zset" then
+    res = redis.call('zrange',key,0,-1)
+  end
 
   for i, id in ipairs(res) do
     local instance = {i=id}
