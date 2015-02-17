@@ -69,8 +69,6 @@ describe('Redis associaitons >', function() {
       });
     });
 
-    xit('should fail on redis failure', function() {});
-
     describe('trees', function() {
 
       before(function() {

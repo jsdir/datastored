@@ -16,13 +16,20 @@ describe('HasOne', function() {
     var hashStore = this.env.hashStore;
 
     this.ChildModel = this.env.createWithAttributes('ChildModel', {
-      foo: datastored.String({hashStores: [hashStore]})
+      foo: datastored.String({hashStores: [hashStore]}),
+      parent: datastored.HasOne({
+        type: 'ParentModel',
+        hashStores: [hashStore]
+      })
     });
 
     this.ParentModel = this.env.createWithAttributes('ParentModel', {
       foo: datastored.String({hashStores: [hashStore]}),
       child: datastored.HasOne({
-        type: 'ChildModel', link: 'parent', hashStores: [hashStore]
+        type: 'ChildModel',
+        link: 'parent',
+        join: ['foo'],
+        hashStores: [hashStore]
       }),
       guardedChild: datastored.HasOne({
         type: 'ChildModel', hashStores: [hashStore], guarded: true
@@ -243,39 +250,52 @@ describe('HasOne', function() {
 
     // Test links
 
-    xit('should update parent/child link', function() {
-      return parent
-        .save({child: child})
-        .then(function() {
-          child.get('parent').should.eq(parent) // test local and fetched
-          return parent.save({child: other});
+    it('should maintain links', function() {
+      // Test that links are maintined throughout the association lifecycle.
+      var child2;
+      var child = this.child;
+      var parent = this.parent;
+
+      return this.ChildModel.create({foo: 'bar'})
+        .then(function(instance) {
+          child2 = instance;
+          // Test that link is maintained when linking an instance.
+          return parent.save({child: child});
         })
         .then(function() {
-          child.get('parent').should.eq(null) // test local and fetched
+          return testUtils.cloneInstance(child).fetch('parent');
+        })
+        .then(function(parentInstance) {
+          testUtils.assertEqualInstances(parentInstance, parent);
+          // Test that link is maintained when replacing an instance.
+          return parent.save({child: child2});
+        })
+        .then(function() {
+          return testUtils.cloneInstance(child).fetch('parent');
+        })
+        .then(function(parentInstance) {
+          expect(parentInstance).to.be.undefined;
+          return testUtils.cloneInstance(child2).fetch('parent');
+        })
+        .then(function(parentInstance) {
+          testUtils.assertEqualInstances(parentInstance, parent);
+          // Test that link is maintained when unlinking an instance.
+          return parent.save({child: null});
+        })
+        .then(function() {
+          return testUtils.cloneInstance(child2).fetch('parent');
+        })
+        .then(function(parentInstance) {
+          expect(parentInstance).to.be.undefined;
         });
-      /*
-      - update parent/child refs when a link is created/destroyed
-          - a -> null
-          - a -> b: a => b, b => a
-          - a -> c: a => c, b => null, c => a
-          - a -> null: a => null, c => null
-       */
     });
-  });
 
-  xit('should not sync joined properties if no link exists', function() {
-    // save child with set joined properties
-    // joined properties should exist on newly fetched parent
-    // change and save joined attribute on the child
-    // fetch parent, joined property should not have changed
-  });
+    // Test joined attributes
 
-  xit('should sync joined properties if a link exists', function() {
-    // save child with set joined properties
-    // joined properties should exist on newly fetched parent
-    // change and save joined attribute on the child
-    // fetch parent, joined property should have changed
-    // NOTE: joined properties are access by fetch({foo: 'bar', child: ['joinedProperty']})
+    xit('should maintain joined attributes', function() {
+      // Test that joined attributes are maintained throughout the association
+      // lifecycle.
+    });
   });
 
   it('should hide the child if requested', function() {
