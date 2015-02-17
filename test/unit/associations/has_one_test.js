@@ -62,6 +62,11 @@ describe('HasOne', function() {
             self.child = instance;
           })
         ,
+        self.ChildModel.create({foo: 'baz'})
+          .then(function(instance) {
+            self.child2 = instance;
+          })
+        ,
         self.ParentModel.create({foo: 'bar'})
           .then(function(instance) {
             self.parent = instance;
@@ -252,21 +257,20 @@ describe('HasOne', function() {
 
     it('should maintain links', function() {
       // Test that links are maintined throughout the association lifecycle.
-      var child2;
       var child = this.child;
+      var child2 = this.child2;
       var parent = this.parent;
 
-      return this.ChildModel.create({foo: 'bar'})
-        .then(function(instance) {
-          child2 = instance;
-          // Test that link is maintained when linking an instance.
-          return parent.save({child: child});
-        })
+      // Test that link is maintained when linking an instance.
+      return parent.save({child: child})
         .then(function() {
           return testUtils.cloneInstance(child).fetch('parent');
         })
         .then(function(parentInstance) {
           testUtils.assertEqualInstances(parentInstance, parent);
+          return parentInstance.fetch('child');
+        }).then(function(childInstance) {
+          childInstance.get('foo').should.eq('bar');
           // Test that link is maintained when replacing an instance.
           return parent.save({child: child2});
         })
@@ -279,6 +283,10 @@ describe('HasOne', function() {
         })
         .then(function(parentInstance) {
           testUtils.assertEqualInstances(parentInstance, parent);
+          return parentInstance.fetch('child');
+        })
+        .then(function(childInstance) {
+          childInstance.get('foo').should.eq('baz');
           // Test that link is maintained when unlinking an instance.
           return parent.save({child: null});
         })
@@ -287,14 +295,11 @@ describe('HasOne', function() {
         })
         .then(function(parentInstance) {
           expect(parentInstance).to.be.undefined;
+          return testUtils.cloneInstance(parent).fetch('child');
+        })
+        .then(function(childInstance) {
+          expect(childInstance).to.be.undefined;
         });
-    });
-
-    // Test joined attributes
-
-    xit('should maintain joined attributes', function() {
-      // Test that joined attributes are maintained throughout the association
-      // lifecycle.
     });
   });
 
