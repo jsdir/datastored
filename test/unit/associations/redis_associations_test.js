@@ -1,9 +1,12 @@
 var RSVP = require('rsvp');
 var redis = require('redis');
+var chai = require('chai');
 
 var datastored = require('../../..');
 var redisDatastores = require('../../../lib/datastores/redis');
 var testUtils = require('../../test_utils');
+
+var expect = chai.expect;
 
 describe('Redis associaitons >', function() {
 
@@ -14,12 +17,27 @@ describe('Redis associaitons >', function() {
     this.store = new redisDatastores.RedisAssociationStore(this.client);
 
     this.ParentModel = this.env.createWithAttributes('ParentModel', {
-      children: datastored.RedisList({store: this.store})
+      children: datastored.RedisList({
+        store: this.store,
+        type: 'Child3Model',
+        link: 'parent'
+      })
+    });
+
+    this.Child3Model = this.env.createWithAttributes('Child3Model', {
+      parent: datastored.HasOne({
+        hashStores: [this.hashStore],
+        type: 'ParentModel'
+      })
     });
   });
 
   beforeEach(function(done) {
     this.store.reset(done);
+  });
+
+  beforeEach(function(done) {
+    this.hashStore.reset(done);
   });
 
   beforeEach(function() {
@@ -35,6 +53,9 @@ describe('Redis associaitons >', function() {
         self.env.BasicModel.create().then(function(instance) {
           self.child2 = instance;
         }),
+        self.Child3Model.create().then(function(instance) {
+          self.child3 = instance;
+        })
       ]);
     }).then(function() {
       return self.parent.fetch({children: ['lpush', [
@@ -67,6 +88,28 @@ describe('Redis associaitons >', function() {
       return this.parent.save({
         children: ['lpush', [this.parent, this.parent]]
       });
+    });
+
+    it('should maintain links', function() {
+      var parent = this.parent;
+      var child3 = this.child3;
+      return parent
+        // Test that links are maintained when adding instances.
+        .save({children: ['lpush', [child3]]})
+        .then(function() {
+          return testUtils.cloneInstance(child3).fetch('parent');
+        })
+        .then(function(parentInstance) {
+          testUtils.assertEqualInstances(parentInstance, parent);
+          // Test that links are maintained when removing instances.
+          return parent.save({children: ['lrem', [0, child3]]});
+        })
+        .then(function() {
+          return testUtils.cloneInstance(child3).fetch('parent');
+        })
+        .then(function(parentInstance) {
+          expect(parentInstance).to.be.null;
+        });
     });
 
     describe('trees', function() {
