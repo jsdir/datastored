@@ -391,3 +391,59 @@ parent.fetch({
   */
 });
 ```
+
+## Links
+
+You can keep related instances in sync by using links. Any `HasOne` or `HasMany` can declare a link:
+
+```js
+datastored.HasOne({
+  hashStores: [hashStore]
+  link: 'child'
+});
+
+datastored.RedisList({
+  store: assocStore,
+  link: 'friends'
+});
+```
+
+### Link rules
+
+For simplicity in defining rules, let `HasOne` and `HasMany` associations of an instance be lists of instances, with `HasOne` having a maximum cardinailty of 1. Setting a `HasOne` to `null` is equivalent to removing the only instance in the list it represents, and replacing an instance is equivalent to removing the existing instance and adding the new instance.
+
+Associations with links are kept in sync by following this rule:
+
+```
+Let Instance(A).Attribute(a) be linked to Instance(B).Attribute(b). (It is also possible for Instance(A) and Instance(B) to be the same instance.)
+
+If Instance(A) is {added, removed} {to, from} Instance(B).Attribute(b), Instance(B) will be {added, removed} {to, from} Instance(A).Attribute(a).
+```
+
+This rule can allow synced `1:1`, `1:n`, and `n:n` relationships. Linking two `1:n` associations creates a `n:n` association.
+
+## Joined Attributes
+
+### Joined Attribute rules
+
+Although joined attributes can be used without links, they must be used with links to stay in sync with the target.
+
+```
+Let Instance(A).Attribute(a) be linked to Instance(B).Attribute(b).
+Let Instance(A).Attribute(a) be HasOne.
+Let Instance(A).Attribute(a) have joined attributes J.
+Let Instance(C).Attribute(c) be HasOne.
+Let Instance(C).Attribute(c) have joined attributes J.
+
+j.1 If Instance(B) saves any attributes, the intersection of those attributes and J are saved to Instance(B).Attribute(b).Attribute(a)
+j.2 While Instance(C).Attribute(c) is set to {Instance, null}, Instance(C).Attribute(c) embeds {attributes J fetched from Instance, null}
+```
+
+### Tree rules
+
+- For tree links to work, `childrenAttribute` and `link` must be defined inside the `tree` option, and each descendant must have an `HasOne` attribute named the value of `link`.
+- Each root descendant added to the tree will have the attribute named the value of `link` set to the root instance, joined attributes should also be automatically assigned here via `j.2`.
+- If the attribute named the value of `link` is changed on any descendant `A`, all descendants of `A` will mirror this change. This allows for relocating a subtree by reassigning
+subtreeRoot.[rootRef, parentRef] to the new parent. Changes will be propagated immediately.
+- (Possibly covered by `j.1`) If the root instance changes joined attributes, those attributes will change on all of the descendants. Tree traversal instead of HasMany is used to
+find the descendants for updating in this case, though the attributes are applied in the same way.
