@@ -412,6 +412,11 @@ datastored.RedisList({
 
 For simplicity in defining rules, let `HasOne` and `HasMany` associations of an instance be lists of instances, with `HasOne` having a maximum cardinailty of 1. Setting a `HasOne` to `null` is equivalent to removing the only instance in the list, and replacing an instance is equivalent to removing the existing instance and adding the new instance.
 
+Adding to a list:
+  - RedisList: rpush (in the future, one will be able to set the insertion policy through save options)
+  - RedisSet: sadd
+  - RedisZSet: zadd with default score (in the future, one will be able to set the score through save options)
+
 Associations with links are kept in sync by following this rule:
 
 ```
@@ -451,6 +456,6 @@ find the descendants for updating in this case, though the attributes are applie
 
 #### Additional Functionality
 
-- Each root descendant added to the tree will have the attribute named the value of `link` set to the root instance, joined attributes should also be automatically assigned here via `j.2`.
-- If the attribute named the value of `link` is changed on any descendant `A`, all descendants of `A` will mirror this change. This allows for relocating a subtree by reassigning
+- t.1 Each root descendant added to the tree will have the attribute named the value of `link` set to the root instance, joined attributes should also be automatically assigned here via `j.2`.
+- t.2 If the attribute named the value of `link` is changed on any descendant `A`, all descendants of `A` will mirror this change. This allows for relocating a subtree by reassigning
 subtreeRoot.[rootRef, parentRef] to the new parent. Changes will be propagated immediately.
