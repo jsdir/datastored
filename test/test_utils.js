@@ -169,6 +169,14 @@ exports.reloadInstance = function(attributes) {
   };
 };
 
+exports.createInstances = function(obj, instances) {
+  return RSVP.hash(_.mapValues(instances, function(instanceType, name) {
+    return instanceType.create().then(function(instance) {
+      obj[name] = instance;
+    });
+  }));
+};
+
 exports.assertEqualInstances = function(instance1, instance2) {
   instance1.id.should.eq(instance2.id);
 };

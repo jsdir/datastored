@@ -14,21 +14,19 @@ describe('HasOne', function() {
   before(function() {
     this.env = testUtils.createTestEnv();
     var hashStore = this.env.hashStore;
+    var createModel = this.env.createWithAttributes;
 
-    this.ChildModel = this.env.createWithAttributes('ChildModel', {
+    this.ChildModel = createModel('ChildModel', {
       foo: datastored.String({hashStores: [hashStore]}),
       parent: datastored.HasOne({
-        type: 'ParentModel',
         hashStores: [hashStore]
       })
     });
 
-    this.ParentModel = this.env.createWithAttributes('ParentModel', {
+    this.ParentModel = createModel('ParentModel', {
       foo: datastored.String({hashStores: [hashStore]}),
       child: datastored.HasOne({
         type: 'ChildModel',
-        link: 'parent',
-        join: ['foo'],
         hashStores: [hashStore]
       }),
       guardedChild: datastored.HasOne({
@@ -43,37 +41,51 @@ describe('HasOne', function() {
       multiTypeChild: datastored.HasOne({hashStores: [hashStore]})
     });
 
-    this.RequiredChildModel = this.env
-      .createWithAttributes('RequiredChildModel', {
-        child: datastored.HasOne({
-          type: 'ChildModel',
-          required: true,
-          hashStores: [hashStore]
-        })
-      });
+    this.NoLinkParentModel = createModel('NoLinkParent', {
+      foo: datastored.String({hashStores: [hashStore]}),
+      child: datastored.HasOne({
+        type: 'ChildModel',
+        hashStores: [hashStore],
+        join: ['foo']
+      })
+    });
+
+    this.RequiredChildModel = createModel('RequiredChildModel', {
+      child: datastored.HasOne({
+        type: 'ChildModel',
+        required: true,
+        hashStores: [hashStore]
+      })
+    });
   });
 
   beforeEach(function() {
-    var self = this;
-    return testUtils.nextTick(function() {
-      return RSVP.all([
-        self.ChildModel.create({foo: 'bar'})
-          .then(function(instance) {
-            self.child = instance;
-          })
-        ,
-        self.ChildModel.create({foo: 'baz'})
-          .then(function(instance) {
-            self.child2 = instance;
-          })
-        ,
-        self.ParentModel.create({foo: 'bar'})
-          .then(function(instance) {
-            self.parent = instance;
-          })
-      ]);
+    return testUtils.createInstances(this, {
+      parent: this.ParentModel,
+      child: this.ChildModel
     });
   });
+
+  function assertAttrEquals(instance, name, value) {
+    return function() {
+      return testUtils.cloneInstance(instance).fetch(name)
+        .then(function(fetchedValue) {
+          if (value) {
+            testUtils.assertEqualInstances(value, fetchedValue);
+          } else {
+            expect(fetchedValue).to.be.undefined;
+          }
+        });
+    };
+  }
+
+  function saveAttr(instance, name, value) {
+    return function() {
+      var data = {};
+      data[name] = value;
+      return instance.save(data);
+    };
+  }
 
   describe('single-type', function() {
 
@@ -135,8 +147,7 @@ describe('HasOne', function() {
         id: '3;ParentModel'
       };
 
-      return this.ParentModel
-        .create(inputData)
+      return this.parent.save(inputData)
         .then(function(instance) {
           // Test get without user transforms.
           child = instance.get('child');
@@ -176,31 +187,33 @@ describe('HasOne', function() {
   describe('multi-type', function() {
 
     it('should save instances', function() {
+      var child = this.child;
+      var parent = this.parent;
       var self = this;
-      return this.parent
-        .save({multiTypeChild: this.child})
+      return parent
+        .save({multiTypeChild: child})
         .then(function(instance) {
           // Test local change.
-          instance.get('multiTypeChild').should.eq(self.child);
+          instance.get('multiTypeChild').should.eq(child);
           return instance;
         })
         .then(testUtils.reloadInstance(['multiTypeChild']))
         .then(function(instance) {
-          instance.get('multiTypeChild').model.should.eq(self.child.model);
-          instance.get('multiTypeChild').id.should.eq(self.child.id);
-          instance.get('multiTypeChild', {user: true}).should.eq(self.child.id);
-          return instance.save({multiTypeChild: self.parent});
+          instance.get('multiTypeChild').model.should.eq(child.model);
+          instance.get('multiTypeChild').id.should.eq(child.id);
+          instance.get('multiTypeChild', {user: true}).should.eq(child.id);
+          return instance.save({multiTypeChild: parent});
         })
         .then(function(instance) {
           // Test local change.
-          instance.get('multiTypeChild').should.eq(self.parent);
+          instance.get('multiTypeChild').should.eq(parent);
           return instance;
         })
         .then(testUtils.reloadInstance(['multiTypeChild']))
         .then(function(instance) {
-          instance.get('multiTypeChild').model.should.eq(self.parent.model);
-          instance.get('multiTypeChild').id.should.eq(self.parent.id);
-          instance.get('multiTypeChild', {user: true}).should.eq(self.parent.id);
+          instance.get('multiTypeChild').model.should.eq(parent.model);
+          instance.get('multiTypeChild').id.should.eq(parent.id);
+          instance.get('multiTypeChild', {user: true}).should.eq(parent.id);
           return instance.save({multiTypeChild: null});
         })
         .then(function(instance) {
@@ -215,9 +228,9 @@ describe('HasOne', function() {
     });
 
     it('should fail to save nested instances', function() {
-      var self = this;
+      var parent = this.parent;
       (function() {
-        self.parent.save({multiTypeChild: {child: {foo: 'bar'}}})
+        parent.save({multiTypeChild: {child: {foo: 'bar'}}})
       }).should.throw('cannot save nested instances in multi-type associations');
     });
   });
@@ -234,81 +247,149 @@ describe('HasOne', function() {
     // Test that the association uses the standard attribute options.
 
     it('should require the child if requested', function() {
-      return this.RequiredChildModel.create({})
+      return this.RequiredChildModel.create()
         .then(testUtils.shouldReject, function(err) {
           err.should.deep.eq({child: 'attribute "child" is required'});
         });
     });
 
     it('should guard the child if requested', function() {
-      var self = this;
-      return this.ParentModel
-        .create({guardedChild: this.child})
+      var child = this.child;
+      return this.parent.save({guardedChild: child})
         .then(function(instance) {
-          instance.get('guardedChild').should.eq(self.child);
+          instance.get('guardedChild').should.eq(child);
           return instance.save({guardedChild: null}, {user: true});
         })
         .then(function(instance) {
-          instance.get('guardedChild').should.eq(self.child);
+          instance.get('guardedChild').should.eq(child);
         });
     });
+  });
 
-    // Test links
+  describe('links', function() {
 
-    it('should maintain links', function() {
-      // Test that links are maintined throughout the association lifecycle.
-      var child = this.child;
+    before(function() {
+      var createModel = this.env.createWithAttributes;
+      var hashStore = this.env.hashStore;
+      this.HasOneLinkParent = createModel('HasOneLinkParent', {
+        child: datastored.HasOne({
+          hashStores: [hashStore],
+          join: ['foo'],
+          link: 'parent'
+        }),
+        bar: datastored.String({hashStores: [hashStore]})
+      });
+
+      this.HasOneLinkChild = createModel('HasOneLinkChild', {
+        parent: datastored.HasOne({
+          hashStores: [hashStore],
+          join: ['bar']
+        }),
+        foo: datastored.String({hashStores: [hashStore]})
+      });
+    });
+
+    beforeEach(function() {
+      return testUtils.createInstances(this, {
+        parent1: this.HasOneLinkParent,
+        parent2: this.HasOneLinkParent,
+        child1: this.HasOneLinkChild,
+        child2: this.HasOneLinkChild
+      });
+    });
+
+    it('should sync local changes to target instances', function() {
+      var parent = this.parent1;
+      var child1 = this.child1;
       var child2 = this.child2;
-      var parent = this.parent;
+      return parent.save({child: child1})
+        .then(assertAttrEquals(child1, 'parent', parent))
+        .then(saveAttr(parent, 'child', child2))
+        .then(assertAttrEquals(child1, 'parent', undefined))
+        .then(assertAttrEquals(child2, 'parent', parent))
+        .then(saveAttr(parent, 'child', null))
+        .then(assertAttrEquals(child2, 'parent', undefined));
+    });
 
-      // Test that link is maintained when linking an instance.
-      return parent.save({child: child})
+    it('should sync target changes to local instances', function() {
+      var parent1 = this.parent1;
+      var parent2 = this.parent2;
+      var child = this.child1;
+      return child.save({parent: parent1})
+        .then(assertAttrEquals(parent1, 'child', child))
+        .then(saveAttr(child, 'parent', parent2))
+        .then(assertAttrEquals(parent1, 'child', undefined))
+        .then(assertAttrEquals(parent2, 'child', child))
+        .then(saveAttr(child, 'parent', null))
+        .then(assertAttrEquals(parent2, 'child', undefined));
+    });
+
+    it('should sync joined attributes', function() {
+      var child = this.child1;
+      var parent = this.parent1;
+      return child.save({foo: '1'})
+        .then(saveAttr(parent, 'bar', '2'))
+        .then(saveAttr(child, 'parent', parent))
         .then(function() {
-          return testUtils.cloneInstance(child).fetch('parent');
-        })
-        .then(function(parentInstance) {
-          testUtils.assertEqualInstances(parentInstance, parent);
-          return parentInstance.fetch('child');
-        }).then(function(childInstance) {
-          childInstance.get('foo').should.eq('bar');
-          // Test that link is maintained when replacing an instance.
-          return parent.save({child: child2});
-        })
-        .then(function() {
-          return testUtils.cloneInstance(child).fetch('parent');
-        })
-        .then(function(parentInstance) {
-          expect(parentInstance).to.be.undefined;
-          return testUtils.cloneInstance(child2).fetch('parent');
-        })
-        .then(function(parentInstance) {
-          testUtils.assertEqualInstances(parentInstance, parent);
-          return parentInstance.fetch('child');
-        })
-        .then(function(childInstance) {
-          childInstance.get('foo').should.eq('baz');
-          // Test that link is maintained when unlinking an instance.
-          return parent.save({child: null});
-        })
-        .then(function() {
-          return testUtils.cloneInstance(child2).fetch('parent');
-        })
-        .then(function(parentInstance) {
-          expect(parentInstance).to.be.undefined;
           return testUtils.cloneInstance(parent).fetch('child');
         })
         .then(function(childInstance) {
-          expect(childInstance).to.be.undefined;
+          childInstance.get('foo').should.eq('1');
+          return testUtils.cloneInstance(child).fetch('parent');
+        })
+        .then(function(parentInstance) {
+          parentInstance.get('bar').should.eq('2');
+        })
+        .then(saveAttr(child, 'foo', '3'))
+        .then(saveAttr(parent, 'bar', '4'))
+        .then(function() {
+          return testUtils.cloneInstance(parent).fetch('child');
+        })
+        .then(function(childInstance) {
+          childInstance.get('foo').should.eq('3');
+          return testUtils.cloneInstance(child).fetch('parent');
+        })
+        .then(function(parentInstance) {
+          parentInstance.get('bar').should.eq('4');
+        });
+    });
+  });
+
+  describe('joined attributes', function() {
+
+    beforeEach(function() {
+      return testUtils.createInstances(this, {
+        noLinkParent: this.NoLinkParentModel
+      });
+    });
+
+    it('should be usable without a link', function() {
+      var parent = this.noLinkParent;
+      var child = this.child;
+      return child.save({foo: '1'})
+        .then(saveAttr(parent, 'child', child))
+        .then(function() {
+          return testUtils.cloneInstance(parent).fetch('child');
+        })
+        .then(function(childInstance) {
+          childInstance.get('foo').should.eq('1');
+          return saveAttr(child, 'foo', '2');
+        })
+        .then(function() {
+          return testUtils.cloneInstance(parent).fetch('child');
+        })
+        .then(function(childInstance) {
+          childInstance.get('foo').should.eq('1');
         });
     });
   });
 
   it('should hide the child if requested', function() {
-    var self = this;
-    return this.ParentModel
-      .create({hiddenChild: this.child})
+    var child = this.child;
+    return this.parent
+      .save({hiddenChild: this.child})
       .then(function(instance) {
-        instance.get('hiddenChild').should.eq(self.child);
+        instance.get('hiddenChild').should.eq(child);
         expect(instance.get('hiddenChild', {user: true})).to.be.undefined;
       });
   });
