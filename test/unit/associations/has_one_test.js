@@ -120,68 +120,6 @@ describe('HasOne', function() {
           expect(instance.get('child')).to.be.undefined;
         });
     });
-
-    it('should save nested instances', function() {
-      // test instance exists with user off, user on, user on with ids
-      var child;
-      var attributes = {
-        foo: true,
-        child: {
-          foo: true,
-          // Undefined attribute
-          child2: {foo: true}
-        }
-      };
-
-      var inputData = {
-        foo: 'bar1',
-        child: {foo: 'bar2'}
-      };
-
-      var data = {
-        child: {
-          foo: 'bar2',
-          id: '4;ChildModel'
-        },
-        foo: 'bar1',
-        id: '3;ParentModel'
-      };
-
-      return this.parent.save(inputData)
-        .then(function(instance) {
-          // Test get without user transforms.
-          child = instance.get('child');
-          instance.get('foo').should.eq('bar1');
-          child.get('foo').should.eq('bar2');
-
-          // Test get with user transforms.
-          var idData = instance.get(attributes, {user: true});
-          idData.id.should.eq(instance.id);
-          idData.foo.should.eq('bar1');
-          idData.child.id.should.eq(child.id);
-          idData.child.foo.should.eq('bar2');
-
-          instance.get(attributes, {user: true, ids: false})
-            .should.deep.eq(inputData);
-
-          return instance;
-        })
-        .then(testUtils.reloadInstance(['foo', 'child']))
-        .then(function(instance) {
-          instance.get(['foo', 'child'], {user: true}).should.deep.eq({
-            foo: 'bar1', child: child.id, id: instance.id
-          });
-          return instance;
-        })
-        .then(testUtils.reloadInstance(attributes))
-        .then(function(instance) {
-          var idData = instance.get(attributes, {user: true});
-          idData.id.should.eq(instance.id);
-          idData.foo.should.eq('bar1');
-          idData.child.id.should.eq(child.id);
-          idData.child.foo.should.eq('bar2');
-        });
-    });
   });
 
   describe('multi-type', function() {
@@ -225,13 +163,6 @@ describe('HasOne', function() {
         .then(function(instance) {
           expect(instance.get('multiTypeChild')).to.be.undefined;
         });
-    });
-
-    it('should fail to save nested instances', function() {
-      var parent = this.parent;
-      (function() {
-        parent.save({multiTypeChild: {child: {foo: 'bar'}}})
-      }).should.throw('cannot save nested instances in multi-type associations');
     });
   });
 
