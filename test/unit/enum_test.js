@@ -44,4 +44,14 @@ describe('Enums', function() {
         value.should.eq('bar');
       });
   });
+
+  it('should persist values in user mode', function() {
+    return this.instance.save({enum: 'bar'}, {user: true})
+      .then(function(instance) {
+        return testUtils.cloneInstance(instance).fetch('enum');
+      })
+      .then(function(value) {
+        value.should.eq('bar');
+      });
+  });
 });
